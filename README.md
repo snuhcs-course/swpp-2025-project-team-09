@@ -4,7 +4,7 @@ You can use the README file to showcase and promote your mobile app. The templat
 
 Please note that the README doesn't affect your grade and is not included in documentation(Wiki).
 
-# [Your Application Name]
+# [Learning Seed]
 
 [Short application description here]
 
