@@ -23,6 +23,13 @@
         <item name="android:gravity">center</item>
     </style>
 
+    <style name="BoldText24">
+        <item name="android:textSize">24sp</item>
+        <item name="android:textColor">@color/black</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:gravity">center</item>
+    </style>
+
     <!-- 버튼 텍스트 (둥근 버튼 포함) -->
     <style name="BoldText64W">
         <item name="android:textSize">64sp</item>
