@@ -142,6 +142,18 @@
         </LinearLayout>
     </ScrollView>
 
+    <!-- Start New Reading 버튼 (항상 고정) -->
+    <android.widget.Button
+        android:id="@+id/startNewReadingButton"
+        android:layout_width="560dp"
+        android:layout_height="120dp"
+        android:text="Start New Reading"
+        android:background="@drawable/round_button"
+        style="@style/BoldText48"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="48dp"/>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
