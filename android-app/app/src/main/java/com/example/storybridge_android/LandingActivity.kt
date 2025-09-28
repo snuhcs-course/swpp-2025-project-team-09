@@ -10,32 +10,48 @@ import android.widget.Button
 import android.content.Intent
 import android.os.Handler
 import android.os.Looper
+import androidx.constraintlayout.widget.ConstraintLayout
 
 class LandingActivity : AppCompatActivity() {
+
+    private lateinit var landingLayout: ConstraintLayout
+    private lateinit var languageLayout: ConstraintLayout
+    private lateinit var btnEnglish: Button
+    private lateinit var btnVietnamese: Button
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContentView(R.layout.activity_landing)
+        setContentView(R.layout.activity_landing_first)
 
         // 시스템 바 padding 적용
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.landing)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
 
-        // 언어 선택 버튼
-        val btnEnglish = findViewById<Button>(R.id.btnEnglish)
-        val btnVietnamese = findViewById<Button>(R.id.btnVietnamese)
+        // Landing 화면 참조
+        landingLayout = findViewById(R.id.landing)
+
+        // 3초 후 Language Selection 화면으로 전환
+        Handler(Looper.getMainLooper()).postDelayed({
+            showLanguageSelection()
+        }, 3000)
+    }
+
+    private fun showLanguageSelection() {
+        // Language Selection 레이아웃으로 전환
+        setContentView(R.layout.activity_landing_second)
+
+        languageLayout = findViewById(R.id.language_se)
+        btnEnglish = findViewById(R.id.btnEnglish)
+        btnVietnamese = findViewById(R.id.btnVietnamese)
+
         btnEnglish.setOnClickListener { navigateToMain() }
         btnVietnamese.setOnClickListener { navigateToMain() }
-
-        // 3초 후 버튼 표시
-        Handler(Looper.getMainLooper()).postDelayed({
-            btnEnglish.visibility = Button.VISIBLE
-            btnVietnamese.visibility = Button.VISIBLE
-        }, 3000) //
     }
+
 
     // 버튼 클릭 시 MainActivity로 이동
     private fun navigateToMain() {
