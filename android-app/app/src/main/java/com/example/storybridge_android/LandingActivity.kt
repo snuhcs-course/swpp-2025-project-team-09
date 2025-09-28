@@ -37,7 +37,7 @@ class LandingActivity : AppCompatActivity() {
         // 3초 후 Language Selection 화면으로 전환
         Handler(Looper.getMainLooper()).postDelayed({
             showLanguageSelection()
-        }, 3000)
+        }, 1000)
     }
 
     private fun showLanguageSelection() {
