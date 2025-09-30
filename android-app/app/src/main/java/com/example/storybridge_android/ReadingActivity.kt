@@ -71,6 +71,13 @@ class ReadingActivity : AppCompatActivity() {
         dimBackground.setOnClickListener {
             toggleOverlay(false)
         }
+
+        val finishButton = findViewById<Button>(R.id.finishButton)
+        finishButton.setOnClickListener {
+            val intent = Intent(this, FinishActivity::class.java)
+            startActivity(intent)
+            finish() // 필요하면 현재 액티비티 종료
+        }
     }
 
 
