@@ -1,4 +1,4 @@
-name: story-tts-env
+name: story-ocr-tts-env
 channels:
   - defaults
 dependencies:
@@ -7,3 +7,6 @@ dependencies:
   - pip:
     - openai
     - kss
+    - requests
+    - pydub
+    - ffmpeg
