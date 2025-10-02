@@ -29,15 +29,6 @@ venv/
 .DS_Store
 Thumbs.db
 
-# Logs
-*.log
-log/
-
-# Output audio files
-out_audio/
-*.mp3
-*.wav
-
 # Temporary files
 tmp/
 *.tmp

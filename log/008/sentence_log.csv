@@ -1,0 +1,3 @@
+page_file,index,ko,translation,tone,emotion,pacing,voice,path,trans_latency,senti_latency,tts_latency
+008_para1.txt,1,겨울이 되었습니다.,Winter has arrived.,"Softly enchanting, serene",A sense of peaceful reflection and cozy warmth,"Deliberate and flowing, with gentle pauses",shimmer,out_audio/008/008_para1_sent1.mp3,0.766,1.903,0.819
+008_para1.txt,2,"첫눈이 내리자, 작은 들쥐 다섯 마리는 돌담 틈새로 난 구멍으로 들어갔습니다.","As the first snow fell, five little field mice scurried into a hole in the stone wall.",Whimsical and enchanting,A sense of wonder and playful curiosity,"Delicate and rhythmic, with gentle pauses to enhance the imagery",shimmer,out_audio/008/008_para1_sent2.mp3,1.099,1.653,1.496
