@@ -1,0 +1,9 @@
+name: story-tts-env
+channels:
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+    - openai
+    - kss
