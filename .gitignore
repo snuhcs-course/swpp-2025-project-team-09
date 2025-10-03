@@ -1,1 +1,3 @@
 *.jpeg
+.idea/
+*.iml
