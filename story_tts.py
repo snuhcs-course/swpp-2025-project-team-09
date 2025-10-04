@@ -3,7 +3,6 @@
 
 import csv
 import time
-import json
 import asyncio
 import argparse
 import sys
@@ -12,109 +11,99 @@ import shutil
 from pathlib import Path
 from typing import Dict, List, Any
 from openai import AsyncOpenAI
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from pydantic import BaseModel, Field
 
-TRANSLATION_SYSTEM_PROMPT_TEMPLATE = """You are an expert multilingual children's-story adapter.
+# --- Prompt Templates ---
+
+TRANSLATION_PROMPT = """
+You are an expert multilingual children's-story adapter.
 You will be given a block of Korean text that may contain up to three parts: [PREVIOUS], [CURRENT], and [NEXT].
 Your task is to translate ONLY the [CURRENT] Korean sentence into a single, fluent {target_lang} sentence.
 Use the [PREVIOUS] and [NEXT] sentences for context to ensure pronouns, flow, and style are correct.
-- Use standard {target_lang} double quotes (“ ”) for dialogue if needed.
-- Your entire response must be ONLY the valid JSON for the translated sentence: {{"{target_lang}_translation": "..."}}
 """
 
-SENTIMENT_SYSTEM_PROMPT = """
-You are an expert voice director for children's audiobooks. Your task is to analyze the sentiment of a single KOREAN sentence and provide performance direction for a voice actor. Your response must be a JSON object with the following keys, using expressive ENGLISH words for all values.
-
-- "Tone": Magical, warm, and inviting, creating a sense of wonder and excitement for young listeners. If the sentence is different, modify this (e.g., "Slightly tense", "Mysterious").
-- "Pacing": Steady and measured, with slight pauses to emphasize magical moments. If the sentence is different, modify this (e.g., "Faster, more urgent").
-- "Emotion": Wonder, curiosity, and a sense of adventure, with a lighthearted and positive vibe. If the sentence is different, modify this (e.g., "A hint of fear", "Joyful excitement").
-
-**Example of High-Quality Output:**
-
-**Input:** `“프레드릭, 넌 왜 일을 안 하니?”`
-**Output JSON:**
-```json
-{
-  "Tone": "Gently chiding, inquisitive",
-  "Pacing": "Direct, with a slight upward inflection",
-  "Emotion": "Mildly exasperated but friendly",
-}
-
-Important Rules:
-- Be specific and creative for Tone, Pacing, and Emotion.
-- Always include all keys. Your entire response must be ONLY the valid JSON.
+SENTIMENT_PROMPT = """
+You are an expert children's audiobook voice director.
+Analyze the sentiment of this Korean sentence and provide expressive ENGLISH directions for Tone, Pacing, and Emotion.
 """
+
+class Translation(BaseModel):
+    """A single, fluent translation of a Korean sentence."""
+    translated_text: str = Field(..., description="The translated sentence in the target language.", alias="translation")
+
+class Sentiment(BaseModel):
+    """Performance direction for a voice actor based on sentiment analysis."""
+    tone: str = Field(..., description="The tone of voice to use (e.g. 'Gently chiding, inquisitive').")
+    pacing: str = Field(..., description="The pacing of the speech (e.g. 'Direct, with a slight upward inflection').")
+    emotion: str = Field(..., description="The emotion to convey (e.g. 'Mildly exasperated but friendly').")
 
 class StoryProcessor:
-    def __init__(self, out_dir="out_audio", log_dir="log"):
+    def __init__(self, out_dir="out_audio", log_dir="log", target_lang: str = "English"):
         self.client = AsyncOpenAI()
-        self.TRANSLATE_MODEL = "gpt-4o-mini"
-        self.SENTIMENT_MODEL = "gpt-4o-mini"
         self.TTS_MODEL = "gpt-4o-mini-tts"
         self.OUT_DIR = Path(out_dir)
         self.LOG_DIR = Path(log_dir)
         self.CSV_LOG = self.LOG_DIR / "sentence_log.csv"
+        
+        self.target_lang = target_lang
+        self.llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
+        self.translation_chain = self._create_translation_chain()
+        self.sentiment_chain = self._create_sentiment_chain()
 
         # Reset dirs each run
-        if self.OUT_DIR.exists():
-            shutil.rmtree(self.OUT_DIR)
-        if self.LOG_DIR.exists():
-            shutil.rmtree(self.LOG_DIR)
+        if self.OUT_DIR.exists(): shutil.rmtree(self.OUT_DIR)
+        if self.LOG_DIR.exists(): shutil.rmtree(self.LOG_DIR)
         self.OUT_DIR.mkdir(parents=True)
         self.LOG_DIR.mkdir(parents=True)
 
-    async def warm_up_api(self):
-        try:
-            await self.client.chat.completions.create(
-                model=self.TRANSLATE_MODEL,
-                messages=[{"role": "user", "content": "Hello"}],
-                max_tokens=2
-            )
-        except Exception as e:
-            print(f"⚠️ Warm-up failed: {e}")
+    def _create_translation_chain(self):
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", TRANSLATION_PROMPT),
+            ("user", "{text_with_context}")
+        ])
+        return prompt | self.llm.with_structured_output(Translation)
 
-    async def translate(self, text_with_context: str, target_lang: str="English") -> Dict[str, Any]:
-        system_prompt = TRANSLATION_SYSTEM_PROMPT_TEMPLATE.format(target_lang=target_lang)
+    def _create_sentiment_chain(self):
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", SENTIMENT_PROMPT),
+            ("user", "{korean_text}")
+        ])
+        return prompt | self.llm.with_structured_output(Sentiment)
+    
+    async def translate(self, text_with_context: str) -> Dict[str, Any]:
         for attempt in range(3):
             try:
                 t0 = time.time()
-                resp = await self.client.chat.completions.create(
-                    model=self.TRANSLATE_MODEL, response_format={"type": "json_object"},
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": text_with_context},
-                    ], temperature=0.7,
-                )
+                response = await self.translation_chain.ainvoke({
+                    "text_with_context": text_with_context,
+                    "target_lang": self.target_lang
+                })
                 latency = time.time() - t0
-                data = json.loads(resp.choices[0].message.content)
-                data["_latency_sec"] = round(latency, 3)
-                return data
-            except Exception:
-                if attempt == 2: raise
+                return {"result": response, "latency": round(latency, 3)}
+            except Exception as e:
+                print(f"Translation attempt {attempt + 1} failed: {e}")
+                if attempt == 2:
+                    return {"result": e, "latency": -1.0}
                 await asyncio.sleep(0.7)
-        return {}
+        return {"result": None, "latency": -1.0}
 
     async def sentiment(self, korean_text: str) -> Dict[str, Any]:
         for attempt in range(3):
             try:
                 t0 = time.time()
-                resp = await self.client.chat.completions.create(
-                    model=self.SENTIMENT_MODEL,
-                    response_format={"type": "json_object"},
-                    messages=[
-                        {"role": "system", "content": SENTIMENT_SYSTEM_PROMPT},
-                        {"role": "user", "content": korean_text},
-                    ],
-                    temperature=0.7,
+                response = await self.sentiment_chain.ainvoke(
+                    {"korean_text": korean_text}
                 )
                 latency = time.time() - t0
-                data = json.loads(resp.choices[0].message.content)
-                data["_latency_sec"] = round(latency, 3)
-                return data
-            except Exception:
+                return {"result": response, "latency": round(latency, 3)}
+            except Exception as e:
+                print(f"Sentiment attempt {attempt + 1} failed: {e}")
                 if attempt == 2:
-                    raise
+                    return {"result": e, "latency": -1.0}
                 await asyncio.sleep(0.7)
-        return {}
+        return {"result": None, "latency": -1.0}
 
     async def synthesize_tts(self, voice: str, text: str, instructions: str, out_path: Path) -> float:
         out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -129,75 +118,92 @@ class StoryProcessor:
             print(f"TTS error for {out_path.name}: {e}")
             return -1.0
 
-    async def process_sentence(self, index: int, sentences: List[str], stem: str, target_lang: str, check_latency: bool) -> Dict:
-        current = sentences[index]
-        context = []
-        if index > 0: context.append(f"[PREVIOUS]: {sentences[index-1]}")
-        context.append(f"[CURRENT]: {current}")
-        if index < len(sentences)-1: context.append(f"[NEXT]: {sentences[index+1]}")
-        context_prompt = "\n".join(context)
-
-        trans_task = self.translate(context_prompt, target_lang)
-        senti_task = self.sentiment(current)
-        trans, senti = await asyncio.gather(trans_task, senti_task)
-
-        translated = trans.get(f"{target_lang}_translation", "").strip()
-        if not translated:
-            return {"status": "translation_failed"}
-
-        voice = "shimmer"
-        out_mp3 = self.OUT_DIR / f"{stem}_sent{index+1}.mp3"
-        tts_instr = (
-            f"[Affect: A gentle, curious narrator with a clear American accent, guiding a magical, child-friendly adventure through a fairy tale world.]"
-            f"[Pronunciation: Clear and precise, with an emphasis on storytelling, ensuring the words are easy to follow and enchanting to listen to.]"
-            f"[Tone: {senti.get('Tone')}] [Emotion: {senti.get('Emotion')}] [Pacing: {senti.get('Pacing')}]"
-        )
-        tts_latency = await self.synthesize_tts(voice, translated, tts_instr, out_mp3)
-
-        result = {
-            "status": "ok",
-            "ko_sentence": current,
-            "translation": translated,
-            "path": str(out_mp3),
-            "tone": senti.get("Tone"),
-            "emotion": senti.get("Emotion"),
-            "pacing": senti.get("Pacing"),
-            "voice": voice,
-        }
-        if check_latency:
-            result.update({
-                "trans_latency": trans.get("_latency_sec", 0),
-                "senti_latency": senti.get("_latency_sec", 0),
-                "tts_latency": tts_latency,
-            })
-        return result
-
-    async def process_page(self, idx: int, page: Dict[str, str], target_lang: str, log_csv: bool, check_latency: bool):
+    async def process_page(self, page: Dict[str, str], log_csv: bool, check_latency: bool):
         file_name = page["fileName"]
         sentences = kss.split_sentences(page["text"].strip())
-        if not sentences: return {"status": "no_sentences"}
+        if not sentences:
+            return {"status": "no_sentences"}
 
         stem = Path(file_name).stem
-        results = await asyncio.gather(*[
-            self.process_sentence(i, sentences, stem, target_lang, check_latency)
-            for i in range(len(sentences))
-        ])
-        ok_results = [r for r in results if r.get("status") == "ok"]
+        
+        # --- Step 1: Concurrently get all translations and sentiments ---
+        llm_tasks = []
+        for i, sentence in enumerate(sentences):
+            context = [f"[CURRENT]: {sentence}"]
+            if i > 0: context.insert(0, f"[PREVIOUS]: {sentences[i-1]}")
+            if i < len(sentences) - 1: context.append(f"[NEXT]: {sentences[i+1]}")
+            context_prompt = "\n".join(context)
+            
+            llm_tasks.append(self.translate(context_prompt))
+            llm_tasks.append(self.sentiment(sentence))
+            
+        llm_responses = await asyncio.gather(*llm_tasks)
+
+        # --- Step 2: Prepare TTS tasks based on the results ---
+        tts_tasks = []
+        valid_results = []
+        for i in range(len(sentences)):
+            trans_response = llm_responses[i*2]
+            senti_response = llm_responses[i*2 + 1]
+            trans_result = trans_response["result"]
+            senti_result = senti_response["result"]
+            
+            if isinstance(trans_result, Exception) or isinstance(senti_result, Exception):
+                continue
+
+            translated = trans_result.translated_text.strip()
+            if not translated:
+                continue
+            
+            voice = "shimmer"
+            out_mp3 = self.OUT_DIR / f"{stem}_sent{i+1}.mp3"
+            tts_instr = (
+                f"[Affect: A gentle, curious narrator with a clear accent, guiding a magical, child-friendly adventure through a fairy tale world.]"
+                f"[Pronunciation: Clear and precise, with an emphasis on storytelling, ensuring the words are easy to follow and enchanting to listen to.]"
+                f"[Tone: {senti_result.tone}] [Emotion: {senti_result.emotion}] [Pacing: {senti_result.pacing}]"
+            )
+            
+            # Add the TTS task to a new list to be run in parallel later
+            tts_tasks.append(self.synthesize_tts(voice, translated, tts_instr, out_mp3))
+            
+            # Store the intermediate results
+            valid_results.append({
+                "ko_sentence": sentences[i], "translation": translated, "path": str(out_mp3),
+                "tone": senti_result.tone, "emotion": senti_result.emotion, "pacing": senti_result.pacing,
+                "voice": voice, "trans_latency": trans_response["latency"], "senti_latency": senti_response["latency"]
+            })
+
+        # --- Step 3: Run all TTS tasks concurrently ---
+        tts_latencies = await asyncio.gather(*tts_tasks)
+
+        # --- Step 4: Combine final results and log ---
+        ok_results = []
+        for i, result_data in enumerate(valid_results):
+            result_data["status"] = "ok"
+            if check_latency:
+                result_data["tts_latency"] = tts_latencies[i]
+            ok_results.append(result_data)
 
         if log_csv and ok_results:
-            header = ["page_file", "index", "ko", "translation", "tone", "emotion", "pacing", "voice", "path"]
-            if check_latency:
-                header += ["trans_latency", "senti_latency", "tts_latency"]
-            if not self.CSV_LOG.exists():
-                with open(self.CSV_LOG, "w", newline="", encoding="utf-8") as f: csv.writer(f).writerow(header)
-            with open(self.CSV_LOG, "a", newline="", encoding="utf-8") as f:
-                writer = csv.writer(f)
-                for i, r in enumerate(ok_results, start=1):
-                    row = [file_name, i, r["ko_sentence"], r["translation"], r["tone"], r["emotion"], r["pacing"], r["voice"], r["path"]]
-                    if check_latency: row += [r["trans_latency"], r["senti_latency"], r["tts_latency"]]
-                    writer.writerow(row)
+            self._write_to_csv(ok_results, file_name, check_latency)
 
         return {"status": "ok" if ok_results else "failed", "details": ok_results}
+        
+    def _write_to_csv(self, results: List[Dict], file_name: str, check_latency: bool):
+        header = ["page_file", "index", "ko", "translation", "tone", "emotion", "pacing", "voice", "path"]
+        if check_latency:
+            header += ["trans_latency", "senti_latency", "tts_latency"]
+        if not self.CSV_LOG.exists():
+            with open(self.CSV_LOG, "w", newline="", encoding="utf-8") as f:
+                csv.writer(f).writerow(header)
+
+        with open(self.CSV_LOG, "a", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            for i, r in enumerate(results, start=1):
+                row = [file_name, i, r["ko_sentence"], r["translation"], r["tone"], r["emotion"], r["pacing"], r["voice"], r["path"]]
+                if check_latency:
+                    row.extend([r["trans_latency"], r["senti_latency"], r["tts_latency"]])
+                writer.writerow(row)
 
 
 async def main():
@@ -211,8 +217,8 @@ async def main():
     args = parser.parse_args()
 
     story_pages = [
-        {"fileName": "001.jpg", "text": "프레드릭"},
-        {"fileName": "002.jpg", "text": "소들이 풀을 뜯고 말들이 뛰노는 풀밭이 있었습니다."},
+        { "fileName": "001.jpg", "text": "프레드릭" },
+        { "fileName": "002.jpg", "text": "소들이 풀을 뜯고 말들이 뛰노는 풀밭이 있었습니다." },
         { "fileName": "003.jpg", "text": "헛간과 곳간에서 가까운 이 돌담에는 수다쟁이 들쥐 가족의 보금자리가 있었습니다." },
         { "fileName": "004.jpg", "text": "농부들이 이사를 가자, 헛간은 버려지고 곳간은 텅 비었습니다. 겨울이 다가오자, 작은 들쥐들은 옥수수와 나무 열매와 밀과 짚을 모으기 시작했습니다. 들쥐들은 밤낮없이 열심히 일했습니다. 단 한 마리, 프레드릭만 빼고 말입니다." },
         { "fileName": "005.jpg", "text": "“프레드릭, 넌 왜 일을 안 하니?” 들쥐들이 물었습니다." },
@@ -229,14 +235,21 @@ async def main():
         { "fileName": "016.jpg", "text": "프레드릭은 얼굴을 붉히며 인사를 한 다음, 수줍게 말했습니다. “나도 알아.”" }
     ]
 
-    processor = StoryProcessor(out_dir=args.out_dir, log_dir=args.log_dir)
-    await processor.warm_up_api()
+    processor = StoryProcessor(
+        out_dir=args.out_dir,
+        log_dir=args.log_dir,
+        target_lang=args.lang
+    )
 
     if not 1 <= args.page <= len(story_pages):
         sys.exit(f"Page must be 1–{len(story_pages)}")
 
     start = time.time()
-    result = await processor.process_page(args.page-1, story_pages[args.page-1], args.lang, args.log_csv, args.latency)
+    result = await processor.process_page(
+        page=story_pages[args.page - 1],
+        log_csv=args.log_csv,
+        check_latency=args.latency
+    )
     print(f"✅ Done in {time.time()-start:.2f}s | Status: {result['status']}")
 
 if __name__ == "__main__":

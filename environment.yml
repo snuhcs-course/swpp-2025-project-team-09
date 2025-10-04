@@ -1,9 +1,13 @@
 name: story-tts-env
 channels:
   - defaults
+  - conda-forge
 dependencies:
   - python=3.10
   - pip
   - pip:
     - openai
     - kss
+    - langchain
+    - langchain-openai
+    - python-mecab-kor

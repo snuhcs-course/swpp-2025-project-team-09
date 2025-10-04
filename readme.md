@@ -3,9 +3,20 @@
 This project uses OpenAI's APIs to translate Korean children's stories into English, analyze their sentiment, and generate high-quality audio narration for each sentence.
 
 ## Prerequisites
+1.  **Miniconda/Anaconda:** You must have a Conda installation. We recommend [Miniconda](https://docs.conda.io/en/latest/miniconda.html).
+2.  **Platform-Specific Dependencies:** This project requires the MeCab-ko morphological analyzer. Please install it **before** creating the Conda environment. You only need to install this for Korean analysis speed up. Can skip installing this backend for kss if speed up is not needed.
 
-1.  **Git:** You'll need Git to clone the project.
-2.  **Miniconda/Anaconda:** You must have a Conda installation. We recommend [Miniconda](https://docs.conda.io/en/latest/miniconda.html).
+    * **For macOS (Intel & Apple Silicon):** Install via [Homebrew](https://brew.sh/).
+        ```bash
+        brew install mecab mecab-ko-dic
+        ```
+
+    * **For Linux (Debian/Ubuntu):**
+        ```bash
+        bash <(curl -s [https://raw.githubusercontent.com/konlpy/konlpy/master/scripts/mecab.sh](https://raw.githubusercontent.com/konlpy/konlpy/master/scripts/mecab.sh))
+        ```
+    * **For Windows:** Please follow the official installation guides for MeCab-ko on Windows.
+
 
 ## Setup Instructions
 
