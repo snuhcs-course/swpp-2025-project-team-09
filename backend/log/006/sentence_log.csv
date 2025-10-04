@@ -1,6 +1,0 @@
-page_file,index,ko,translation,tone,emotion,pacing,voice,path,trans_latency,senti_latency,tts_latency
-006_para1.txt,1,"어느 날, 들쥐들은 동그마니 앉아 풀밭을 내려다보고 있는 프레드릭을 보았습니다.","One day, the field mice saw Frederick sitting in a circle, gazing down at the meadow.",Curious and slightly whimsical,Intrigued and playful,"Measured, with a hint of wonder",shimmer,out_audio/006/006_para1_sent1.mp3,1.159,1.058,1.554
-006_para1.txt,2,들쥐들은 또다시 물었습니다.,The field mice asked again.,Curious and playful,Light-hearted and inquisitive,"Moderate, with a slight bounce in rhythm",shimmer,out_audio/006/006_para1_sent2.mp3,0.833,0.972,2.182
-006_para1.txt,3,"""프레드릭, 지금은 뭐해?""","""Frederick, what are you doing right now?""",Curious and playful,Inquisitive and friendly,"Light and bouncy, with a slight pause for emphasis",shimmer,out_audio/006/006_para1_sent3.mp3,0.924,1.015,2.024
-006_para1.txt,4,"""색깔을 모으고 있어. 겨울엔 온통 잿빛이잖아.""","""I'm collecting colors because everything is gray in winter.""",Reflective and slightly wistful,Melancholic yet hopeful,"Slow, with a gentle ebb and flow",shimmer,out_audio/006/006_para1_sent4.mp3,0.824,1.386,1.309
-006_para1.txt,5,프레드릭이 짤막하게 대답했습니다.,Frederick replied briefly.,"Neutral, slightly detached",Calm and matter-of-fact,"Short and clipped, with a steady rhythm",shimmer,out_audio/006/006_para1_sent5.mp3,0.76,0.987,1.367

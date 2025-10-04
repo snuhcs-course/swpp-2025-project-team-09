@@ -17,14 +17,6 @@ venv/
 *.egg-info/
 *.egg
 
-# Conda environments
-*.conda
-*.lock
-*.yml
-
-# Jupyter Notebook checkpoints
-.ipynb_checkpoints
-
 # VSCode settings
 .vscode/
 

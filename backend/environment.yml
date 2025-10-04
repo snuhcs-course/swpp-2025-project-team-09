@@ -1,0 +1,16 @@
+name: story-ocr-tts-env
+channels:
+  - defaults
+dependencies:
+  - python=3.10
+  - ffmpeg
+  - pip
+  - pip:
+    - openai
+    - kss
+    - requests
+    - pydub
+    - langchain
+    - langchain-openai
+    - python-mecab-kor
+    - python-dotenv
