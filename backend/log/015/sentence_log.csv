@@ -1,0 +1,3 @@
+page_file,index,ko,translation,tone,emotion,pacing,voice,path,trans_latency,senti_latency,tts_latency
+015_para1.txt,1,"프레드릭은 얼굴을 붉히며 인사를 한 다음, 수줍게 말했습니다.",Frederick blushed as he greeted before shyly saying.,Shy and endearing,Nervously shy but sweetly engaging,"Slow and deliberate, with soft pauses",shimmer,out_audio/015/015_para1_sent1.mp3,0.815,0.97,1.122
+015_para1.txt,2,"""나도 알아.""","""I know too.""","Slightly playful, acknowledging",Lightly confident and friendly,"Casual, with a relaxed rhythm",shimmer,out_audio/015/015_para1_sent2.mp3,0.801,1.094,1.041

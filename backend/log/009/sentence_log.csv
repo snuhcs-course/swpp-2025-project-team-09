@@ -1,0 +1,4 @@
+page_file,index,ko,translation,tone,emotion,pacing,voice,path,trans_latency,senti_latency,tts_latency
+009_para1.txt,1,처음엔 먹이가 아주 넉넉했습니다.,"At first, there was plenty of food.",Warm and inviting,Content and nostalgic,"Slow and steady, with a slight emphasis on 'very plentiful'",shimmer,out_audio/009/009_para1_sent1.mp3,0.987,1.123,13.448
+009_para1.txt,2,들쥐들은 바보 같은 늑대와 어리석은 고양이 얘기를 하며 지냈습니다.,The field mice spent their time talking about the foolish wolf and the silly cat.,"Playfully mocking, light-hearted",Amused and teasing,"Moderate, with a slight bounce",shimmer,out_audio/009/009_para1_sent2.mp3,0.99,0.945,1.336
+009_para1.txt,3,들쥐 가족은 행복했습니다.,The field mice family was happy.,Warm and cheerful,Joyful and content,"Smooth and flowing, with gentle pauses",shimmer,out_audio/009/009_para1_sent3.mp3,0.917,0.965,1.148

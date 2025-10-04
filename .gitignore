@@ -1,2 +1,41 @@
 .idea/
 *.iml
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+*.egg-info/
+*.egg
+
+# Conda environments
+*.conda
+*.lock
+*.yml
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# VSCode settings
+.vscode/
+
+# MacOS / Linux / Windows system files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+*.tmp
+*.bak
+
+# Cache
+.cache/
