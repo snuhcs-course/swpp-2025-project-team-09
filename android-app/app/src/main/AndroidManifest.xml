@@ -1,14 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-
     <!-- Permissions -->
     <uses-permission
         android:name="com.example.unwanted.PERMISSION"
         tools:node="remove" />
-    <uses-permission android:name="android.permission.CAMERA" />
-
-    <!-- Features -->
+    <uses-permission android:name="android.permission.CAMERA" /> <!-- Features -->
     <uses-feature android:name="android.hardware.camera.any" />
 
     <application
@@ -20,18 +17,19 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Storybridgeandroid">
-
+        <activity
+            android:name=".LoadingActivity"
+            android:exported="false" />
         <!-- Launcher Activity -->
         <activity
             android:name=".LandingActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-
-        <!-- Other Activities (Consider alphabetical or flow order) -->
+        </activity> <!-- Other Activities (Consider alphabetical or flow order) -->
         <activity
             android:name=".CameraActivity"
             android:exported="false" />
@@ -47,7 +45,6 @@
         <activity
             android:name=".VoiceSelectActivity"
             android:exported="false" />
-
     </application>
 
 </manifest>

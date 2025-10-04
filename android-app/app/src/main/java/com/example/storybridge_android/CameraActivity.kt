@@ -52,7 +52,7 @@ class CameraActivity : AppCompatActivity() {
 
         val goReadingButton = findViewById<Button>(R.id.goReadingButton)
         goReadingButton.setOnClickListener {
-            val intent = Intent(this, ReadingActivity::class.java)
+            val intent = Intent(this, LoadingActivity::class.java)
             startActivity(intent)
         }
     }
