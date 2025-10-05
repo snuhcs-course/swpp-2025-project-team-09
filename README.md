@@ -137,7 +137,7 @@ This first demo focuses on building the **basic structure and flow of StoryBridg
 | Area | Implemented Features |
 |------|----------------------|
 | **Android App (Frontend)** | - Basic UI layout for the StoryBridge app<br>- Page navigation and button click interactions<br>- Activity transitions between main screens (Main → Language → Voice → Camera → Result) |
-| **Backend (Python FastAPI)** | - Core pipeline to extract **Korean text from images**, translate to **English**, analyze **sentiment**, and generate **audio narration**<br>- Basic endpoint for communication with the Android client |
+| **Backend (Python)** | - Core pipeline to extract **Korean text from images**, translate to **English**, analyze **sentiment**, and generate **audio narration**|
 
 ### Goals Achieved
 - Established the **end-to-end connection** between the Android client and the backend server.  
@@ -146,8 +146,8 @@ This first demo focuses on building the **basic structure and flow of StoryBridg
 
 ### Not Implemented Yet
 - Complete OCR and TTS integration with the Android app.  
-- Advanced UI components (progress animation, playback controls, etc.).  
-- Multi-language translation selection and emotional TTS fine-tuning.
+- Advanced UI components
+- Multi-language translation selection
 
 ---
 
