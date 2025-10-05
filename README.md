@@ -126,8 +126,10 @@ python -m pip install openai kss requests pydub langchain langchain-openai pytho
 
 **Step 2. Set Your OpenAI API Key**
 
-This project requires an OpenAI API key. You must set it as an environment variable.
+This project requires an OpenAI API key and a Naver OCR API URL. You must set them as environment variables before running the demo.
 
+Please note that these keys are not included in the repository for security reasons.
+If necessary (e.g., for TA verification), the .env file or keys can be provided upon request.
 
 Create a `.env` file in `backend/` directory with the following content:
    ```
