@@ -2,9 +2,11 @@
 
 # How to Run Demo (Execution Instructions)
 
-This demo contains **two processes** to run:  
-- The **Android client application**  
-- The **Python backend server**
+This demo contains **two separate processes** to run:  
+- The **Android application** 
+    - demonstrates the user interface, including basic navigation, activity transitions, and button event handling.
+- The **Python backend pipeline** 
+    - implements the **OCR → Translation → TTS** flow, allowing you to test an image input and generate an audio output as the result.
 
 ---
 
@@ -156,7 +158,7 @@ The generated audio files will be in the `out_audio/` directory.
 
 # What the Demo Demonstrates
 
-This first demo focuses on building the **basic structure and flow of StoryBridge**, including the user interface and backend pipeline connection.
+This first demo focuses on building the **basic structure and flow of StoryBridge**, including the user interface and backend pipeline, which were developed **separately** and not yet integrated.
 
 ### Implemented Features
 
@@ -166,14 +168,13 @@ This first demo focuses on building the **basic structure and flow of StoryBridg
 | **Backend (Python)** | - Core pipeline to extract **Korean text from images**, translate to **English**, analyze **sentiment**, and generate **audio narration**|
 
 ### Goals Achieved
-- Established the **end-to-end connection** between the Android client and the backend server.  
-- Verified **UI navigation flow** and event handling across activities.  
+- Verified **UI navigation flow** and event handling across activities.
 - Built the **foundational OCR–Translation–TTS pipeline** in the backend to prepare for full integration in later iterations.
 
 ### Not Implemented Yet
 - Complete OCR and TTS integration with the Android app.  
 - Advanced UI components
-- Multi-language translation selection
+- Multi-language(e.g. Vietnamese) translation
 
 ---
 
