@@ -2,7 +2,7 @@
 
 # How to Run Demo (Execution Instructions)
 
-This demo requires **two processes** to run simultaneously:  
+This demo contains **two processes** to run:  
 - The **Android client application**  
 - The **Python backend server**
 
@@ -85,7 +85,12 @@ Pipeline to extract Korean text from images, translate to English, analyze senti
 
 ### Setup Instructions
 
-**STEP 1. Create the Conda Environment**
+**Step 1. Navigate to the backend directory**
+```bash
+cd backend
+```
+
+**Step 2. Create the Conda Environment**
 
 Use the provided `environment.yml` file to automatically create a new Conda environment with all the necessary dependencies.
 
@@ -95,7 +100,31 @@ conda env create -f environment.yml
 
 This will create a new environment named `story-ocr-tts-env`.
 
-**STEP 2. Set Your OpenAI API Key**
+### ⚠️ Windows Setup Notes
+
+On some Windows setups, the pip section in environment.yml might not install properly if a global Python installation interferes.
+If the environment seems empty (only pip, setuptools, and wheel installed), follow these manual steps instead:
+
+**(1) Remove any existing environment**
+```bash
+conda deactivate
+conda env remove -n story-ocr-tts-env
+```
+**(2) Create a clean base environment**
+```bash
+conda create -n story-ocr-tts-env python=3.10 ffmpeg pip
+```
+**(3) Activate the environment**
+```bash
+conda activate story-ocr-tts-env
+```
+**(4) Install dependencies manually**
+```bash
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install openai kss requests pydub langchain langchain-openai python-dotenv
+```
+
+**Step 2. Set Your OpenAI API Key**
 
 This project requires an OpenAI API key. You must set it as an environment variable.
 
@@ -108,7 +137,7 @@ Create a `.env` file in `backend/` directory with the following content:
    ```
 
 
-**STEP 3. Activate the Environment**
+**Step 3. Activate the Environment**
 
 Before running the script, you must activate the environment you created in step 2.
 
@@ -122,11 +151,6 @@ python ./main.py
 ```
 
 The generated audio files will be in the `out_audio/` directory.
-
-
-
-
-
 
 # What the Demo Demonstrates
 
