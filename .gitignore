@@ -1,3 +1,29 @@
-*.jpeg
+# IDE/OS generated files
+# .DS_Store: macOS에서 생성되는 폴더 메타데이터 파일
+.DS_Store
+# .idea/: IntelliJ, Android Studio 등에서 사용되는 프로젝트 설정 폴더
 .idea/
+# *.iml: IntelliJ에서 생성되는 모듈 파일
 *.iml
+# .gradle/: Gradle 빌드 시스템에서 생성되는 캐시/설정 폴더
+.gradle
+# local.properties: 로컬 환경에 종속적인 설정 파일 (예: SDK 경로, API 키)
+local.properties
+
+
+# Android-specific build and temporary files
+# android-app/build/: 안드로이드 빌드 결과물 폴더
+android-app/build/
+# android-app/app/build/: 안드로이드 앱 모듈의 빌드 결과물 폴더
+android-app/app/build/
+# android-app/captures/: 안드로이드 스튜디오에서 화면 캡처 저장 시 생성되는 폴더
+android-app/captures/
+# android-app/.externalNativeBuild: NDK(Native Development Kit) 빌드 관련 파일
+android-app/.externalNativeBuild
+# android-app/.cxx: C++ 빌드 관련 파일
+android-app/.cxx
+
+
+# Specific temporary/cache files
+# *.jpeg: 모든 .jpeg 파일을 무시 (대용량 바이너리 파일을 Git으로 추적하지 않기 위함)
+*.jpeg

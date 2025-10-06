@@ -1,7 +1,7 @@
 📂 StoryBridge
  ├── 📂 android-app                  # Android Studio 프로젝트
  │    ├── app/src/main/java/com/storybridge/app/   # Kotlin/Java 코드
- │    │    ├── MainActivity.kt       # 앱 진입점
+ │    │    ├── LandingActivity.kt       # 앱 진입점
  │    │    ├── network/              # Retrofit API 정의
  │    │    └── ui/                   # 화면 (Activity, Fragment)
  │    ├── app/src/main/res/          # 레이아웃 XML, 이미지, 문자열 리소스
