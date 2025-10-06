@@ -9,6 +9,7 @@
 .gradle
 # local.properties: 로컬 환경에 종속적인 설정 파일 (예: SDK 경로, API 키)
 local.properties
+.env
 
 
 # Android-specific build and temporary files
