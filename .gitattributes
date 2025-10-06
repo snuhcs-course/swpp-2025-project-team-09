@@ -1,0 +1,1 @@
+android-app/app/src/main/res/drawable/*.jpeg filter=lfs diff=lfs merge=lfs -text
