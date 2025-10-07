@@ -58,6 +58,9 @@ dependencies {
     implementation("androidx.camera:camera-lifecycle:$camerax_version")
     implementation("androidx.camera:camera-view:1.3.0-alpha01")
 
+    // ML Kit
+    implementation("com.google.android.gms:play-services-mlkit-document-scanner:16.0.0")
+
     // Test
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

@@ -1,96 +1,95 @@
 package com.example.storybridge_android
 
-import android.Manifest
-import android.content.pm.PackageManager
-import android.os.Bundle
-import android.util.Log
-import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.Preview
-import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.view.PreviewView
-import com.example.storybridge_android.databinding.ActivityCameraBinding
-
-import android.widget.Button
 import android.content.Intent
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
+import com.google.mlkit.vision.documentscanner.GmsDocumentScanner
+import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
+import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
+import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
+import java.io.File
+import java.io.FileOutputStream
 
 class CameraActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityCameraBinding
-    private val CAMERA_REQUEST_CODE = 101
+    private lateinit var scanner: GmsDocumentScanner
+    private lateinit var scannerLauncher: ActivityResultLauncher<IntentSenderRequest>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        binding = ActivityCameraBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        setContentView(R.layout.activity_loading)
 
-        // 시스템 바 인셋 적용
-        ViewCompat.setOnApplyWindowInsetsListener(binding.main) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
+        val options = GmsDocumentScannerOptions.Builder()
+            .setGalleryImportAllowed(false)
+            .setPageLimit(1)
+            .setScannerMode(GmsDocumentScannerOptions.SCANNER_MODE_BASE)
+            .setResultFormats(GmsDocumentScannerOptions.RESULT_FORMAT_JPEG)
+            .build()
 
-        // 카메라 권한 체크
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-            != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.CAMERA),
-                CAMERA_REQUEST_CODE
-            )
-        } else {
-            startCamera()
-        }
+        scanner = GmsDocumentScanning.getClient(options)
 
-        val goReadingButton = findViewById<Button>(R.id.goReadingButton)
-        goReadingButton.setOnClickListener {
-            val intent = Intent(this, LoadingActivity::class.java)
-            startActivity(intent)
-        }
+        scannerLauncher =
+            registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+                if (result.resultCode == RESULT_OK) {
+                    result.data?.let { intent ->
+                        val scanningResult = GmsDocumentScanningResult.fromActivityResultIntent(intent)
+                        scanningResult?.getPages()?.let { pages ->
+                            if (pages.isNotEmpty()) {
+                                val firstPage = pages[0]
+                                saveImageAndProceed(firstPage.getImageUri())
+                            }
+                        }
+                    }
+                } else {
+                    // If the user cancels, post the re-launch to the main thread's message queue.
+                    // This ensures the previous scanner activity is fully closed before starting a new one.
+                    Log.d(TAG, "Scanning cancelled or failed. Relaunching scanner.")
+                    Handler(Looper.getMainLooper()).post {
+                        launchScanner()
+                    }
+                }
+            }
+
+        // Launch the scanner for the first time.
+        launchScanner()
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == CAMERA_REQUEST_CODE) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                startCamera()
-            } else {
-                Toast.makeText(this, "Camera permission denied", Toast.LENGTH_SHORT).show()
+    private fun launchScanner() {
+        scanner.getStartScanIntent(this)
+            .addOnSuccessListener { intentSender ->
+                scannerLauncher.launch(IntentSenderRequest.Builder(intentSender).build())
             }
-        }
+            .addOnFailureListener { e ->
+                // If the scanner itself fails to start, go back to the main activity.
+                Log.e(TAG, "Scanner failed to start: ${e.message}", e)
+                val intent = Intent(this, MainActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+                startActivity(intent)
+            }
     }
 
-    private fun startCamera() {
-        val viewFinder: PreviewView = binding.viewFinder
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+    private fun saveImageAndProceed(imageUri: android.net.Uri) {
+        val inputStream = contentResolver.openInputStream(imageUri)
+        val file = File(getExternalFilesDir(null), "scanned_page_${System.currentTimeMillis()}.jpg")
+        val outputStream = FileOutputStream(file)
 
-        cameraProviderFuture.addListener({
-            val cameraProvider = cameraProviderFuture.get()
-            val preview = Preview.Builder().build().also {
-                it.setSurfaceProvider(viewFinder.surfaceProvider)
-            }
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+        inputStream?.copyTo(outputStream)
+        inputStream?.close()
+        outputStream.close()
 
-            try {
-                cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(this, cameraSelector, preview)
-            } catch(exc: Exception) {
-                Log.e("CameraX", "Use case binding failed", exc)
-            }
-        }, ContextCompat.getMainExecutor(this))
+        Log.d(TAG, "Scan successful: ${file.absolutePath}")
+        val intent = Intent(this, LoadingActivity::class.java)
+        startActivity(intent)
+        finish()
     }
 
-
+    companion object {
+        private const val TAG = "CameraActivity"
+    }
 }
