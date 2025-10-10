@@ -1,24 +1,23 @@
 package com.example.storybridge_android
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
+import android.widget.Button
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import com.example.storybridge_android.databinding.ActivityCameraBinding
-
-import android.widget.Button
-import android.content.Intent
 
 class CameraActivity : AppCompatActivity() {
 
@@ -30,6 +29,8 @@ class CameraActivity : AppCompatActivity() {
         enableEdgeToEdge()
         binding = ActivityCameraBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        val selectedVoice = intent.getStringExtra(VOICE_TYPE)
 
         // 시스템 바 인셋 적용
         ViewCompat.setOnApplyWindowInsetsListener(binding.main) { v, insets ->
@@ -90,6 +91,13 @@ class CameraActivity : AppCompatActivity() {
                 Log.e("CameraX", "Use case binding failed", exc)
             }
         }, ContextCompat.getMainExecutor(this))
+    }
+
+
+
+
+    companion object {
+        const val VOICE_TYPE = "voice_selection" // 실제 문자열은 여기서만 관리
     }
 
 
