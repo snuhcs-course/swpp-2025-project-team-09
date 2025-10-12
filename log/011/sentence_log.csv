@@ -1,3 +1,5 @@
 page_file,index,ko,translation,tone,emotion,pacing,voice,path,trans_latency,senti_latency,tts_latency
-011_para1.txt,1,"그러던 들쥐들은, 햇살과 색깔과 이야기를 모은다고 했던 프레드릭의 말이 생각났습니다.","Then the field mice remembered Frederick's words about gathering sunshine, colors, and stories.","Reflective, whimsical",Nostalgic wonder and enchantment,"Gentle and flowing, with pauses for imagination",shimmer,out_audio/011/011_para1_sent1.mp3,1.08,1.976,1.711
-011_para1.txt,2,"""네 양식들은 어떻게 되었니, 프레드릭?"" 들쥐들이 물었습니다.","The mice asked, ""How are your supplies, Frederick?""","Curiously playful, slightly teasing",Light-hearted curiosity blended with friendly mischief,"Bouncy and rhythmic, with playful pauses",shimmer,out_audio/011/011_para1_sent2.mp3,0.866,1.557,0.97
+011_para1.txt,1,"그러던 들쥐들은, 햇살과 색깔과 이야기를 모은다고
+했던 프레드릭의 말이 생각났습니다.","Then the field mice remembered Frederick's words about gathering sunshine, colors, and stories.",Reflective and nostalgic,"Warmly contemplative, with a hint of whimsy","Slow and deliberate, with pauses for emphasis",shimmer,out_audio/011/011_para1_sent1.mp3,1.864,1.585,1.883
+011_para1.txt,2,"""네 양식들은 어떻게 되었니, 프레드릭?""
+들쥐들이 물었습니다.","""What about your supplies, Frederick?"" the field mice asked.",Curious and slightly playful,Lightly teasing and friendly,"Moderate, with a slight rise at the end of the question",shimmer,out_audio/011/011_para1_sent2.mp3,1.09,1.09,1.095

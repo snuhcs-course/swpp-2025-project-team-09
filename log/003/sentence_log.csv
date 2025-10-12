@@ -1,0 +1,2 @@
+page_file,index,ko,translation,tone,emotion,pacing,voice,path,trans_latency,senti_latency,tts_latency
+003_para1.txt,1,헛간과 곳간에서 가까운 이 돌담에는 수다쟁이 들쥐 가족의 보금자리가 있었습니다.,"Near the barn and the granary, there was a stone wall that served as a home for a chatty family of mice.",Warm and whimsical,Nostalgic and playful,"Gentle and flowing, with slight pauses for effect",shimmer,out_audio/003/003_para1_sent1.mp3,1.262,1.097,1.968

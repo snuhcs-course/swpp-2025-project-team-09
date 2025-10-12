@@ -1,0 +1,10 @@
+page_file,index,ko,translation,tone,emotion,pacing,voice,path,trans_latency,senti_latency,tts_latency
+001_para2.txt,1,"칼데콧 아너 상
+CALDECOTT HONOR
+BOOK",Caldecott Honor Book,Proud and celebratory,Excited and joyful,"Moderate, with a slight rise at 'Honor' to emphasize importance",shimmer,out_audio/001/001_para2_sent1.mp3,0.988,1.623,1.041
+001_para1.txt,1,"네버랜드
+Picture Books
+세계의 걸작 그림책
+107",Neverland Picture Books: Masterpieces of the World's Illustrated Books,Enthusiastic and inviting,"Excited and whimsical, as if introducing a magical adventure","Bright and cheerful, with slight pauses for emphasis",shimmer,out_audio/001/001_para1_sent1.mp3,1.181,1.469,1.405
+001_para3.txt,1,"프레드릭
+레오 리오니 그림/글· 최순희 옮김","Frederick by Leo Lionni, translated by Choi Soon-hee.",Warm and whimsical,"Nostalgic and imaginative, evoking a sense of wonder","Gentle and flowing, allowing for pauses to emphasize key moments",shimmer,out_audio/001/001_para3_sent1.mp3,1.432,1.523,2.049

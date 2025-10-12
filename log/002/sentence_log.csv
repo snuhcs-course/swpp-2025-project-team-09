@@ -1,0 +1,4 @@
+page_file,index,ko,translation,tone,emotion,pacing,voice,path,trans_latency,senti_latency,tts_latency
+002_para1.txt,1,소들이 풀을 뜯고 말들이 뛰노는 풀밭이 있었습니다.,There was a meadow where cows grazed and horses frolicked.,Warm and inviting,"Joyful and serene, evoking a sense of peace in nature","Gentle and flowing, with a slight pause after each image",shimmer,out_audio/002/002_para1_sent1.mp3,0.814,1.43,1.476
+002_para1.txt,2,"그 풀밭을 따라 오래된 돌담이
+죽 둘러쳐져 있었습니다.",An old stone wall surrounded the meadow where the cows grazed and the horses frolicked.,Reflective and serene,Nostalgic and tranquil,"Slow and flowing, with gentle pauses",shimmer,out_audio/002/002_para1_sent2.mp3,1.089,1.113,1.867

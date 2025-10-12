@@ -3,10 +3,15 @@ channels:
   - defaults
 dependencies:
   - python=3.10
+  - ffmpeg
   - pip
+  - scikit-learn
   - pip:
     - openai
     - kss
     - requests
     - pydub
-    - ffmpeg
+    - langchain
+    - langchain-openai
+    - python-mecab-kor
+    - python-dotenv

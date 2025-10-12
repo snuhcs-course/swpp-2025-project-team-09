@@ -3,9 +3,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# C extensions
-*.so
-
 # Virtual environments
 .env
 .venv
@@ -17,7 +14,6 @@ venv/
 # Conda environments
 *.conda
 *.lock
-*.yml
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints

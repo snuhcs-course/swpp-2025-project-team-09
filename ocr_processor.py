@@ -4,12 +4,36 @@ import time
 import json
 from pathlib import Path
 from typing import List, Dict, Any
+import numpy as np # type: ignore
+from sklearn.cluster import DBSCAN  # type: ignore
 
 
 class OCRProcessor:
-    def __init__(self, api_url: str, secret_key: str):
+    def __init__(self, api_url: str, secret_key: str, conf_threshold: float = 0.85):
         self.api_url = api_url
         self.secret_key = secret_key
+        self.conf_threshold = conf_threshold
+
+    def _filter_low_confidence(self, result_json: Dict[str, Any]) -> Dict[str, Any]:
+        images = result_json.get("images", [])
+        if not images:
+            return result_json
+
+        fields = images[0].get("fields", [])
+        threshold = getattr(self, "conf_threshold")
+        filtered_fields = []
+        for f in fields:
+            c = f.get("inferConfidence", None)
+            if c is None or c > threshold:
+                filtered_fields.append(f)
+
+        new_json = dict(result_json)
+        new_images = list(images)
+        new_first = dict(new_images[0])
+        new_first["fields"] = filtered_fields
+        new_images[0] = new_first
+        new_json["images"] = new_images
+        return new_json # return shallow copied result
 
     def _font_size(self, result_json: Dict[str, Any]) -> float:
         images = result_json.get("images", [])
@@ -29,47 +53,82 @@ class OCRProcessor:
         return sum(heights) / len(heights) if heights else 0.0
 
     def _parse_infer_text(self, result_json: Dict[str, Any]) -> List[str]:
-        avg_font_size = self._font_size(result_json)
-        images = result_json.get("images", [])
-        if not images:
+
+        # 1) Filter out low-confidence fields before computing font size or tokens
+        filtered_json = self._filter_low_confidence(result_json)
+
+        # 2) Compute font size from filtered fields
+        fs = self._font_size(filtered_json)
+
+        images_f = filtered_json.get("images", [])
+        if not images_f:
             return []
+        fields = images_f[0].get("fields", [])
 
-        fields = images[0].get("fields", [])
-        paragraphs = []
-        current_paragraph = []
-
-        prev_y = -1.0
-        prev_x = -1.0
-
+        # 3) Build tokens from filtered fields
+        tokens = []
         for field in fields:
             text = field.get("inferText", "")
             vertices = field.get("boundingPoly", {}).get("vertices", [])
-
-            ys = [v.get("y", 0.0) for v in vertices]
             xs = [v.get("x", 0.0) for v in vertices]
+            ys = [v.get("y", 0.0) for v in vertices]
+            if xs and ys:
+                tokens.append(
+                    {
+                        "text": text,
+                        "x": float(np.mean(xs)),
+                        "y": float(np.mean(ys)),
+                    }
+                )
 
-            avg_y = sum(ys) / len(ys) if ys else 0.0
-            avg_x = sum(xs) / len(xs) if xs else 0.0
+        if not tokens:
+            return []
 
-            if prev_y > 0 and (
-                False
-                # TODO: implement better paragraph detection logic (maybe K-means clustering?)
-                
-                # abs(avg_y - prev_y) > avg_font_size * 3
-                # or abs(avg_x - prev_x) > avg_font_size * 25
-            ):
-                if current_paragraph:
-                    paragraphs.append(" ".join(current_paragraph).strip())
-                    current_paragraph = []
+        # 4) Paragraph clustering (2D DBSCAN on x, y)
+        X = np.array([[t["x"], t["y"]] for t in tokens])
+        para_eps = max(fs * 6.0, 15.0)
+        para_db = DBSCAN(eps=para_eps, min_samples=2)
+        para_labels = para_db.fit_predict(X)
 
-            current_paragraph.append(text)
-            prev_y = avg_y
-            prev_x = avg_x
+        for t, lbl in zip(tokens, para_labels):
+            t["para_label"] = int(lbl)
 
-        if current_paragraph:
-            paragraphs.append(" ".join(current_paragraph).strip())
+        paragraphs: List[List[Dict[str, Any]]] = []
+        for lbl in sorted(set(para_labels)):
+            if lbl == -1:
+                continue  # skip noise cluster
+            paragraph_tokens = [t for t in tokens if t["para_label"] == lbl]
+            paragraphs.append(paragraph_tokens)
 
-        return paragraphs
+        results: List[str] = []
+
+        # 5) For each paragraph, cluster lines by Y and sort words by X
+        for para in paragraphs:
+            if not para:
+                continue
+            # Cluster by Y within paragraph (DBSCAN)
+            Y = np.array([[t["y"]] for t in para])
+            line_eps = max(fs * 0.5, 2.0)
+            line_db = DBSCAN(eps=line_eps, min_samples=1)
+            line_labels = line_db.fit_predict(Y)
+            for t, lbl in zip(para, line_labels):
+                t["line_label"] = int(lbl)
+
+            # Build line-level text
+            lines = []
+            for lbl in sorted(set(line_labels)):
+                line_tokens = [t for t in para if t["line_label"] == lbl]
+                line_tokens.sort(key=lambda t: t["x"])
+                line_text = " ".join(t["text"] for t in line_tokens)
+                y_mean = np.mean([t["y"] for t in line_tokens])
+                lines.append({"text": line_text, "y": y_mean})
+
+            # Sort lines vertically and join into paragraph text
+            lines_sorted = sorted(lines, key=lambda l: l["y"])
+            paragraph_text = "\n".join(l["text"] for l in lines_sorted)
+            results.append(paragraph_text.strip())
+
+        return results
 
     def run_ocr(self, image_path: str) -> List[str]:
         request_json = {
@@ -84,8 +143,8 @@ class OCRProcessor:
             "file": open(image_path, "rb"),
             "message": (None, json.dumps(request_json), "application/json"),
         }
-
         response = requests.post(self.api_url, headers=headers, files=files)
         result = response.json()
+        paragraphs = self._parse_infer_text(result)
 
-        return self._parse_infer_text(result)
+        return paragraphs

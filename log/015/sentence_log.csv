@@ -1,3 +1,3 @@
 page_file,index,ko,translation,tone,emotion,pacing,voice,path,trans_latency,senti_latency,tts_latency
-015_para1.txt,1,"프레드릭은 얼굴을 붉히며 인사를 한 다음, 수줍게 말했습니다.",Frederick blushed as he greeted them and then shyly said.,"Shy and endearing, with a hint of warmth","Awkward yet charming, filled with a sense of innocence","Gentle and slow, allowing for pauses that highlight the character's shyness",shimmer,out_audio/015/015_para1_sent1.mp3,0.791,2.936,1.477
-015_para1.txt,2,"""나도 알아.""",I know too.,Casual and confident,Self-assured and slightly playful,"Quick and assured, with a slight emphasis on '알아'",shimmer,out_audio/015/015_para1_sent2.mp3,0.608,1.588,1.117
+015_para1.txt,1,"프레드릭은 얼굴을 붉히며 인사를 한 다음, 수줍게 말했습니다.","Frederick blushed, greeted them, and then shyly said.",Shy and endearing,Awkwardly bashful yet charmingly sincere,"Slow and deliberate, with a gentle rise at the end of phrases",shimmer,out_audio/015/015_para1_sent1.mp3,0.898,1.592,1.519
+015_para1.txt,2,"""나도 알아.""","""I know too.""",Confident and slightly playful,Self-assured and a bit cheeky,"Moderate, with a hint of teasing",shimmer,out_audio/015/015_para1_sent2.mp3,0.887,0.887,3.431

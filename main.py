@@ -10,7 +10,10 @@ import asyncio
 import time
 from pathlib import Path
 from typing import List, Dict, Any
-from pydub import AudioSegment   # 설치 필요: pip install pydub
+from pydub import AudioSegment  
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
 import kss
 from ocr_processor import OCRProcessor
@@ -62,7 +65,7 @@ class OCR2TTS:
         for i, para in enumerate(paragraphs, 1):
             sentences = kss.split_sentences(para.strip())
             page = {"fileName": f"{stem}_para{i}.txt", "text": " ".join(sentences)}
-            tasks.append(self.story.process_page(i, page, target_lang, log_csv, check_latency))
+            tasks.append(self.story.process_page(page, log_csv, check_latency))
 
         results = await asyncio.gather(*tasks)
         tts_end_time = time.time()
@@ -76,9 +79,10 @@ class OCR2TTS:
 
 
 async def main():
-    # --- Set your OCR API details here ---
-    ocr_api_url = "" 
-    ocr_secret = ""
+    ocr_api_url = os.getenv("OCR_API_URL")
+    ocr_secret = os.getenv("OCR_SECRET")
+    if not ocr_api_url or not ocr_secret:
+        raise ValueError("Environment variables OCR_API_URL and OCR_SECRET must be set.")
     resources_dir = Path("./resources")
 
     image_files = sorted(resources_dir.glob("*.jpeg"))
@@ -90,7 +94,6 @@ async def main():
         log_dir = Path("log") / stem
 
         pipeline = OCR2TTS(ocr_api_url, ocr_secret, out_dir=out_dir, log_dir=log_dir)
-        await pipeline.story.warm_up_api()
 
         result = await pipeline.process_image(str(image_path), target_lang="English",
                                               log_csv=True, check_latency=True)
