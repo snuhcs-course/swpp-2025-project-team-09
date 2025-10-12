@@ -1,16 +1,15 @@
 package com.example.storybridge_android
 
-import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-
-import android.widget.Button
 import android.content.Intent
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.widget.Button
+import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 
 class LandingActivity : AppCompatActivity() {
 
@@ -31,7 +30,7 @@ class LandingActivity : AppCompatActivity() {
             insets
         }
 
-        // Landing 화면 참조
+        // Landing 화면 참조 (뒤에 어디에 사용되나요?)
         landingLayout = findViewById(R.id.landing)
 
         // 3초 후 Language Selection 화면으로 전환
@@ -48,8 +47,14 @@ class LandingActivity : AppCompatActivity() {
         btnEnglish = findViewById(R.id.btnEnglish)
         btnVietnamese = findViewById(R.id.btnVietnamese)
 
-        btnEnglish.setOnClickListener { navigateToMain() }
-        btnVietnamese.setOnClickListener { navigateToMain() }
+        btnEnglish.setOnClickListener {
+            AppSettings.setLanguage(this, "en")
+            navigateToMain()
+        }
+        btnVietnamese.setOnClickListener {
+            AppSettings.setLanguage(this, "vi")
+            navigateToMain()
+        }
     }
 
 

@@ -30,8 +30,6 @@ class CameraActivity : AppCompatActivity() {
         binding = ActivityCameraBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val selectedVoice = intent.getStringExtra(VOICE_TYPE)
-
         // 시스템 바 인셋 적용
         ViewCompat.setOnApplyWindowInsetsListener(binding.main) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -94,11 +92,6 @@ class CameraActivity : AppCompatActivity() {
     }
 
 
-
-
-    companion object {
-        const val VOICE_TYPE = "voice_selection" // 실제 문자열은 여기서만 관리
-    }
 
 
 }

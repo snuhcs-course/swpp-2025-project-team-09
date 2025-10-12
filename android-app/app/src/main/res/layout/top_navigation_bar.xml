@@ -11,7 +11,7 @@
         android:id="@+id/storyBridgeTitle"
         android:layout_width="wrap_content"
         android:layout_height="58dp"
-        android:text="STORY BRIDGE"
+        android:text="@string/story_bridge"
         android:textColor="@color/black"
         style="@style/BoldText48"
         app:layout_constraintStart_toStartOf="parent"

@@ -23,20 +23,19 @@ class VoiceSelectActivity : AppCompatActivity() {
         val manButton = findViewById<Button>(R.id.manButton)
         val womanButton = findViewById<Button>(R.id.womanButton)
 
-        val voiceOptions = mapOf(
-            manButton to "man",
-            womanButton to "woman"
-        )
-
-        voiceOptions.forEach { (button, voiceType) ->
-            button.setOnClickListener {
-                val intent = Intent(this, CameraActivity::class.java)
-
-                // 2. 주소(Key) 관리를 위해 상수 사용 + Map에서 가져온 값(Value) 사용
-                intent.putExtra(CameraActivity.VOICE_TYPE, voiceType)
-
-                startActivity(intent)
-            }
+        manButton.setOnClickListener {
+            AppSettings.setVoice(this, "male")
+            goToCamera()
         }
+
+        womanButton.setOnClickListener {
+            AppSettings.setVoice(this, "female")
+            goToCamera()
+        }
+    }
+
+    private fun goToCamera() {
+        startActivity(Intent(this, CameraActivity::class.java))
+        finish()
     }
 }

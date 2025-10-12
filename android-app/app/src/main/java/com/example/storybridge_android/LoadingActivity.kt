@@ -39,4 +39,12 @@ class LoadingActivity : AppCompatActivity() {
         }
         handler.post(runnable)
     }
+
+    fun waifForServerResponse(){
+
+    }
+
+    fun onApiResponse(){
+
+    }
 }
