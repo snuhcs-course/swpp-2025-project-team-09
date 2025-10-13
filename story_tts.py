@@ -105,12 +105,14 @@ class StoryProcessor:
                 await asyncio.sleep(0.7)
         return {"result": None, "latency": -1.0}
 
-    async def synthesize_tts(self, voice: str, text: str, instructions: str, out_path: Path) -> float:
+    # --- MODIFIED METHOD ---
+    # The `response_format` is now a required string argument
+    async def synthesize_tts(self, voice: str, text: str, instructions: str, out_path: Path, response_format: str) -> float:
         out_path.parent.mkdir(parents=True, exist_ok=True)
         t0 = time.time()
         try:
             async with self.client.audio.speech.with_streaming_response.create(
-                model=self.TTS_MODEL, voice=voice, input=text, instructions=instructions
+                model=self.TTS_MODEL, voice=voice, input=text, instructions=instructions, response_format=response_format
             ) as response:
                 await response.stream_to_file(out_path)
             return round(time.time() - t0, 3)
@@ -118,7 +120,9 @@ class StoryProcessor:
             print(f"TTS error for {out_path.name}: {e}")
             return -1.0
 
-    async def process_page(self, page: Dict[str, str], log_csv: bool, check_latency: bool):
+    # --- MODIFIED METHOD ---
+    # Added `response_format` parameter
+    async def process_page(self, page: Dict[str, str], log_csv: bool, check_latency: bool, response_format: str = "mp3"):
         file_name = page["fileName"]
         sentences = kss.split_sentences(page["text"].strip())
         if not sentences:
@@ -156,19 +160,23 @@ class StoryProcessor:
                 continue
             
             voice = "shimmer"
-            out_mp3 = self.OUT_DIR / f"{stem}_sent{i+1}.mp3"
+            # --- MODIFIED LINE ---
+            # File extension is now dynamic based on the chosen format
+            out_file = self.OUT_DIR / f"{stem}_sent{i+1}.{response_format}"
             tts_instr = (
                 f"[Affect: A gentle, curious narrator with a clear accent, guiding a magical, child-friendly adventure through a fairy tale world.]"
                 f"[Pronunciation: Clear and precise, with an emphasis on storytelling, ensuring the words are easy to follow and enchanting to listen to.]"
                 f"[Tone: {senti_result.tone}] [Emotion: {senti_result.emotion}] [Pacing: {senti_result.pacing}]"
             )
             
-            # Add the TTS task to a new list to be run in parallel later
-            tts_tasks.append(self.synthesize_tts(voice, translated, tts_instr, out_mp3))
+            # --- MODIFIED LINE ---
+            # Pass the response_format to the synthesize_tts method
+            tts_tasks.append(self.synthesize_tts(voice, translated, tts_instr, out_file, response_format))
             
-            # Store the intermediate results
+            # --- MODIFIED DICTIONARY ---
+            # Store the correct output path
             valid_results.append({
-                "ko_sentence": sentences[i], "translation": translated, "path": str(out_mp3),
+                "ko_sentence": sentences[i], "translation": translated, "path": str(out_file),
                 "tone": senti_result.tone, "emotion": senti_result.emotion, "pacing": senti_result.pacing,
                 "voice": voice, "trans_latency": trans_response["latency"], "senti_latency": senti_response["latency"]
             })
@@ -214,6 +222,15 @@ async def main():
     parser.add_argument("--lang", type=str, default="English", help="Target translation language.")
     parser.add_argument("--out_dir", type=str, default="out_audio", help="Output audio directory.")
     parser.add_argument("--log_dir", type=str, default="log", help="Log directory.")
+    
+    # --- NEW ARGUMENT ---
+    parser.add_argument(
+        "--format",
+        type=str,
+        default="mp3",
+        choices=["mp3", "opus", "aac", "flac", "wav", "pcm"],
+        help="The audio format for the TTS output."
+    )
     args = parser.parse_args()
 
     story_pages = [
@@ -245,10 +262,13 @@ async def main():
         sys.exit(f"Page must be 1–{len(story_pages)}")
 
     start = time.time()
+    # --- MODIFIED CALL ---
+    # Pass the format argument to the processor
     result = await processor.process_page(
         page=story_pages[args.page - 1],
         log_csv=args.log_csv,
-        check_latency=args.latency
+        check_latency=args.latency,
+        response_format=args.format
     )
     print(f"✅ Done in {time.time()-start:.2f}s | Status: {result['status']}")
 
