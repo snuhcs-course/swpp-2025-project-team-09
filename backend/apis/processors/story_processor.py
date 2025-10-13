@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# TODO: Update this code as code using langchain (adapt least update file)
+
+import os
 import csv
 import time
 import json
@@ -45,8 +48,10 @@ Important Rules:
 """
 
 class StoryProcessor:
-    def __init__(self, out_dir="out_audio", log_dir="log"):
-        self.client = AsyncOpenAI()
+    def __init__(self, out_dir="out_audio", log_dir="log", openai_api_key=None):
+        print(">>> StoryProcessor init start")
+        self.client = AsyncOpenAI(api_key=openai_api_key or os.getenv("OPENAI_API_KEY"))
+        print(">>> AsyncOpenAI created")
         self.TRANSLATE_MODEL = "gpt-4o-mini"
         self.SENTIMENT_MODEL = "gpt-4o-mini"
         self.TTS_MODEL = "gpt-4o-mini-tts"
@@ -61,6 +66,7 @@ class StoryProcessor:
             shutil.rmtree(self.LOG_DIR)
         self.OUT_DIR.mkdir(parents=True)
         self.LOG_DIR.mkdir(parents=True)
+        print(">>> StoryProcessor ready")
 
     async def warm_up_api(self):
         try:
@@ -183,6 +189,9 @@ class StoryProcessor:
             for i in range(len(sentences))
         ])
         ok_results = [r for r in results if r.get("status") == "ok"]
+        
+        translated_sentences = [r["translation"] for r in ok_results if "translation" in r]
+        full_translation = " ".join(translated_sentences).strip()
 
         if log_csv and ok_results:
             header = ["page_file", "index", "ko", "translation", "tone", "emotion", "pacing", "voice", "path"]
@@ -197,5 +206,9 @@ class StoryProcessor:
                     if check_latency: row += [r["trans_latency"], r["senti_latency"], r["tts_latency"]]
                     writer.writerow(row)
 
-        return {"status": "ok" if ok_results else "failed", "details": ok_results}
+        return {
+            "status": "ok" if ok_results else "failed",
+            "translation_text": full_translation,
+            "details": ok_results
+        }
 

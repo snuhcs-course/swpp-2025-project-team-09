@@ -1,3 +1,4 @@
+import os
 import requests
 import uuid
 import time
@@ -5,11 +6,13 @@ import json
 from pathlib import Path
 from typing import List, Dict, Any
 
-
 class OCRProcessor:
-    def __init__(self, api_url: str, secret_key: str):
-        self.api_url = api_url
-        self.secret_key = secret_key
+    def __init__(self, api_url: str = None, secret_key: str = None):
+        self.api_url = api_url or os.getenv("OCR_API_URL")
+        self.secret_key = secret_key or os.getenv("OCR_SECRET_KEY")
+
+        if not self.api_url or not self.secret_key:
+            raise ValueError("OCRProcessor: Missing OCR_API_URL or OCR_SECRET_KEY environment variables")
 
     def _font_size(self, result_json: Dict[str, Any]) -> float:
         images = result_json.get("images", [])
@@ -71,7 +74,7 @@ class OCRProcessor:
 
         return paragraphs
 
-    def run_ocr(self, image_path: str) -> List[str]:
+    def run_ocr(self, image_path: str) -> tuple[list[str], dict]:
         request_json = {
             "images": [{"format": "png", "name": Path(image_path).stem}],
             "requestId": str(uuid.uuid4()),
@@ -80,12 +83,13 @@ class OCRProcessor:
         }
 
         headers = {"X-OCR-SECRET": self.secret_key}
-        files = {
-            "file": open(image_path, "rb"),
-            "message": (None, json.dumps(request_json), "application/json"),
-        }
+        with open(image_path, "rb") as img_file:
+            files = {
+                "file": (Path(image_path).name, img_file, "application/octet-stream"),
+                "message": (None, json.dumps(request_json), "application/json"),
+            }
+            response = requests.post(self.api_url, headers=headers, files=files)
+            result = response.json()
 
-        response = requests.post(self.api_url, headers=headers, files=files)
-        result = response.json()
-
-        return self._parse_infer_text(result)
+        paragraphs = self._parse_infer_text(result)
+        return paragraphs, result
