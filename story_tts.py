@@ -105,8 +105,6 @@ class StoryProcessor:
                 await asyncio.sleep(0.7)
         return {"result": None, "latency": -1.0}
 
-    # --- MODIFIED METHOD ---
-    # The `response_format` is now a required string argument
     async def synthesize_tts(self, voice: str, text: str, instructions: str, out_path: Path, response_format: str) -> float:
         out_path.parent.mkdir(parents=True, exist_ok=True)
         t0 = time.time()
@@ -120,8 +118,7 @@ class StoryProcessor:
             print(f"TTS error for {out_path.name}: {e}")
             return -1.0
 
-    # --- MODIFIED METHOD ---
-    # Added `response_format` parameter
+    # --- NEW METHOD ---
     async def process_page(self, page: Dict[str, str], log_csv: bool, check_latency: bool, response_format: str = "mp3"):
         file_name = page["fileName"]
         sentences = kss.split_sentences(page["text"].strip())
@@ -130,38 +127,32 @@ class StoryProcessor:
 
         stem = Path(file_name).stem
         
-        # --- Step 1: Concurrently get all translations and sentiments ---
-        llm_tasks = []
-        for i, sentence in enumerate(sentences):
+        # --- PIPELINE APPROACH: Process each sentence as soon as it's ready ---
+        async def process_single_sentence(i: int, sentence: str):
+            # Build context
             context = [f"[CURRENT]: {sentence}"]
             if i > 0: context.insert(0, f"[PREVIOUS]: {sentences[i-1]}")
             if i < len(sentences) - 1: context.append(f"[NEXT]: {sentences[i+1]}")
             context_prompt = "\n".join(context)
             
-            llm_tasks.append(self.translate(context_prompt))
-            llm_tasks.append(self.sentiment(sentence))
+            # Run translation and sentiment in parallel for this sentence
+            trans_response, senti_response = await asyncio.gather(
+                self.translate(context_prompt),
+                self.sentiment(sentence)
+            )
             
-        llm_responses = await asyncio.gather(*llm_tasks)
-
-        # --- Step 2: Prepare TTS tasks based on the results ---
-        tts_tasks = []
-        valid_results = []
-        for i in range(len(sentences)):
-            trans_response = llm_responses[i*2]
-            senti_response = llm_responses[i*2 + 1]
             trans_result = trans_response["result"]
             senti_result = senti_response["result"]
             
             if isinstance(trans_result, Exception) or isinstance(senti_result, Exception):
-                continue
-
+                return None
+            
             translated = trans_result.translated_text.strip()
             if not translated:
-                continue
+                return None
             
+            # Immediately start TTS (don't wait for other sentences)
             voice = "shimmer"
-            # --- MODIFIED LINE ---
-            # File extension is now dynamic based on the chosen format
             out_file = self.OUT_DIR / f"{stem}_sent{i+1}.{response_format}"
             tts_instr = (
                 f"[Affect: A gentle, curious narrator with a clear accent, guiding a magical, child-friendly adventure through a fairy tale world.]"
@@ -169,34 +160,29 @@ class StoryProcessor:
                 f"[Tone: {senti_result.tone}] [Emotion: {senti_result.emotion}] [Pacing: {senti_result.pacing}]"
             )
             
-            # --- MODIFIED LINE ---
-            # Pass the response_format to the synthesize_tts method
-            tts_tasks.append(self.synthesize_tts(voice, translated, tts_instr, out_file, response_format))
+            tts_latency = await self.synthesize_tts(voice, translated, tts_instr, out_file, response_format)
             
-            # --- MODIFIED DICTIONARY ---
-            # Store the correct output path
-            valid_results.append({
-                "ko_sentence": sentences[i], "translation": translated, "path": str(out_file),
+            return {
+                "ko_sentence": sentence, "translation": translated, "path": str(out_file),
                 "tone": senti_result.tone, "emotion": senti_result.emotion, "pacing": senti_result.pacing,
-                "voice": voice, "trans_latency": trans_response["latency"], "senti_latency": senti_response["latency"]
-            })
-
-        # --- Step 3: Run all TTS tasks concurrently ---
-        tts_latencies = await asyncio.gather(*tts_tasks)
-
-        # --- Step 4: Combine final results and log ---
-        ok_results = []
-        for i, result_data in enumerate(valid_results):
-            result_data["status"] = "ok"
-            if check_latency:
-                result_data["tts_latency"] = tts_latencies[i]
-            ok_results.append(result_data)
-
+                "voice": voice, "trans_latency": trans_response["latency"], 
+                "senti_latency": senti_response["latency"], "tts_latency": tts_latency,
+                "status": "ok"
+            }
+        
+        # Process all sentences in pipeline - each starts TTS immediately when ready
+        results = await asyncio.gather(*[
+            process_single_sentence(i, sent) for i, sent in enumerate(sentences)
+        ])
+        
+        # Filter out None results
+        ok_results = [r for r in results if r is not None]
+        
         if log_csv and ok_results:
             self._write_to_csv(ok_results, file_name, check_latency)
-
-        return {"status": "ok" if ok_results else "failed", "details": ok_results}
         
+        return {"status": "ok" if ok_results else "failed", "details": ok_results}
+
     def _write_to_csv(self, results: List[Dict], file_name: str, check_latency: bool):
         header = ["page_file", "index", "ko", "translation", "tone", "emotion", "pacing", "voice", "path"]
         if check_latency:
