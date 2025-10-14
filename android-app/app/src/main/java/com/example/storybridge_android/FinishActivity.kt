@@ -28,4 +28,20 @@ class FinishActivity : AppCompatActivity() {
             finish() // 현재 FinishActivity 종료
         }
     }
+
+    private fun navigateToMain() {
+        // TODO: MainActivity로 이동하는 로직 구현
+    }
+
+    private fun displayStats() {
+        // TODO: 학습 내역 요약 보여줌
+    }
+
+    private fun decideSave() {
+        // TODO: 저장할지 안 할지 결정
+    }
+
+    private fun endSession() {
+        // TODO: 세션 종료를 서버에 알림
+    }
 }
