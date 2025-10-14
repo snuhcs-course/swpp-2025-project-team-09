@@ -40,8 +40,18 @@ class LoadingActivity : AppCompatActivity() {
         handler.post(runnable)
     }
 
-    fun waifForServerResponse(){
 
+    private fun navigateToReading() {
+        // TODO: ReadingActivity로 이동하는 로직 구현
+        // TODO: 일단 OCR + Translation 결과가 오면 이동
+    }
+
+    private fun showProgress() {
+        // TODO: 대략적인 프로그레스 바 형태로 진행도 보여주기
+    }
+
+    fun waifForServerResponse(){
+        // TODO: OCR, TTS 진행도를 서버에서 받아오기
     }
 
     fun onApiResponse(){
