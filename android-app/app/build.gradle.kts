@@ -58,6 +58,13 @@ dependencies {
     implementation("androidx.camera:camera-lifecycle:$camerax_version")
     implementation("androidx.camera:camera-view:1.3.0-alpha01")
 
+    // Retrofit & Gson
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+
+    // OkHttp3 (Retrofit이 내부적으로 씀)
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     // ML Kit
     implementation("com.google.android.gms:play-services-mlkit-document-scanner:16.0.0")
 

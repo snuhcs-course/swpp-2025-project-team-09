@@ -1,14 +1,11 @@
 package com.example.storybridge_android.ui
 
 import android.content.Context
-import android.content.Intent
 import android.util.AttributeSet
 import android.view.LayoutInflater
-import androidx.constraintlayout.widget.ConstraintLayout
 import android.widget.ImageView
-import android.widget.TextView
+import androidx.constraintlayout.widget.ConstraintLayout
 import com.example.storybridge_android.R
-import com.example.storybridge_android.SettingActivity
 
 
 class TopNavigationBar @JvmOverloads constructor(
@@ -19,12 +16,10 @@ class TopNavigationBar @JvmOverloads constructor(
 
     init {
         LayoutInflater.from(context).inflate(R.layout.top_navigation_bar, this, true)
-
         // Settings 클릭 이벤트
-        findViewById<ImageView>(R.id.settingsIcon).setOnClickListener {
-            // SettingActivity로 이동
-            // context.startActivity(Intent(context, SettingActivity::class.java))
-        }
+        // UI 이벤트만 담당 Intent는 MainActivity에서 처리
+        findViewById<ImageView>(R.id.settingsIcon)
+
     }
 
     fun setOnSettingsClickListener(listener: () -> Unit) {

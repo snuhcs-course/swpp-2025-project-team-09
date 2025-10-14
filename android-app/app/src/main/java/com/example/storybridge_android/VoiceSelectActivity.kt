@@ -1,19 +1,19 @@
 package com.example.storybridge_android
 
+import android.content.Intent
 import android.os.Bundle
+import android.widget.Button
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-
-import android.widget.Button
-import android.content.Intent
 
 class VoiceSelectActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_voice_select)
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
@@ -24,13 +24,18 @@ class VoiceSelectActivity : AppCompatActivity() {
         val womanButton = findViewById<Button>(R.id.womanButton)
 
         manButton.setOnClickListener {
-            val intent = Intent(this, CameraActivity::class.java)
-            startActivity(intent)
+            AppSettings.setVoice(this, "male")
+            goToCamera()
         }
 
         womanButton.setOnClickListener {
-            val intent = Intent(this, CameraActivity::class.java)
-            startActivity(intent)
+            AppSettings.setVoice(this, "female")
+            goToCamera()
         }
+    }
+
+    private fun goToCamera() {
+        startActivity(Intent(this, CameraActivity::class.java))
+        finish()
     }
 }

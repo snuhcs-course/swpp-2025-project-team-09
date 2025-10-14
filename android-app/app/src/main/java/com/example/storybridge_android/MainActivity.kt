@@ -1,13 +1,12 @@
 package com.example.storybridge_android
 
+import android.content.Intent
 import android.os.Bundle
+import android.widget.Button
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import android.widget.Button
-import android.content.Intent
-
 import com.example.storybridge_android.ui.TopNavigationBar
 
 class MainActivity : AppCompatActivity() {
@@ -22,17 +21,43 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
+        setupTopNavigationBar()
+        setupStartButton()
+    }
+
+    /**
+     * TopNavigationBar의 클릭 이벤트 연결
+     */
+    private fun setupTopNavigationBar() {
         val topNav = findViewById<TopNavigationBar>(R.id.topNavigationBar)
         topNav.setOnSettingsClickListener {
-            // 클릭 시 SettingActivity로 이동 (TopNavigationBar.kt 내부에서도 이미 처리 가능)
-            // 여기서 추가로 다른 작업 가능
+            onSettingsClick()
         }
+    }
 
-        // Start New Reading 버튼 클릭 시 VoiceSelectActivity로 이동
+    /**
+     * "Start New Reading" 버튼 초기화 및 클릭 이벤트 연결
+     */
+    private fun setupStartButton() {
         val startButton = findViewById<Button>(R.id.startNewReadingButton)
         startButton.setOnClickListener {
-            val intent = Intent(this, VoiceSelectActivity::class.java)
-            startActivity(intent)
+            onStartNewReadingClick()
         }
+    }
+
+    /**
+     * ⚙️ 설정 버튼 클릭 시 호출
+     */
+    private fun onSettingsClick() {
+        val intent = Intent(this, SettingActivity::class.java)
+        startActivity(intent)
+    }
+
+    /**
+     * Start New Reading 버튼 클릭 시 호출
+     */
+    private fun onStartNewReadingClick() {
+        val intent = Intent(this, VoiceSelectActivity::class.java)
+        startActivity(intent)
     }
 }

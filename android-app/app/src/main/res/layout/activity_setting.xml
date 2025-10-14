@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/settingLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white">
+
+    <!-- 상단바 -->
+    <com.example.storybridge_android.ui.TopNavigationBar
+        android:id="@+id/topNavigationBar"
+        android:layout_width="0dp"
+        android:layout_height="120dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- 언어 설정 -->
+    <TextView
+        android:id="@+id/languageTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Language"
+        style="@style/BoldText48"
+        app:layout_constraintTop_toBottomOf="@id/topNavigationBar"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="32dp"
+        />
+
+    <RadioGroup
+        android:id="@+id/languageGroup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/languageTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="32dp"
+        android:orientation="horizontal">
+
+        <RadioButton
+            android:id="@+id/radioEnglish"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="English"
+            android:layout_marginEnd="32dp"/>
+
+        <RadioButton
+            android:id="@+id/radioVietnamese"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Vietnamese"/>
+    </RadioGroup>
+
+    <!-- 음성 선택 -->
+    <TextView
+        android:id="@+id/voiceTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Voice Type"
+        style="@style/BoldText48"
+        app:layout_constraintTop_toBottomOf="@id/languageGroup"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="32dp"
+        android:layout_marginStart="32dp"/>
+
+    <RadioGroup
+        android:id="@+id/voiceGroup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/voiceTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="32dp"
+        android:orientation="horizontal">
+
+        <RadioButton
+            android:id="@+id/radioMan"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="MAN"
+            android:layout_marginEnd="32dp"/>
+
+        <RadioButton
+            android:id="@+id/radioWoman"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="WOMAN"/>
+    </RadioGroup>
+
+    <!-- 저장 버튼 -->
+    <Button
+        android:id="@+id/btnSaveSettings"
+        style="@style/BoldText48"
+        android:layout_width="560dp"
+        android:layout_height="120dp"
+        android:layout_marginBottom="48dp"
+        android:background="@drawable/round_button"
+        android:text="Save Settings"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
