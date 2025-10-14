@@ -65,6 +65,8 @@ dependencies {
     // OkHttp3 (Retrofit이 내부적으로 씀)
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    // ML Kit
+    implementation("com.google.android.gms:play-services-mlkit-document-scanner:16.0.0")
 
     // Test
     testImplementation(libs.junit)
