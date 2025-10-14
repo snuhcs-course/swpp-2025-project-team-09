@@ -81,10 +81,19 @@ class ReadingActivity : AppCompatActivity() {
     }
 
 
-    private fun navigateTo() {
-        // TODO: 인풋에 따라 각각 다른 액티비티로 이동
-        // TODO: 다른 페이지의 Reading, Camera, Finish
-        // TODO: 액티비티로 이동하는 버튼이 모두 컴포넌트에 있다는 문제
+    private fun navigateToFinish() {
+        // TODO: FinishActivity로 이동하는 로직 구현
+        // TODO: 상단 네비게이션에 버튼 존재
+    }
+
+    private fun navigateToCamera() {
+        // TODO: CameraActivity로 이동하는 로직 구현
+        // TODO: 하단 네비게이션에 버튼 존재
+    }
+
+    private fun navigateToReading() {
+        // TODO: ReadingActivity로 이동하는 로직 구현
+        // TODO: 왼쪽에서 나오는 오버레이에 페이지를 누르면 해당 페이지로 이동
     }
 
     private fun displayPage() {
@@ -97,6 +106,10 @@ class ReadingActivity : AppCompatActivity() {
 
     private fun toggleUI() {
         // TODO: 터치 여부에 따라서 상단, 하단 바 숨기거나 보여줌
+    }
+
+    private fun toggleOverlay() {
+        // TODO: 좌측 오버레이 숨기거나 보여줌
     }
 
     private fun updateAudio() {

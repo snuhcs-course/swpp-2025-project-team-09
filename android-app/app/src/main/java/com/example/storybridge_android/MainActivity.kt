@@ -34,6 +34,10 @@ class MainActivity : AppCompatActivity() {
         // TODO: StartSession.Activity로 이동하는 로직 구현
     }
 
+    private fun navigateToLoadingSession() {
+        // TODO: LoadingActivity로 이동하는 로직 구현
+    }
+
     private fun loadSessionCard() {
         // TODO: SessionCard.kt 컴포넌트들을 화면에 로딩
     }
