@@ -11,6 +11,15 @@
 local.properties
 .env
 
+# Django / Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.db.sqlite3
+backend/db.sqlite3
+*.migrations
 
 # Android-specific build and temporary files
 # android-app/build/: 안드로이드 빌드 결과물 폴더
