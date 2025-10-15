@@ -10,8 +10,9 @@ class BB(models.Model):
     page = models.ForeignKey(Page, on_delete=models.CASCADE, related_name="bbs")
     original_text = models.TextField()
     translated_text = models.TextField(null=True, blank=True)
-    audio_base64 = models.TextField(null=True, blank=True)
-    position = models.JSONField(default=dict, blank=True)
+    audio_base64 = models.JSONField(default=list, blank=True)
+    # TODO: Add position fields (x, y, width, height) as needed
+    #position = models.JSONField(default=dict, blank=True)
 
     def __str__(self):
         return f"BB of Page {self.page.id}"
