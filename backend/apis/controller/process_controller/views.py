@@ -25,7 +25,6 @@ class ProcessUploadView(APIView):
 
         {
         "session_id": "string",
-        "page_index": integer,
         "lang": "string",
         "image_base64": "string"
         }
@@ -44,17 +43,17 @@ class ProcessUploadView(APIView):
 
     def post(self, request):
         session_id = request.data.get("session_id")
-        page_index = request.data.get("page_index")
         lang = request.data.get("lang")
         image_base64 = request.data.get("image_base64")
-        if not all([session_id, page_index, lang, image_base64]):
+        if not all([session_id, lang, image_base64]):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
         try:
             session = Session.objects.get(id=session_id)
         except Session.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
-
+        
+        page_index = session.getPages().count()
         # 이미지 디코딩 및 저장. 
         image_bytes = base64.b64decode(image_base64)
         image_filename = f"{uuid.uuid4().hex}.jpg"
@@ -66,7 +65,6 @@ class ProcessUploadView(APIView):
         # OCR 단계
         ocr = OCRModule()
         ocr_result = ocr.process_page(image_path) # paragraph
-        print("OCR Result:", ocr_result)
         if not ocr_result:
             return Response({
                 "error_code": 422,
@@ -87,6 +85,8 @@ class ProcessUploadView(APIView):
         loop.close()
 
         tts_audio = []
+        paras_translations = []
+
         for result in tasks_results:
             if result.get("status") == "ok":
                 para_audio = [
@@ -96,6 +96,16 @@ class ProcessUploadView(APIView):
                 ]
                 tts_audio.append(para_audio)
 
+                para_translated = " ".join(
+                    [
+                        sentence_data["translation"]
+                        for sentence_data in result.get("details", [])
+                        if "translation" in sentence_data
+                    ]
+                )
+                paras_translations.append(para_translated)
+
+
         # 페이지 생성
         page = Page.objects.create(
             session=session,
@@ -103,14 +113,16 @@ class ProcessUploadView(APIView):
             bbox_json=json.dumps(ocr_result),
             created_at=timezone.now()
         )
-
+        print(len(ocr_result), len(tts_audio))
         # BB 데이터 저장
         for i, para_text in enumerate(ocr_result):
             para_audio = tts_audio[i] if i < len(tts_audio) else []
+            para_translated = paras_translations[i] if i < len(paras_translations) else ""
             BB.objects.create(
                 page=page,
                 original_text=para_text,
-                audio_base64=[base64.b64encode(a).decode("utf-8") for a in para_audio]
+                audio_base64=[base64.b64encode(a).decode("utf-8") for a in para_audio],
+                translated_text=para_translated
                 # TODO: Add position info
                 # position={
                 #     "x": field.get("x", 0),
@@ -121,7 +133,7 @@ class ProcessUploadView(APIView):
             )
         session.totalPages += 1
         session.save()
-
+        print("session id:", session.id, "page_index: ", page_index, "page:", page)
         return Response({
             "session_id": session_id,
             "page_index": int(page_index),

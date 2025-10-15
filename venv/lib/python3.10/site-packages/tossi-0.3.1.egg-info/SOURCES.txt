@@ -1,0 +1,17 @@
+README.md
+setup.cfg
+setup.py
+tossi/__about__.py
+tossi/__init__.py
+tossi/coda.py
+tossi/formatter.py
+tossi/hangul.py
+tossi/particles.py
+tossi/tolerance.py
+tossi/utils.py
+tossi.egg-info/PKG-INFO
+tossi.egg-info/SOURCES.txt
+tossi.egg-info/dependency_links.txt
+tossi.egg-info/not-zip-safe
+tossi.egg-info/requires.txt
+tossi.egg-info/top_level.txt

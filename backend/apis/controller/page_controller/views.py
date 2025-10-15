@@ -124,18 +124,19 @@ class PageGetOCRView(APIView):
     def get(self, request):
         session_id = request.query_params.get("session_id")
         page_index = request.query_params.get("page_index")
-
         if not session_id or page_index is None:
             return Response(status=status.HTTP_400_BAD_REQUEST)
-
+        print("session_id:", session_id, "page_index:", page_index)
         try:
-            page = Page.objects.filter(session__id=session_id).order_by("id")[int(page_index)]
+            page = Page.objects.filter(session_id=session_id).order_by("id")[int(page_index)]
+
             bbs = page.getBBs()
 
             ocr_results = []
             for bb in bbs:
                 ocr_results.append({
-                    "bbox": bb.position,
+                    # TODO: bbox 정보 추가
+                    #"bbox": bb.position,
                     "original_txt": bb.original_text,
                     "translation_txt": bb.translated_text
                 })
@@ -184,39 +185,38 @@ class PageGetTTSView(APIView):
         }
     """
 
-def get(self, request):
-    session_id = request.query_params.get("session_id")
-    page_index = request.query_params.get("page_index")
+    def get(self, request):
+        session_id = request.query_params.get("session_id")
+        page_index = request.query_params.get("page_index")
 
-    if not session_id or page_index is None:
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        if not session_id or page_index is None:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
-    try:
-        page = Page.objects.filter(session__id=session_id).order_by("id")[int(page_index)]
-        bbs = page.getBBs()
+        try:
+            page = Page.objects.filter(session__id=session_id).order_by("id")[int(page_index)]
+            bbs = page.getBBs()
 
-        audio_results = []
-        for i, bb in enumerate(bbs):
-            # ✅ bb.audio_base64가 문자열(JSON 형태)일 수도 있고, 리스트일 수도 있음
-            audio_list = (
-                json.loads(bb.audio_base64)
-                if isinstance(bb.audio_base64, str)
-                else bb.audio_base64
-            )
+            audio_results = []
+            for i, bb in enumerate(bbs):
+                audio_list = (
+                    json.loads(bb.audio_base64)
+                    if isinstance(bb.audio_base64, str)
+                    else bb.audio_base64
+                )
 
-            audio_results.append({
-                "bbox_index": i,
-                "audio_base64_list": audio_list  # ✅ 이름도 리스트로 수정
-            })
+                audio_results.append({
+                    "bbox_index": i,
+                    "audio_base64_list": audio_list
+                })
 
-        return Response({
-            "session_id": session_id,
-            "page_index": int(page_index),
-            "audio_results": audio_results,
-            "generated_at": page.created_at
-        }, status=status.HTTP_200_OK)
+            return Response({
+                "session_id": session_id,
+                "page_index": int(page_index),
+                "audio_results": audio_results,
+                "generated_at": page.created_at
+            }, status=status.HTTP_200_OK)
 
-    except (Page.DoesNotExist, IndexError):
-        return Response(status=status.HTTP_404_NOT_FOUND)
-    except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except (Page.DoesNotExist, IndexError):
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

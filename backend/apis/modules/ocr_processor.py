@@ -7,11 +7,13 @@ import numpy as np
 from pathlib import Path
 from typing import List, Dict, Any
 from sklearn.cluster import DBSCAN 
+from dotenv import load_dotenv
+load_dotenv()
 
 class OCRModule:
-    def __init__(self, conf_threshold: float = 0.85):
-        self.api_url = "https://foktrcpgui.apigw.ntruss.com/custom/v1/46306/243a02e5c2b49022608921358ba314dcfaef7566fa05290fd581a0e24c0662a9/general"
-        self.secret_key = "SERGTXdGSFhqamVaeVVoaVdsTGFyZ0VEcEprbEZsamU="
+    def __init__(self, conf_threshold: float = 0.8):
+        self.api_url = os.getenv("OCR_API_URL")
+        self.secret_key = os.getenv("OCR_SECRET")
         self.conf_threshold = conf_threshold
 
     def _filter_low_confidence(self, result_json: Dict[str, Any]) -> Dict[str, Any]:
