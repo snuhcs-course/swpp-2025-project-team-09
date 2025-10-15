@@ -13,10 +13,10 @@ interface PageApi {
         @Body request: GetImageRequest
     ): Call<GetImageResponse>
 
-    @GET("/page/get_ocr")
+    @GET("/page/get_ocr_translation")
     fun getOcrResults(
-        @Body request: GetOcrRequest
-    ): Call<GetOcrResponse>
+        @Body request: GetOcrTranslationRequest
+    ): Call<GetOcrTranslationResponse>
 
     @GET("/page/get_tts")
     fun getTtsResults(
@@ -42,7 +42,7 @@ data class GetImageResponse(
 )
 
 // 4-2. Get OCR Results
-data class GetOcrRequest(
+data class GetOcrTranslationRequest(
     val session_id: String,
     val page_index: Int
 )
@@ -60,7 +60,7 @@ data class BBox(
     val height: Int
 )
 
-data class GetOcrResponse(
+data class GetOcrTranslationResponse(
     val session_id: String,
     val page_index: Int,
     val ocr_results: List<OcrBox>,
