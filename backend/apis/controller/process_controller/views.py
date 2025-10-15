@@ -5,13 +5,14 @@ from django.utils import timezone
 from apis.models.session_model import Session
 from apis.models.page_model import Page
 from apis.models.bb_model import BB
-from apis.modules.OCRprocessor import OCRModule
-from apis.modules.tts_module import TTSModule
+from apis.modules.ocr_processor import OCRModule
+from apis.modules.tts_processor import TTSModule
 import base64
 import io
 import json
 import uuid
 import os
+import asyncio
 
 class ProcessUploadView(APIView):
     """
@@ -24,7 +25,6 @@ class ProcessUploadView(APIView):
 
         {
         "session_id": "string",
-        "page_index": integer,
         "lang": "string",
         "image_base64": "string"
         }
@@ -43,19 +43,18 @@ class ProcessUploadView(APIView):
 
     def post(self, request):
         session_id = request.data.get("session_id")
-        page_index = request.data.get("page_index")
         lang = request.data.get("lang")
         image_base64 = request.data.get("image_base64")
-
-        if not all([session_id, page_index, lang, image_base64]):
+        if not all([session_id, lang, image_base64]):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
         try:
             session = Session.objects.get(id=session_id)
         except Session.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
-
-        # 이미지 디코딩 및 저장
+        
+        page_index = session.getPages().count()
+        # 이미지 디코딩 및 저장. 
         image_bytes = base64.b64decode(image_base64)
         image_filename = f"{uuid.uuid4().hex}.jpg"
         image_path = f"media/images/{session_id}_{page_index}_{image_filename}"
@@ -65,65 +64,76 @@ class ProcessUploadView(APIView):
 
         # OCR 단계
         ocr = OCRModule()
-        ocr_result = ocr.processImage(image_path)
-        if not ocr_result or "fields" not in ocr_result:
+        ocr_result = ocr.process_page(image_path) # paragraph
+        if not ocr_result:
             return Response({
                 "error_code": 422,
                 "message": "PROCESS__UNABLE_TO_PROCESS_IMAGE"
             }, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
-        # Translation 단계
-        translator = TranslationModule()
-        translated = []
-        for field in ocr_result["fields"]:
-            original_txt = field.get("inferText", "")
-            if original_txt:
-                translated_txt = translator.translateText(original_txt, target_lang=lang)
-                translated.append(translated_txt)
-            else:
-                translated.append("")
 
-        # TTS 단계
+        tasks = []
         tts = TTSModule()
-        audio_results = []
-        for text in translated:
-            if text.strip():
-                audio_buffer = tts.generateTTS(text)
-                if audio_buffer:
-                    audio_base64 = base64.b64encode(audio_buffer.read()).decode("utf-8")
-                    audio_results.append(audio_base64)
-                else:
-                    audio_results.append("")
-            else:
-                audio_results.append("")
+
+        for i, para in enumerate(ocr_result, 1):
+            page = {"fileName": f"{session_id}_{page_index}_{i}.jpg", "text": para}
+            tasks.append(tts.process_paragraph(page, log_csv=True, check_latency=True))
+
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        tasks_results = loop.run_until_complete(asyncio.gather(*tasks))
+        loop.close()
+
+        tts_audio = []
+        paras_translations = []
+
+        for result in tasks_results:
+            if result.get("status") == "ok":
+                para_audio = [
+                    sentence_data["tts_result"]
+                    for sentence_data in result.get("details", [])
+                    if "tts_result" in sentence_data
+                ]
+                tts_audio.append(para_audio)
+
+                para_translated = " ".join(
+                    [
+                        sentence_data["translation"]
+                        for sentence_data in result.get("details", [])
+                        if "translation" in sentence_data
+                    ]
+                )
+                paras_translations.append(para_translated)
+
 
         # 페이지 생성
         page = Page.objects.create(
             session=session,
             img_url=image_path,
-            translation_text="\n".join(translated),
             bbox_json=json.dumps(ocr_result),
             created_at=timezone.now()
         )
-
+        print(len(ocr_result), len(tts_audio))
         # BB 데이터 저장
-        for i, field in enumerate(ocr_result["fields"]):
+        for i, para_text in enumerate(ocr_result):
+            para_audio = tts_audio[i] if i < len(tts_audio) else []
+            para_translated = paras_translations[i] if i < len(paras_translations) else ""
             BB.objects.create(
                 page=page,
-                original_text=field.get("inferText", ""),
-                translated_text=translated[i] if i < len(translated) else "",
-                audio_base64=audio_results[i] if i < len(audio_results) else "",
-                position={
-                    "x": field.get("x", 0),
-                    "y": field.get("y", 0),
-                    "width": field.get("width", 0),
-                    "height": field.get("height", 0),
-                }
+                original_text=para_text,
+                audio_base64=[base64.b64encode(a).decode("utf-8") for a in para_audio],
+                translated_text=para_translated
+                # TODO: Add position info
+                # position={
+                #     "x": field.get("x", 0),
+                #     "y": field.get("y", 0),
+                #     "width": field.get("width", 0),
+                #     "height": field.get("height", 0),
+                # }
             )
-
         session.totalPages += 1
         session.save()
-
+        print("session id:", session.id, "page_index: ", page_index, "page:", page)
         return Response({
             "session_id": session_id,
             "page_index": int(page_index),

@@ -5,6 +5,7 @@ from apis.models.page_model import Page
 from apis.models.bb_model import BB
 import base64
 import os
+import json
 
 class PageGetImageView(APIView):
     """
@@ -123,18 +124,19 @@ class PageGetOCRView(APIView):
     def get(self, request):
         session_id = request.query_params.get("session_id")
         page_index = request.query_params.get("page_index")
-
         if not session_id or page_index is None:
             return Response(status=status.HTTP_400_BAD_REQUEST)
-
+        print("session_id:", session_id, "page_index:", page_index)
         try:
-            page = Page.objects.filter(session__id=session_id).order_by("id")[int(page_index)]
+            page = Page.objects.filter(session_id=session_id).order_by("id")[int(page_index)]
+
             bbs = page.getBBs()
 
             ocr_results = []
             for bb in bbs:
                 ocr_results.append({
-                    "bbox": bb.position,
+                    # TODO: bbox 정보 추가
+                    #"bbox": bb.position,
                     "original_txt": bb.original_text,
                     "translation_txt": bb.translated_text
                 })
@@ -176,7 +178,7 @@ class PageGetTTSView(APIView):
         "audio_results": [
             {
             "bbox_index": "integer",   
-            "audio_base64": "string" 
+            "audio_base64_list": "list of string" 
             }
         ],
         "generated_at": "string (datetime)"
@@ -196,9 +198,15 @@ class PageGetTTSView(APIView):
 
             audio_results = []
             for i, bb in enumerate(bbs):
+                audio_list = (
+                    json.loads(bb.audio_base64)
+                    if isinstance(bb.audio_base64, str)
+                    else bb.audio_base64
+                )
+
                 audio_results.append({
                     "bbox_index": i,
-                    "audio_base64": bb.audio_base64
+                    "audio_base64_list": audio_list
                 })
 
             return Response({

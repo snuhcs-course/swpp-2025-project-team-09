@@ -7,7 +7,7 @@ urlpatterns = [
     # routing to session controller
     path("session/", include("apis.controller.session_controller.urls")),
 
-    # routing to process controller (OCR / Translation / TTS)
+    # routing to process controller (OCR / TTS)
     path("process/", include("apis.controller.process_controller.urls")),
 
     # routing to page controller
