@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Landing Page 앱 이름 -->
+
     <style name="BoldText96">
         <item name="android:textSize">96sp</item>
         <item name="android:textColor">@color/black</item>
