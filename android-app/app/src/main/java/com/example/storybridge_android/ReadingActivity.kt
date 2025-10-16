@@ -81,6 +81,46 @@ class ReadingActivity : AppCompatActivity() {
     }
 
 
+    private fun navigateToFinish() {
+        // TODO: FinishActivity로 이동하는 로직 구현
+        // TODO: 상단 네비게이션에 버튼 존재
+    }
+
+    private fun navigateToCamera() {
+        // TODO: CameraActivity로 이동하는 로직 구현
+        // TODO: 하단 네비게이션에 버튼 존재
+    }
+
+    private fun navigateToReading() {
+        // TODO: ReadingActivity로 이동하는 로직 구현
+        // TODO: 왼쪽에서 나오는 오버레이에 페이지를 누르면 해당 페이지로 이동
+    }
+
+    private fun displayPage() {
+        // TODO: 페이지 이미지 보여주기
+    }
+
+    private fun displayBB() {
+        // TODO: 번역된 텍스트가 있는 bounding box, 오디오 버튼 보여주기
+    }
+
+    private fun toggleUI() {
+        // TODO: 터치 여부에 따라서 상단, 하단 바 숨기거나 보여줌
+    }
+
+    private fun toggleOverlay() {
+        // TODO: 좌측 오버레이 숨기거나 보여줌
+    }
+
+    private fun updateAudio() {
+        // TODO: 서버로부터 TTS 파일을 받아서 오디오 버튼에 바인딩
+    }
+
+    private fun playAudio() {
+        // TODO: 오디오 버튼을 누르면 재생
+    }
+
+
     private fun toggleOverlay(show: Boolean) {
         if (show && !isOverlayVisible) {
             overlay.visibility = View.VISIBLE

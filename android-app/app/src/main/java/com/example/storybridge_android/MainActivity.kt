@@ -25,6 +25,25 @@ class MainActivity : AppCompatActivity() {
         setupStartButton()
     }
 
+    private fun navigateToSettings() {
+        // TODO: SettinsActivity로 이동하는 로직 구현
+        // TODO: onCreate에서 이 함수를 버튼에 바인딩하는 함수를 호출하면 될 것 같습니다.
+    }
+
+    private fun navigateToStartSession() {
+        // TODO: StartSession.Activity로 이동하는 로직 구현
+    }
+
+    private fun navigateToLoadingSession() {
+        // TODO: LoadingActivity로 이동하는 로직 구현
+    }
+
+    private fun loadSessionCard() {
+        // TODO: SessionCard.kt 컴포넌트들을 화면에 로딩
+    }
+
+
+
     /**
      * TopNavigationBar의 클릭 이벤트 연결
      */
@@ -32,6 +51,7 @@ class MainActivity : AppCompatActivity() {
         val topNav = findViewById<TopNavigationBar>(R.id.topNavigationBar)
         topNav.setOnSettingsClickListener {
             onSettingsClick()
+            // TODO: 이 부분을 navigateToSettings()로 대체하는 식으로 구현하면 될 것 같습니다.
         }
     }
 

@@ -35,6 +35,9 @@ class CameraActivity : AppCompatActivity() {
     private lateinit var scanner: GmsDocumentScanner
     private lateinit var scannerLauncher: ActivityResultLauncher<IntentSenderRequest>
 
+
+    //TODO: onCreate 함수 너무 길어서 분리 부탁드립니다.
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_loading)
@@ -73,6 +76,27 @@ class CameraActivity : AppCompatActivity() {
         // Launch the scanner for the first time.
         launchScanner()
     }
+
+
+    private fun navigateToLoading() {
+        // TODO: LoadingActivity로 이동하는 로직 구현
+    }
+
+    private fun startCamera() {
+        // TODO: 이 부분은 스켈레톤 신경 쓰시지 말고 구현하셔도 됩니다.
+        // TODO: StartSession 하고 동일한 구조면 좋겠습니다.
+        // TODO: 가능하다면 아예 카메라 부분을 다른 파일로 빼고 그걸 StartSession, Camera 각각에서 재사용하는 쪽으로 구현해도 좋을 것 같습니다. (중복 방지)
+    }
+
+    private fun resizeImage() {
+        // TODO: OCR 성능이 떨어지지 않는 선 + http 속도 고려해서 리사이즈
+    }
+
+    private fun uploadImage() {
+        // TODO: 이미지 업로드
+    }
+
+
 
     private fun launchScanner() {
         scanner.getStartScanIntent(this)

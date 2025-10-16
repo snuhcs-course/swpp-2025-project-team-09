@@ -18,6 +18,19 @@ class SettingActivity : AppCompatActivity() {
         setupVoiceOptions()
     }
 
+    private fun navigateToMain() {
+        //TODO: MainActivity로 이동하는 로직 구현
+    }
+
+    private fun setLangPreference() {
+        //TODO: 유저의 language preference 업데이트
+    }
+
+
+    // 아래 함수는 적당히 수정 부탁드립니다.
+    // 사실 top navigation이 그닥 재사용이 안 될 것 같아서 걍 없애도 될 것 같아요
+
+
     private fun setupTopBar() {
         val topBar = findViewById<TopNavigationBar>(R.id.topNavigationBar)
 
