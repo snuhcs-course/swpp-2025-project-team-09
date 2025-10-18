@@ -47,16 +47,16 @@ class SettingActivity : AppCompatActivity() {
     private fun setupLanguageOptions() {
         languageGroup = findViewById(R.id.languageGroup)
         val english = findViewById<RadioButton>(R.id.radioEnglish)
-        val vietnamese = findViewById<RadioButton>(R.id.radioVietnamese)
+        val Chinese = findViewById<RadioButton>(R.id.radioChinese)
 
         val currentLang = AppSettings.getLanguage(this)
         when (currentLang) {
             "en" -> english.isChecked = true
-            "vi" -> vietnamese.isChecked = true
+            "cn" -> Chinese.isChecked = true
         }
 
         english.setOnClickListener { AppSettings.setLanguage(this, "en") }
-        vietnamese.setOnClickListener { AppSettings.setLanguage(this, "vi") }
+        Chinese.setOnClickListener { AppSettings.setLanguage(this, "cn") }
     }
 
     private fun setupVoiceOptions() {
@@ -86,7 +86,7 @@ class SettingActivity : AppCompatActivity() {
             // 선택된 언어 확인
             val selectedLang = when (findViewById<RadioGroup>(R.id.languageGroup).checkedRadioButtonId) {
                 R.id.radioEnglish -> "en"
-                R.id.radioVietnamese -> "vi"
+                R.id.radioChinese -> "cn"
                 else -> "en"
             }
 

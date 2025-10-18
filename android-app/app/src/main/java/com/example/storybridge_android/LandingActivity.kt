@@ -20,7 +20,7 @@ import retrofit2.Response
 
 class LandingActivity : AppCompatActivity() {
     private lateinit var btnEnglish: Button
-    private lateinit var btnVietnamese: Button
+    private lateinit var btnChinese: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -93,14 +93,14 @@ class LandingActivity : AppCompatActivity() {
     private fun showLanguageSelection() {
         setContentView(R.layout.activity_landing_second)
         btnEnglish = findViewById(R.id.btnEnglish)
-        btnVietnamese = findViewById(R.id.btnVietnamese)
+        btnChinese = findViewById(R.id.btnChinese)
 
         btnEnglish.setOnClickListener {
             setLangPreference("en")
             navigateToMain()
         }
-        btnVietnamese.setOnClickListener {
-            setLangPreference("vi")
+        btnEnglish.setOnClickListener {
+            AppSettings.setLanguage(this, "en")
             navigateToMain()
         }
     }
