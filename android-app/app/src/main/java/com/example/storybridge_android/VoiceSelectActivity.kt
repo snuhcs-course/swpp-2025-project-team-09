@@ -20,22 +20,27 @@ class VoiceSelectActivity : AppCompatActivity() {
             insets
         }
 
+        setupClickListeners()
+    }
+
+    private fun navigateToCamera() {
+        val intent = Intent(this, CameraActivity::class.java)
+        startActivity(intent)
+        finish()
+    }
+
+    private fun setupClickListeners() {
         val manButton = findViewById<Button>(R.id.manButton)
         val womanButton = findViewById<Button>(R.id.womanButton)
 
         manButton.setOnClickListener {
             AppSettings.setVoice(this, "male")
-            goToCamera()
+            navigateToCamera()
         }
 
         womanButton.setOnClickListener {
             AppSettings.setVoice(this, "female")
-            goToCamera()
+            navigateToCamera()
         }
-    }
-
-    private fun goToCamera() {
-        startActivity(Intent(this, CameraActivity::class.java))
-        finish()
     }
 }

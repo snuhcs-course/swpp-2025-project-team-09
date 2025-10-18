@@ -1,17 +1,28 @@
 package com.example.storybridge_android
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.widget.Button
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import com.example.storybridge_android.databinding.ActivityCameraBinding
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanner
 import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
@@ -29,13 +40,10 @@ class CameraActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_start_session)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
+        setContentView(R.layout.activity_loading)
+
+        //TODO: 지속되는 ML kit 오류로 임시로 LoadingActivity로 넘어가도록 설정
+        navigateToLoading()
 
         val options = GmsDocumentScannerOptions.Builder()
             .setGalleryImportAllowed(false)
@@ -74,8 +82,12 @@ class CameraActivity : AppCompatActivity() {
 
 
     private fun navigateToLoading() {
-        // TODO: LoadingActivity로 이동하는 로직 구현
+        val intent = Intent(this, LoadingActivity::class.java)
+        startActivity(intent)
+        finish()
     }
+
+
 
     private fun startCamera() {
         // TODO: 이 부분은 스켈레톤 신경 쓰시지 말고 구현하셔도 됩니다.
