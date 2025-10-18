@@ -5,32 +5,43 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.View
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import com.example.storybridge_android.databinding.ActivityFinishBinding
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import com.example.storybridge_android.R
 
 class FinishActivity : AppCompatActivity() {
-    private lateinit var binding: ActivityFinishBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityFinishBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        enableEdgeToEdge()
+        setContentView(R.layout.activity_finish)
+
+        // 시스템 인셋 적용
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
+        }
+
+        val mainButton: View = findViewById(R.id.mainButton)
 
         // 3초 뒤에 버튼 보이게 하기
         Handler(Looper.getMainLooper()).postDelayed({
-            binding.mainButton.visibility = View.VISIBLE
+            mainButton.visibility = View.VISIBLE
         }, 3000)
 
-        // 버튼 클릭 시 MainActivity로 이동
-        binding.mainButton.setOnClickListener {
-            val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent)
-            finish() // 현재 FinishActivity 종료
+        // 버튼 클릭 시 메인으로 이동
+        mainButton.setOnClickListener {
+            navigateToMain()
         }
     }
 
     private fun navigateToMain() {
-        // TODO: MainActivity로 이동하는 로직 구현
+        val intent = Intent(this, MainActivity::class.java)
+        startActivity(intent)
+        finish()
     }
 
     private fun displayStats() {
