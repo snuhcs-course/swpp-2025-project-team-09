@@ -16,7 +16,7 @@ class LandingActivity : AppCompatActivity() {
     private lateinit var landingLayout: ConstraintLayout
     private lateinit var languageLayout: ConstraintLayout
     private lateinit var btnEnglish: Button
-    private lateinit var btnVietnamese: Button
+    private lateinit var btnChinese: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,10 +37,11 @@ class LandingActivity : AppCompatActivity() {
 
         //TODO: 유저가 앱을 처음 열었는지 아닌지 확인해서 처음이라면 언어 설정.
 
-        // 3초 후 Language Selection 화면으로 전환
+        // 2초 후 Language Selection 화면으로 전환
         Handler(Looper.getMainLooper()).postDelayed({
             showLanguageSelection()
-        }, 1000)
+            bindNavigateTo()
+        }, 2000)
     }
 
 
@@ -67,16 +68,20 @@ class LandingActivity : AppCompatActivity() {
 
         languageLayout = findViewById(R.id.language_se)
         btnEnglish = findViewById(R.id.btnEnglish)
-        btnVietnamese = findViewById(R.id.btnVietnamese)
+        btnChinese = findViewById(R.id.btnChinese)
+    }
 
+    private fun bindNavigateTo() {
         btnEnglish.setOnClickListener {
             AppSettings.setLanguage(this, "en")
             navigateToMain()
         }
-        btnVietnamese.setOnClickListener {
+        btnChinese.setOnClickListener {
             AppSettings.setLanguage(this, "vi")
             navigateToMain()
         }
     }
+
+
 
 }
