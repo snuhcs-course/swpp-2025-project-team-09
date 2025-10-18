@@ -7,41 +7,82 @@ import android.os.Looper
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.example.storybridge_android.databinding.ActivityFinishBinding
+import com.example.storybridge_android.network.EndSessionRequest
+import com.example.storybridge_android.network.EndSessionResponse
+import com.example.storybridge_android.network.RetrofitClient
+import com.example.storybridge_android.network.SessionStatsResponse
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class FinishActivity : AppCompatActivity() {
+
     private lateinit var binding: ActivityFinishBinding
+    private val sessionApi = RetrofitClient.sessionApi
+    private lateinit var sessionId: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityFinishBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // 3초 뒤에 버튼 보이게 하기
+        sessionId = intent.getStringExtra("session_id") ?: ""
+
+        // 세션 종료 → 통계 표시
+        endSession()
+
+        // 3초 뒤 버튼 보이기
         Handler(Looper.getMainLooper()).postDelayed({
             binding.mainButton.visibility = View.VISIBLE
         }, 3000)
 
-        // 버튼 클릭 시 MainActivity로 이동
+        // 버튼 클릭 시 메인으로
         binding.mainButton.setOnClickListener {
-            val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent)
-            finish() // 현재 FinishActivity 종료
+            navigateToMain()
         }
     }
 
     private fun navigateToMain() {
-        // TODO: MainActivity로 이동하는 로직 구현
-    }
-
-    private fun displayStats() {
-        // TODO: 학습 내역 요약 보여줌
-    }
-
-    private fun decideSave() {
-        // TODO: 저장할지 안 할지 결정
+        val intent = Intent(this, MainActivity::class.java)
+        startActivity(intent)
+        finish()
     }
 
     private fun endSession() {
-        // TODO: 세션 종료를 서버에 알림
+        if (sessionId.isEmpty()) return
+        val req = EndSessionRequest(sessionId)
+        sessionApi.endSession(req).enqueue(object : Callback<EndSessionResponse> {
+            override fun onResponse(call: Call<EndSessionResponse>, response: Response<EndSessionResponse>) {
+                if (response.isSuccessful) {
+                    displayStats()
+                }
+            }
+            override fun onFailure(call: Call<EndSessionResponse>, t: Throwable) {
+                t.printStackTrace()
+            }
+        })
+    }
+
+    private fun displayStats() {
+        sessionApi.getSessionStats(sessionId).enqueue(object : Callback<SessionStatsResponse> {
+            override fun onResponse(call: Call<SessionStatsResponse>, response: Response<SessionStatsResponse>) {
+                if (response.isSuccessful) {
+                    val stats = response.body()
+                    if (stats != null) {
+                        val summary = """
+                            Session: ${stats.session_id}
+                            Pages: ${stats.total_pages}
+                            Time: ${stats.total_time_spent}s
+                            Words: ${stats.total_words_read}
+                        """.trimIndent()
+                        binding.sessionSummary.text = summary
+                        binding.sessionSummary.visibility = View.VISIBLE
+                    }
+                }
+            }
+            override fun onFailure(call: Call<SessionStatsResponse>, t: Throwable) {
+                t.printStackTrace()
+            }
+        })
     }
 }

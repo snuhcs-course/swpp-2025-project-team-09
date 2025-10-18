@@ -42,7 +42,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun navigateToStartSession() {
-        startActivity(Intent(this, VoiceSelectActivity::class.java))
+        startActivity(Intent(this, StartSessionActivity::class.java))
     }
 
     private fun navigateToLoadingSession() {

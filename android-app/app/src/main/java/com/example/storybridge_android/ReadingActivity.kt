@@ -1,26 +1,36 @@
 package com.example.storybridge_android
 
 import android.content.Intent
+import android.graphics.BitmapFactory
+import android.media.MediaPlayer
 import android.os.Bundle
+import android.util.Base64
 import android.view.Gravity
 import android.view.View
+import android.widget.Button
+import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import android.widget.Button
-import android.widget.ImageButton
-import android.graphics.BitmapFactory
-import android.media.MediaPlayer
-import android.util.Base64
-import android.widget.ImageView
+import com.example.storybridge_android.network.GetImageResponse
+import com.example.storybridge_android.network.GetOcrTranslationResponse
+import com.example.storybridge_android.network.GetTtsResponse
+import com.example.storybridge_android.network.RetrofitClient
 import java.io.File
 import java.io.FileOutputStream
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class ReadingActivity : AppCompatActivity() {
 
+    private lateinit var sessionId: String
+    private var pageIndex: Int = 0
+    private val pageApi = RetrofitClient.pageApi
     private lateinit var mainLayout: ConstraintLayout
     private lateinit var topUi: View
     private lateinit var bottomUi: View
@@ -37,6 +47,10 @@ class ReadingActivity : AppCompatActivity() {
         initViews()
         initUiState()
         initListeners()
+
+        sessionId = intent.getStringExtra("session_id") ?: ""
+        pageIndex = intent.getIntExtra("page_index", 0)
+        fetchPageData()
     }
 
     private fun initViews() {
@@ -75,8 +89,10 @@ class ReadingActivity : AppCompatActivity() {
     }
 
     private fun navigateToCamera() {
-        val intent = Intent(this, CameraActivity::class.java)
+        val intent = Intent(this, CameraSessionActivity::class.java)
+        intent.putExtra("session_id", sessionId)
         startActivity(intent)
+        finish()
     }
 
     private fun navigateToReading(pageIndex: Int? = null) {
@@ -218,5 +234,62 @@ class ReadingActivity : AppCompatActivity() {
         boxView.translationX = x.toFloat()
         boxView.translationY = y.toFloat()
         mainLayout.addView(boxView)
+    }
+
+    private fun fetchPageData() {
+        fetchImage()
+        fetchOcrResults()
+        fetchTtsResults()
+    }
+
+    private fun fetchImage() {
+        pageApi.getImage(sessionId, pageIndex).enqueue(object : Callback<GetImageResponse> {
+            override fun onResponse(call: Call<GetImageResponse>, response: Response<GetImageResponse>) {
+                if (response.isSuccessful) {
+                    val imageBase64 = response.body()?.image_base64
+                    displayPage(imageBase64)
+                }
+            }
+            override fun onFailure(call: Call<GetImageResponse>, t: Throwable) {
+                t.printStackTrace()
+            }
+        })
+    }
+
+    private fun fetchOcrResults() {
+        pageApi.getOcrResults(sessionId, pageIndex).enqueue(object : Callback<GetOcrTranslationResponse> {
+            override fun onResponse(call: Call<GetOcrTranslationResponse>, response: Response<GetOcrTranslationResponse>) {
+                if (response.isSuccessful) {
+                    val ocrList = response.body()?.ocr_results ?: return
+                    val boxes = ocrList.mapNotNull {
+                        it.bbox?.let { box ->
+                            BoundingBox(box.x, box.y, box.width, box.height, it.translation_txt)
+                        }
+                    }
+                    if (boxes.isNotEmpty()) displayBB(boxes)
+                }
+            }
+
+            override fun onFailure(call: Call<GetOcrTranslationResponse>, t: Throwable) {
+                t.printStackTrace()
+            }
+        })
+    }
+
+    private fun fetchTtsResults() {
+        pageApi.getTtsResults(sessionId, pageIndex).enqueue(object : Callback<GetTtsResponse> {
+            override fun onResponse(call: Call<GetTtsResponse>, response: Response<GetTtsResponse>) {
+                if (response.isSuccessful) {
+                    val audioList = response.body()?.audio_results
+                    if (!audioList.isNullOrEmpty()) {
+                        val mergedAudio = audioList.first().audio_base64
+                        updateAudio(mergedAudio)
+                    }
+                }
+            }
+            override fun onFailure(call: Call<GetTtsResponse>, t: Throwable) {
+                t.printStackTrace()
+            }
+        })
     }
 }

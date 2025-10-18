@@ -9,18 +9,18 @@ import retrofit2.http.Query
 // Retrofit API Interface
 interface ProcessApi {
 
-    @POST("/process/upload")
+    @POST("/process/upload/")
     fun uploadImage(
         @Body request: UploadImageRequest
     ): Call<UploadImageResponse>
 
-    @GET("/process/check_ocr_translation")
+    @GET("/process/check_ocr_translation/")
     fun checkOcrTranslationStatus(
         @Query("session_id") session_id: String,
         @Query("page_index") page_index: Int
     ): Call<CheckOcrTranslationResponse>
 
-    @GET("/process/check_tts")
+    @GET("/process/check_tts/")
     fun checkTtsStatus(
         @Query("session_id") session_id: String,
         @Query("page_index") page_index: Int

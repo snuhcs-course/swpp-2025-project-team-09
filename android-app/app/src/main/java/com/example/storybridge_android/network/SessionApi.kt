@@ -1,4 +1,4 @@
-package com.example.storybridge_android.network
+    package com.example.storybridge_android.network
 
 import retrofit2.Call
 import retrofit2.http.Body
@@ -46,8 +46,7 @@ interface SessionApi {
 
 // 2-1. Start Reading Session
 data class StartSessionRequest(
-    val user_id: String,
-    val page_index: Int
+    val user_id: String
 )
 
 data class StartSessionResponse(

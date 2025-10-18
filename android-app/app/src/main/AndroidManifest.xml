@@ -38,6 +38,9 @@
             android:name=".CameraActivity"
             android:exported="false" />
         <activity
+            android:name=".CameraSessionActivity"
+            android:exported="false" />
+        <activity
             android:name=".FinishActivity"
             android:exported="false" />
         <activity
