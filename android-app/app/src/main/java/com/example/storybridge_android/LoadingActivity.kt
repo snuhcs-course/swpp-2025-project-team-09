@@ -32,8 +32,7 @@ class LoadingActivity : AppCompatActivity() {
                     handler.postDelayed(this, updateInterval) // ✅ Long 타입 사용
                 } else {
                     // 다 차면 ReadingActivity로 이동
-                    startActivity(Intent(this@LoadingActivity, ReadingActivity::class.java))
-                    finish()
+                    navigateToReading()
                 }
             }
         }
@@ -42,8 +41,9 @@ class LoadingActivity : AppCompatActivity() {
 
 
     private fun navigateToReading() {
-        // TODO: ReadingActivity로 이동하는 로직 구현
-        // TODO: 일단 OCR + Translation 결과가 오면 이동
+        val intent = Intent(this, ReadingActivity::class.java)
+        startActivity(intent)
+        finish()
     }
 
     private fun showProgress() {

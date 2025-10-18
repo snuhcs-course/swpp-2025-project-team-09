@@ -25,4 +25,5 @@ class TopNavigationBar @JvmOverloads constructor(
     fun setOnSettingsClickListener(listener: () -> Unit) {
         findViewById<ImageView>(R.id.settingsIcon).setOnClickListener { listener() }
     }
+
 }
