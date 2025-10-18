@@ -10,7 +10,7 @@
     android:clipToPadding="false">
 
     <!-- 책 배경 -->
-    <View
+    <ImageView
         android:id="@+id/bookImage"
         android:layout_width="match_parent"
         android:layout_height="200dp"

@@ -118,7 +118,14 @@ class TTSModule:
                 instructions=instructions,
                 response_format=response_format
             )
+            audio_bytes = response.content
+            
+            with open(out_path, "wb") as f:
+                f.write(audio_bytes)
+            
             return round(time.time() - t0, 3), response.content
+        
+        
         except Exception as e:
             print(f"TTS error for {out_path.name}: {e}")
             return -1.0, None

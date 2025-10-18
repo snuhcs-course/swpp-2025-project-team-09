@@ -1,8 +1,0 @@
-<resources>
-    <declare-styleable name="Page">
-        <attr name="exampleStringPage" format="string" />
-        <attr name="exampleDimensionPAge" format="dimension" />
-        <attr name="exampleColorPage" format="color" />
-        <attr name="exampleDrawablePage" format="color|reference" />
-    </declare-styleable>
-</resources>

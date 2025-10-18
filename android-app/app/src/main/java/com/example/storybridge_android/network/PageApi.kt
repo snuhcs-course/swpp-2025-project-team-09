@@ -1,28 +1,34 @@
-package com.example.api
+package com.example.storybridge_android.network
 
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Query
+
 
 // Retrofit API Interface
 interface PageApi {
 
     @GET("/page/get_image")
     fun getImage(
-        @Body request: GetImageRequest
+        @Query("session_id") session_id: String,
+        @Query("page_index") page_index: Int
     ): Call<GetImageResponse>
 
     @GET("/page/get_ocr_translation")
     fun getOcrResults(
-        @Body request: GetOcrTranslationRequest
+        @Query("session_id") session_id: String,
+        @Query("page_index") page_index: Int
     ): Call<GetOcrTranslationResponse>
 
     @GET("/page/get_tts")
     fun getTtsResults(
-        @Body request: GetTtsRequest
+        @Query("session_id") session_id: String,
+        @Query("page_index") page_index: Int
     ): Call<GetTtsResponse>
 }
+
 
 // --------------------
 // Request / Response data classes

@@ -7,7 +7,9 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
-    const val BASE_URL = "http://10.0.2.2:8000" // 에뮬레이터 → 로컬 Django
+    //const val BASE_URL = "http://10.0.2.2:8000"
+    private const val BASE_URL = "https://flavia-mitotic-positively.ngrok-free.dev" // 사용할 때마다 바꿔줘야 하는듯
+
 
     private val logging = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
@@ -19,12 +21,16 @@ object RetrofitClient {
         .readTimeout(120, TimeUnit.SECONDS)
         .build()
 
-    val api: ProcessImageAPI by lazy {
+    private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .client(client)
             .build()
-            .create(ProcessImageAPI::class.java)
     }
+
+    val userApi: UserApi by lazy { retrofit.create(UserApi::class.java) }
+    val sessionApi: SessionApi by lazy { retrofit.create(SessionApi::class.java) }
+    val processApi: ProcessApi by lazy { retrofit.create(ProcessApi::class.java) }
+    val pageApi: PageApi by lazy { retrofit.create(PageApi::class.java) }
 }

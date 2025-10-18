@@ -1,9 +1,10 @@
-package com.example.api
+    package com.example.storybridge_android.network
 
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Query
 
 // Retrofit API Interface
 interface SessionApi {
@@ -25,17 +26,17 @@ interface SessionApi {
 
     @GET("/session/stats")
     fun getSessionStats(
-        @Body request: SessionStatsRequest
+        @Query("session_id") session_id: String
     ): Call<SessionStatsResponse>
 
     @GET("/session/info")
     fun getSessionInfo(
-        @Body request: SessionInfoRequest
+        @Query("session_id") session_id: String
     ): Call<SessionInfoResponse>
 
     @GET("/session/review")
     fun getSessionReview(
-        @Body request: SessionReviewRequest
+        @Query("session_id") session_id: String
     ): Call<SessionReviewResponse>
 }
 
@@ -45,8 +46,7 @@ interface SessionApi {
 
 // 2-1. Start Reading Session
 data class StartSessionRequest(
-    val user_id: String,
-    val page_index: Int
+    val user_id: String
 )
 
 data class StartSessionResponse(

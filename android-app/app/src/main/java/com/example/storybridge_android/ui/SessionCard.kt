@@ -17,7 +17,7 @@ class SessionCard @JvmOverloads constructor(
     private val bookImage: ImageView
     private val bookTitle: TextView
     private val bookProgress: TextView
-    private val nextButton: ImageView
+    private val nextButton: ConstraintLayout
 
     init {
         LayoutInflater.from(context).inflate(R.layout.card_item, this, true)

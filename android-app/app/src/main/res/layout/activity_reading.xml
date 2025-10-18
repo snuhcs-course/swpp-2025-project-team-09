@@ -19,6 +19,29 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- 페이지 메인 이미지 -->
+    <ImageView
+        android:id="@+id/pageImage"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:scaleType="fitCenter"
+        app:layout_constraintTop_toBottomOf="@id/topUi"
+        app:layout_constraintBottom_toTopOf="@id/bottomUi"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- 오디오 재생 버튼 -->
+    <ImageButton
+        android:id="@+id/playButton"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:backgroundTint="@color/white"
+        android:background="@drawable/rounded_button"
+        android:src="@android:drawable/ic_media_play"
+        app:layout_constraintBottom_toTopOf="@id/bottomUi"
+        app:layout_constraintEnd_toEndOf="parent"
+        />
+
     <!-- 상단 UI -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/topUi"

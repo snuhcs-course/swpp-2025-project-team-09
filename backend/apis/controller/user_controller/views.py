@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
 from apis.models.user_model import User
+from apis.models.session_model import Session
 import base64
 
 class UserRegisterView(APIView):
@@ -162,12 +163,9 @@ class UserInfoView(APIView):
     
     Endpoint: /user/info
 
-    - Request (GET)
+    - Request Example:
+        GET /user/info?device_info=SM-S901N
 
-        {
-        "device_info": "string",
-        }
-    
     - Response
 
         Status: 200 OK
@@ -179,7 +177,7 @@ class UserInfoView(APIView):
         "started_at": "datetime"
         }
     """
-
+    
     def get(self, request):
         device_info = request.query_params.get("device_info")
         if not device_info:
@@ -187,26 +185,32 @@ class UserInfoView(APIView):
 
         try:
             user = User.objects.get(device_info=device_info)
-            books = Book.objects.filter(user=user)
-            if not books.exists():
-                return Response(status=status.HTTP_404_NOT_FOUND)
+            sessions = Session.objects.filter(user=user)
+            if not sessions.exists():
+                return Response({
+                    "user_id": user.uid,
+                    "sessions": []
+                }, status=status.HTTP_200_OK)
 
             result = []
-            for book in books:
-                pages = Page.objects.filter(book=book)
+            for session in sessions:
+                pages = Page.objects.filter(session=session)
                 if pages.exists():
                     first_page = pages.first()
-                    image_path = first_page.image_url
-                    with open(image_path, "rb") as img_file:
-                        image_base64 = base64.b64encode(img_file.read()).decode("utf-8")
+                    image_path = first_page.img_url  # 필드명 맞게 변경
+                    try:
+                        with open(image_path, "rb") as img_file:
+                            image_base64 = base64.b64encode(img_file.read()).decode("utf-8")
+                    except FileNotFoundError:
+                        image_base64 = None
                 else:
                     image_base64 = None
 
                 result.append({
                     "user_id": user.uid,
-                    "title": book.title,
+                    "title": session.title,
                     "image_base64": image_base64,
-                    "started_at": book.created_at
+                    "started_at": session.created_at
                 })
 
             return Response(result, status=status.HTTP_200_OK)
@@ -216,5 +220,6 @@ class UserInfoView(APIView):
                 "error_code": 404,
                 "message": "USER__DEVICE_NOT_REGISTERED"
             }, status=status.HTTP_404_NOT_FOUND)
-        except Exception:
+        except Exception as e:
+            print("[DEBUG] UserInfoView error:", e)
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
