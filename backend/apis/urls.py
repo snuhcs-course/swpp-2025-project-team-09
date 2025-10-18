@@ -1,16 +1,15 @@
-from django.urls import path
-from .views import ProcessImageView as process_image_view
-from .views import BookListView as book_list_view
-from .views import PageListView as page_list_view
+from django.urls import path, include
 
-# URL routing for StoryBridge API endpoints
 urlpatterns = [
-    # POST /api/process_image/ : OCR → Translation → TTS pipeline for uploaded image
-    path('api/process_image/', process_image_view.as_view(), name='process_image'),
+    # routing to user controller
+    path("user/", include("apis.controller.user_controller.urls")),
 
-    # GET /api/books/<str:user_uid>/ : Retrieve list of books for a given user
-    path('api/books/<str:user_uid>/', book_list_view.as_view(), name='book_list'),
+    # routing to session controller
+    path("session/", include("apis.controller.session_controller.urls")),
 
-    # GET /api/pages/<int:book_id>/ : Retrieve list of pages belonging to a book
-    path('api/pages/<int:book_id>/', page_list_view.as_view(), name='page_list'),
+    # routing to process controller (OCR / TTS)
+    path("process/", include("apis.controller.process_controller.urls")),
+
+    # routing to page controller
+    path("page/", include("apis.controller.page_controller.urls")),
 ]

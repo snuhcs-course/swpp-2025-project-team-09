@@ -1,1 +1,12 @@
-# TODO
+django
+djangorestframework
+python-dotenv
+requests
+openai
+langchain-openai
+kss
+ffmpeg
+pip
+scikit-learn
+pydub
+langchain
