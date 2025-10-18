@@ -1,10 +1,11 @@
-package com.example.api
+package com.example.storybridge_android.network
 
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.PATCH
 import retrofit2.http.POST
+import retrofit2.http.Query
 
 // Retrofit API Interface
 interface UserApi {
@@ -26,7 +27,7 @@ interface UserApi {
 
     @GET("/user/info")
     fun userInfo(
-        @Body request: UserInfoRequest
+        @Query("device_info") device_info: String
     ): Call<UserInfoResponse>
 }
 

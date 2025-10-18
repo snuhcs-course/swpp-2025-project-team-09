@@ -1,9 +1,10 @@
-package com.example.api
+package com.example.storybridge_android.network
 
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Query
 
 // Retrofit API Interface
 interface ProcessApi {
@@ -15,12 +16,14 @@ interface ProcessApi {
 
     @GET("/process/check_ocr_translation")
     fun checkOcrTranslationStatus(
-        @Body request: CheckOcrTranslationRequest
+        @Query("session_id") session_id: String,
+        @Query("page_index") page_index: Int
     ): Call<CheckOcrTranslationResponse>
 
     @GET("/process/check_tts")
     fun checkTtsStatus(
-        @Body request: CheckTtsRequest
+        @Query("session_id") session_id: String,
+        @Query("page_index") page_index: Int
     ): Call<CheckTtsResponse>
 }
 

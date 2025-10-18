@@ -1,8 +1,0 @@
-<resources>
-    <declare-styleable name="TopNavigation">
-        <attr name="exampleStringTop" format="string" />
-        <attr name="exampleDimensionTop" format="dimension" />
-        <attr name="exampleColorTop" format="color" />
-        <attr name="exampleDrawableTop" format="color|reference" />
-    </declare-styleable>
-</resources>

@@ -1,6 +1,5 @@
 <resources>
     <string name="app_name">storybridge-android</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="story_bridge">Story Bridge</string>
+    <string name="story_bridge">story bridge</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

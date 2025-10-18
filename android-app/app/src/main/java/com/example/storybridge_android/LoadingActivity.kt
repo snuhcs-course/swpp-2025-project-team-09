@@ -6,11 +6,16 @@ import android.os.Handler
 import android.os.Looper
 import android.widget.ProgressBar
 import androidx.appcompat.app.AppCompatActivity
+import com.example.storybridge_android.network.*
 
 class LoadingActivity : AppCompatActivity() {
+
     private lateinit var loadingBar: ProgressBar
     private val handler = Handler(Looper.getMainLooper())
-    private var progress = 0
+    private var isPolling = true
+    private lateinit var sessionId: String
+    private var pageIndex: Int = 0
+    private var lang: String = "en"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -18,43 +23,62 @@ class LoadingActivity : AppCompatActivity() {
 
         loadingBar = findViewById(R.id.loadingBar)
 
-        // 3초 동안 0 → 100% 진행
-        val updateInterval = 30L      // ms 단위 (Long)
-        val totalDuration = 3000      // 전체 시간 (ms)
-        val steps = totalDuration / updateInterval   // 몇 번 업데이트 되는지
-        val stepSize = 100 / steps.toInt()           // 한 번 업데이트 시 증가할 퍼센트
+        sessionId = intent.getStringExtra("session_id") ?: "home"
+        pageIndex = intent.getIntExtra("page_index", 0)
+        lang = intent.getStringExtra("lang") ?: "en"
+
+        pollStatus()
+    }
+
+    private fun pollStatus() {
+        val api = MockApiClient
 
         val runnable = object : Runnable {
             override fun run() {
-                if (progress < 100) {
-                    progress += stepSize
-                    loadingBar.progress = progress
-                    handler.postDelayed(this, updateInterval) // ✅ Long 타입 사용
-                } else {
-                    // 다 차면 ReadingActivity로 이동
-                    startActivity(Intent(this@LoadingActivity, ReadingActivity::class.java))
-                    finish()
+                if (!isPolling) return
+
+                try {
+                    // MockApiClient는 즉시 응답 반환
+                    val response = api.checkOcrTranslationStatus(sessionId, pageIndex).execute()
+                    val body = response.body() ?: return
+
+                    loadingBar.progress = body.progress
+
+                    if (body.status == "ready") {
+                        isPolling = false
+                        fetchFinalResult()
+                    } else {
+                        // 다음 주기 재호출
+                        handler.postDelayed(this, 800)
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    handler.postDelayed(this, 1500)
                 }
             }
         }
+
         handler.post(runnable)
     }
 
-
-    private fun navigateToReading() {
-        // TODO: ReadingActivity로 이동하는 로직 구현
-        // TODO: 일단 OCR + Translation 결과가 오면 이동
+    private fun fetchFinalResult() {
+        val api = MockApiClient
+        try {
+            val req = UploadImageRequest(sessionId, pageIndex, lang, "")
+            val response = api.uploadImage(req).execute()
+            if (response.isSuccessful) {
+                val intent = Intent(this, ReadingActivity::class.java)
+                startActivity(intent)
+                finish()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
-    private fun showProgress() {
-        // TODO: 대략적인 프로그레스 바 형태로 진행도 보여주기
-    }
-
-    fun waifForServerResponse(){
-        // TODO: OCR, TTS 진행도를 서버에서 받아오기
-    }
-
-    fun onApiResponse(){
-
+    override fun onDestroy() {
+        super.onDestroy()
+        isPolling = false
+        handler.removeCallbacksAndMessages(null)
     }
 }
