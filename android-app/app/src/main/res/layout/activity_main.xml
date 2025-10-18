@@ -7,20 +7,49 @@
     android:layout_height="match_parent"
     android:background="@color/white">
 
-    <!-- TopNavigationBar 추가 -->
-    <com.example.storybridge_android.ui.TopNavigationBar
-        android:id="@+id/topNavigationBar"
-        android:layout_width="0dp"
+    <!-- 고정 헤더 영역 -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/topNav"
+        android:layout_width="match_parent"
         android:layout_height="120dp"
+        android:background="@color/gray_light"
+        android:paddingStart="32dp"
+        android:paddingEnd="32dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- 헤더의 내부 요소 1: 앱 이름 -->
+        <TextView
+            android:id="@+id/appNameTextView"
+            style="@style/BoldText48"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Story Bridge"
+            android:textColor="@color/black"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"/>
+
+        <!-- 헤더의 내부 요소 2: 설정 아이콘 -->
+        <ImageView
+            android:id="@+id/settingsIcon"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:padding="8dp"
+            android:background="@drawable/circle_gray"
+            android:src="@drawable/ic_settings"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- ScrollView -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@id/topNavigationBar"
+        app:layout_constraintTop_toBottomOf="@id/topNav"
         app:layout_constraintBottom_toBottomOf="parent"
         android:paddingStart="36dp"
         android:paddingEnd="36dp">

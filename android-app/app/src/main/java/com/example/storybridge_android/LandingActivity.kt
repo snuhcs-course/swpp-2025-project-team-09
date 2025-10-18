@@ -23,8 +23,7 @@ class LandingActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_landing_first)
 
-        // 시스템 바 padding 적용
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.landing)) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
