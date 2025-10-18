@@ -76,7 +76,10 @@ class ProcessUploadView(APIView):
         tts = TTSModule()
 
         for i, para in enumerate(ocr_result, 1):
-            page = {"fileName": f"{session_id}_{page_index}_{i}.jpg", "text": para}
+            page = {
+                "fileName": f"{session_id}_{page_index}_{i}.jpg",
+                "text": para.get("text", "")
+            }
             tasks.append(tts.process_paragraph(page, log_csv=True, check_latency=True))
 
         loop = asyncio.new_event_loop()
@@ -115,21 +118,17 @@ class ProcessUploadView(APIView):
         )
         print(len(ocr_result), len(tts_audio))
         # BB 데이터 저장
-        for i, para_text in enumerate(ocr_result):
+        for i, para in enumerate(ocr_result):
+            para_text = para.get("text", "")
+            bbox = para.get("bbox", {})
             para_audio = tts_audio[i] if i < len(tts_audio) else []
             para_translated = paras_translations[i] if i < len(paras_translations) else ""
             BB.objects.create(
                 page=page,
                 original_text=para_text,
                 audio_base64=[base64.b64encode(a).decode("utf-8") for a in para_audio],
-                translated_text=para_translated
-                # TODO: Add position info
-                # position={
-                #     "x": field.get("x", 0),
-                #     "y": field.get("y", 0),
-                #     "width": field.get("width", 0),
-                #     "height": field.get("height", 0),
-                # }
+                translated_text=para_translated,
+                coordinates=bbox
             )
         session.totalPages += 1
         session.save()
