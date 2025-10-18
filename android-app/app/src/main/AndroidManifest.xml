@@ -49,6 +49,9 @@
         <activity
             android:name=".VoiceSelectActivity"
             android:exported="false" />
+        <activity
+            android:name=".SettingActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

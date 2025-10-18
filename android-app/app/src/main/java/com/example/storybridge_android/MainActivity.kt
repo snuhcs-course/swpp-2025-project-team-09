@@ -12,7 +12,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.example.storybridge_android.network.MockApiClient
 import com.example.storybridge_android.network.RetrofitClient
 import com.example.storybridge_android.network.UserInfoResponse
 import com.example.storybridge_android.ui.TopNavigationBar
@@ -51,8 +50,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadSessionCard() {
-        val deviceInfo = android.os.Build.MODEL
-        val call = MockApiClient.userInfo(deviceInfo)
+        val deviceInfo = android.provider.Settings.Secure.getString(
+            contentResolver,
+            android.provider.Settings.Secure.ANDROID_ID
+        )
+        val call = RetrofitClient.userApi.userInfo(deviceInfo)
+
+        val container = findViewById<LinearLayout>(R.id.cardContainer)
+        val emptyContainer = findViewById<LinearLayout>(R.id.emptyContainer)
 
         call.enqueue(object : Callback<UserInfoResponse> {
             override fun onResponse(
@@ -61,29 +66,44 @@ class MainActivity : AppCompatActivity() {
             ) {
                 if (response.isSuccessful) {
                     val data = response.body()
-                    if (data != null) {
-                        val container = findViewById<LinearLayout>(R.id.cardContainer)
-                        val sessionCard = SessionCard(this@MainActivity)
-                        sessionCard.setBookTitle(data.title)
-                        sessionCard.setBookProgress("Started: ${data.started_at}")
-                        sessionCard.setOnNextClickListener { navigateToLoadingSession() }
 
+                    if (data == null || data.title.isNullOrEmpty() || data.started_at.isNullOrEmpty()) {
+                        container.visibility = LinearLayout.GONE
+                        emptyContainer.visibility = LinearLayout.VISIBLE
+                        return
+                    }
+
+                    container.removeAllViews()
+                    val sessionCard = SessionCard(this@MainActivity)
+                    sessionCard.setBookTitle(data.title)
+                    sessionCard.setBookProgress("Started: ${data.started_at}")
+                    sessionCard.setOnNextClickListener { navigateToLoadingSession() }
+
+                    if (!data.image_base64.isNullOrEmpty()) {
                         val imageBytes = Base64.decode(data.image_base64, Base64.DEFAULT)
                         val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
                         sessionCard.findViewById<ImageView>(R.id.bookImage).setImageBitmap(bitmap)
-
-                        container.addView(sessionCard)
                     }
+
+                    container.addView(sessionCard)
+                    container.visibility = LinearLayout.VISIBLE
+                    emptyContainer.visibility = LinearLayout.GONE
+
                 } else {
                     Log.e("MainActivity", "Error: ${response.code()}")
+                    container.visibility = LinearLayout.GONE
+                    emptyContainer.visibility = LinearLayout.VISIBLE
                 }
             }
 
             override fun onFailure(call: Call<UserInfoResponse>, t: Throwable) {
                 Log.e("MainActivity", "API failed: ${t.message}")
+                container.visibility = LinearLayout.GONE
+                emptyContainer.visibility = LinearLayout.VISIBLE
             }
         })
     }
+
 
     /**
      * TopNavigationBar의 클릭 이벤트 연결

@@ -7,10 +7,8 @@ import android.os.Looper
 import android.widget.Button
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.example.storybridge_android.network.MockApiClient
 import com.example.storybridge_android.network.RetrofitClient
 import com.example.storybridge_android.network.UserLoginResponse
 import com.example.storybridge_android.network.UserRegisterResponse
@@ -71,7 +69,6 @@ class LandingActivity : AppCompatActivity() {
 
     private fun registerNewUser(deviceId: String) {
         val api = RetrofitClient.userApi
-        // val api = MockApiClient
         val registerReq = UserRegisterRequest(device_info = deviceId, language_preference = "en")
 
         api.userRegister(registerReq).enqueue(object : Callback<UserRegisterResponse> {

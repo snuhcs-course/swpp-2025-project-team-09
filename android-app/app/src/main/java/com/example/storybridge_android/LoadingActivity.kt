@@ -7,6 +7,11 @@ import android.os.Looper
 import android.widget.ProgressBar
 import androidx.appcompat.app.AppCompatActivity
 import com.example.storybridge_android.network.*
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import com.example.storybridge_android.network.CheckOcrTranslationResponse
+import com.example.storybridge_android.network.UploadImageResponse
 
 class LoadingActivity : AppCompatActivity() {
 
@@ -31,50 +36,65 @@ class LoadingActivity : AppCompatActivity() {
     }
 
     private fun pollStatus() {
-        val api = MockApiClient
+        val api = RetrofitClient.processApi
+        var runnable: Runnable? = null
 
-        val runnable = object : Runnable {
-            override fun run() {
-                if (!isPolling) return
+        runnable = Runnable {
+            if (!isPolling) return@Runnable
 
-                try {
-                    // MockApiClient는 즉시 응답 반환
-                    val response = api.checkOcrTranslationStatus(sessionId, pageIndex).execute()
-                    val body = response.body() ?: return
+            api.checkOcrTranslationStatus(sessionId, pageIndex)
+                .enqueue(object : Callback<CheckOcrTranslationResponse> {
+                    override fun onResponse(
+                        call: Call<CheckOcrTranslationResponse>,
+                        response: Response<CheckOcrTranslationResponse>
+                    ) {
+                        val body = response.body() ?: return
+                        loadingBar.progress = body.progress
 
-                    loadingBar.progress = body.progress
-
-                    if (body.status == "ready") {
-                        isPolling = false
-                        fetchFinalResult()
-                    } else {
-                        // 다음 주기 재호출
-                        handler.postDelayed(this, 800)
+                        if (body.status == "ready") {
+                            isPolling = false
+                            fetchFinalResult()
+                        } else {
+                            handler.postDelayed(runnable!!, 800)
+                        }
                     }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    handler.postDelayed(this, 1500)
-                }
-            }
+
+                    override fun onFailure(
+                        call: Call<CheckOcrTranslationResponse>,
+                        t: Throwable
+                    ) {
+                        t.printStackTrace()
+                        handler.postDelayed(runnable!!, 1500)
+                    }
+                })
         }
 
         handler.post(runnable)
     }
 
+
     private fun fetchFinalResult() {
-        val api = MockApiClient
-        try {
-            val req = UploadImageRequest(sessionId, pageIndex, lang, "")
-            val response = api.uploadImage(req).execute()
-            if (response.isSuccessful) {
-                val intent = Intent(this, ReadingActivity::class.java)
-                startActivity(intent)
-                finish()
+        val api = RetrofitClient.processApi
+        val req = UploadImageRequest(sessionId, pageIndex, lang, "")
+
+        api.uploadImage(req).enqueue(object : Callback<UploadImageResponse> {
+            override fun onResponse(
+                call: Call<UploadImageResponse>,
+                response: Response<UploadImageResponse>
+            ) {
+                if (response.isSuccessful) {
+                    val intent = Intent(this@LoadingActivity, ReadingActivity::class.java)
+                    startActivity(intent)
+                    finish()
+                }
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+
+            override fun onFailure(call: Call<UploadImageResponse>, t: Throwable) {
+                t.printStackTrace()
+            }
+        })
     }
+
 
     override fun onDestroy() {
         super.onDestroy()
