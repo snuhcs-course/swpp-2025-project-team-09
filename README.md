@@ -58,8 +58,7 @@ During Iteration 2, we successfully implemented almost all of the features we in
 
 Although the core features are in place, a few enhancements are planned to fully complete the initial goals:
 
-- **Bounding Box & Audio Details**: Fine-tune bounding box handling and audio playback per detected text region.  
-- **Settings.kt & Finish.kt Content**: Add additional content and UI enhancements to settings and session finish screens.  
+- **Bounding Box & Audio Details**: Fine-tune bounding box handling and audio playback per detected text region.
 - **Session Navigation & Review**: Implement navigation to previous pages within a session and the ability to review past sessions.
 
 Once these improvements are added, all features originally targeted for this project will be fully implemented.
