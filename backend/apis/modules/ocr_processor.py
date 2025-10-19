@@ -12,8 +12,8 @@ load_dotenv()
 
 class OCRModule:
     def __init__(self, conf_threshold: float = 0.8):
-        self.api_url = ''
-        self.secret_key = ''
+        self.api_url = os.getenv("OCR_API_URL", "")
+        self.secret_key = os.getenv("OCR_SECRET", "")
         self.conf_threshold = conf_threshold
 
     def _filter_low_confidence(self, result_json: Dict[str, Any]) -> Dict[str, Any]:
