@@ -14,7 +14,7 @@ interface ProcessApi {
         @Body request: UploadImageRequest
     ): Call<UploadImageResponse>
 
-    @GET("/process/check_ocr_translation/")
+    @GET("/process/check_ocr/")
     fun checkOcrTranslationStatus(
         @Query("session_id") session_id: String,
         @Query("page_index") page_index: Int

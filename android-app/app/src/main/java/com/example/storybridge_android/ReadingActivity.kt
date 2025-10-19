@@ -127,6 +127,7 @@ class ReadingActivity : AppCompatActivity() {
             if (child.tag == "bbox") mainLayout.removeViewAt(i)
         }
         for (box in bboxes) {
+            android.util.Log.d("BB_DEBUG",  "text: '${box.text}'")
             val boxView = TextView(this).apply {
                 text = box.text
                 setBackgroundColor(getColor(R.color.black_50))

@@ -10,19 +10,19 @@ import retrofit2.http.Query
 // Retrofit API Interface
 interface PageApi {
 
-    @GET("/page/get_image")
+    @GET("/page/get_image/")
     fun getImage(
         @Query("session_id") session_id: String,
         @Query("page_index") page_index: Int
     ): Call<GetImageResponse>
 
-    @GET("/page/get_ocr_translation")
+    @GET("/page/get_ocr/")
     fun getOcrResults(
         @Query("session_id") session_id: String,
         @Query("page_index") page_index: Int
     ): Call<GetOcrTranslationResponse>
 
-    @GET("/page/get_tts")
+    @GET("/page/get_tts/")
     fun getTtsResults(
         @Query("session_id") session_id: String,
         @Query("page_index") page_index: Int
