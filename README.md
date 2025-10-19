@@ -1,12 +1,32 @@
-# StoryBridge Iteration 2 demo
+# StoryBridge Iteration 2 Demo
 
-## Demo video
+## Demo Video
 [Google Drive Video Link](https://drive.google.com/file/d/1--f2O0EBmdfJ4LIOAiRf4Nkua0eDT1nl/view?usp=sharing)
-<br><br>
-## How to run
+
+## How to Run
+
 To demonstrate the app with a local backend, we used **ngrok** to expose the backend server to your mobile emulator. Make sure the mobile device is connected to the same Wi-Fi as your local machine.
 
-### 1. Start Django Backend
+### 1. Install Dependencies
+Before running the backend, install the required Python packages. Open a terminal and run:
+
+```bash
+cd backend
+pip install -r requirements.txt
+```
+### 2. Configure Environment Variables
+
+Create a .env file inside the backend folder with the following content:
+
+```bash
+OPENAI_API_KEY=<your_api_key>
+OCR_API_URL=<your_api_url>
+OCR_SECRET=<your_api_key>
+```
+
+This allows the backend to access OpenAI and Clova OCR services.
+
+### 3. Start Django Backend
 Open a terminal and run:
 
 ```bash
@@ -15,7 +35,7 @@ python manage.py runserver 0.0.0.0:8000
 ```
 This will start the Django development server accessible on your local network.
 
-### 2. Start ngrok
+### 4. Start ngrok
 In a separate terminal, run:
 ```bash
 cd backend
@@ -37,12 +57,12 @@ ngrok http 8000
 ```
 <img width="792" height="190" alt="Screenshot 2025-10-19 at 8 25 03 PM" src="https://github.com/user-attachments/assets/ca11b776-0a4a-44cd-a73a-67f7b4d8dc4f" />
 
-### 3. Accessing the Web Interface
+### 5. Accessing the Web Interface
 - ngrok provides a **Web Interface** where you can monitor incoming HTTP requests.
 - The **Forwarding URL** should be used as the `BASE_URL` in `RetrofitClient` in your Android app.
   <img width="679" height="83" alt="Screenshot 2025-10-19 at 8 24 15 PM" src="https://github.com/user-attachments/assets/6ee35e3c-b1d7-4623-8c6d-6b524cb76d1d" />
 
-### 4. Demo
+### 6. Demo
 Once ngrok is running, you can run the Android emulator or connect a physical device to the same Wi-Fi. All API calls will be forwarded to your local backend via the ngrok URL.
 
 <br><br>
