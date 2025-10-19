@@ -10,3 +10,4 @@ pip
 scikit-learn
 pydub
 langchain
+pyngrok

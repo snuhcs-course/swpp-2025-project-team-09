@@ -16,17 +16,15 @@ import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import com.example.storybridge_android.network.GetImageResponse
 import com.example.storybridge_android.network.GetOcrTranslationResponse
 import com.example.storybridge_android.network.GetTtsResponse
 import com.example.storybridge_android.network.RetrofitClient
-import java.io.File
-import java.io.FileOutputStream
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.io.File
+import java.io.FileOutputStream
 
 class ReadingActivity : AppCompatActivity() {
 
@@ -43,6 +41,9 @@ class ReadingActivity : AppCompatActivity() {
     private var mediaPlayer: MediaPlayer? = null
     private var pageBitmap: Bitmap? = null
 
+    // 🔹 순차 재생용
+    private var audioQueue: List<String> = emptyList()
+    private var currentAudioIndex = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -84,7 +85,7 @@ class ReadingActivity : AppCompatActivity() {
         closeButton.setOnClickListener { toggleOverlay(false) }
         dimBackground.setOnClickListener { toggleOverlay(false) }
         finishButton.setOnClickListener { navigateToFinish() }
-        //playButton.setOnClickListener { playAudio() }
+        // playButton 클릭 리스너는 updateAudioSequential에서 설정
     }
 
     private fun navigateToFinish() {
@@ -131,7 +132,6 @@ class ReadingActivity : AppCompatActivity() {
         val pageImage = findViewById<ImageView>(R.id.pageImage)
         if (pageImage.drawable == null) return
 
-        // 기존 바운딩 박스 제거
         for (i in mainLayout.childCount - 1 downTo 0) {
             val child = mainLayout.getChildAt(i)
             if (child.tag == "bbox") mainLayout.removeViewAt(i)
@@ -139,12 +139,6 @@ class ReadingActivity : AppCompatActivity() {
 
         val imageMatrix = pageImage.imageMatrix
         for (box in bboxes) {
-            // 좌표 로그 출력
-            android.util.Log.d(
-                "BoundingBoxDebug",
-                "Box: text='${box.text}', x=${box.x}, y=${box.y}, width=${box.width}, height=${box.height}"
-            )
-
             val rect = RectF(
                 box.x.toFloat(),
                 box.y.toFloat(),
@@ -171,7 +165,6 @@ class ReadingActivity : AppCompatActivity() {
             mainLayout.addView(boxView)
         }
     }
-
 
     private fun toggleUI() {
         if (uiVisible) {
@@ -203,75 +196,73 @@ class ReadingActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * 오디오 데이터를 디코딩하고 재생 버튼 활성화
-     */
-    private fun updateAudio(base64Audio: String) {
-        val playButton = findViewById<ImageButton>(R.id.playButton)
-        val audioFile = File(cacheDir, "temp_audio.mp3")
+    // -------------------
+    // 🔹 오디오 순차 재생
+    // -------------------
 
+    private fun updateAudioSequential(audioBase64List: List<String>) {
+        if (audioBase64List.isEmpty()) {
+            disablePlayButton()
+            return
+        }
+
+        audioQueue = audioBase64List
+        currentAudioIndex = 0
+
+        val playButton = findViewById<ImageButton>(R.id.playButton)
+        playButton.isEnabled = true
+        playButton.setOnClickListener {
+            playNextAudio()
+        }
+    }
+
+    private fun playNextAudio() {
+        if (currentAudioIndex >= audioQueue.size) {
+            currentAudioIndex = 0
+            return
+        }
+
+        val base64Audio = audioQueue[currentAudioIndex]
+        val audioFile = File(cacheDir, "temp_audio_$currentAudioIndex.mp3")
         try {
             val audioBytes = Base64.decode(base64Audio, Base64.DEFAULT)
             FileOutputStream(audioFile).use { it.write(audioBytes) }
 
-            // 버튼 활성화 및 클릭 리스너 설정
-            playButton.isEnabled = true
-            playButton.setOnClickListener {
-                playAudio(audioFile)
-            }
-
-            android.util.Log.d("AudioDebug", "Audio file saved and play button enabled")
-        } catch (e: Exception) {
-            e.printStackTrace()
-            android.util.Log.e("AudioDebug", "Failed to decode/save audio", e)
-            disablePlayButton()
-        }
-    }
-
-    /**
-     * 실제 MediaPlayer로 오디오 재생
-     */
-    private fun playAudio(audioFile: File) {
-        try {
-            mediaPlayer?.release() // 기존 재생 종료
-
+            mediaPlayer?.release()
             mediaPlayer = MediaPlayer().apply {
                 setDataSource(audioFile.absolutePath)
                 setOnPreparedListener { start() }
-                setOnCompletionListener { release() }
+                setOnCompletionListener {
+                    currentAudioIndex++
+                    playNextAudio()
+                }
                 prepareAsync()
             }
 
-            android.util.Log.d("AudioDebug", "Playing audio: ${audioFile.absolutePath}")
         } catch (e: Exception) {
             e.printStackTrace()
-            android.util.Log.e("AudioDebug", "Failed to play audio", e)
         }
     }
 
-    /**
-     * 버튼 비활성화 공통 함수
-     */
     private fun disablePlayButton() {
         val playButton = findViewById<ImageButton>(R.id.playButton)
         playButton.isEnabled = false
         playButton.setOnClickListener(null)
-        android.util.Log.d("AudioDebug", "Play button disabled")
     }
 
+    // -------------------
+    // 🔹 서버 통신
+    // -------------------
 
     private fun fetchPageData() {
-        fetchImage() // OCR은 image 완료 후 호출
+        fetchImage()
     }
 
     private fun fetchImage() {
         pageApi.getImage(sessionId, pageIndex).enqueue(object : Callback<GetImageResponse> {
             override fun onResponse(call: Call<GetImageResponse>, response: Response<GetImageResponse>) {
                 if (response.isSuccessful) {
-                    val imageBase64 = response.body()?.image_base64
-                    displayPage(imageBase64)
-
-                    // ✅ image 세팅 완료 후 OCR fetch
+                    displayPage(response.body()?.image_base64)
                     fetchOcrResults()
                     fetchTtsResults()
                 }
@@ -282,80 +273,54 @@ class ReadingActivity : AppCompatActivity() {
         })
     }
 
-
     private fun fetchOcrResults() {
         pageApi.getOcrResults(sessionId, pageIndex).enqueue(object : Callback<GetOcrTranslationResponse> {
             override fun onResponse(call: Call<GetOcrTranslationResponse>, response: Response<GetOcrTranslationResponse>) {
                 if (response.isSuccessful) {
                     val ocrList = response.body()?.ocr_results
-                    // 📌 response 전체 로그
-                    android.util.Log.d("BoundingBoxDebug", "OCR Response: ${response.body()}")
-
                     val boxes = ocrList?.mapNotNull {
                         it.bbox?.let { box ->
                             BoundingBox(box.x, box.y, box.width, box.height, it.translation_txt)
                         }
                     } ?: emptyList()
-
-                    // 📌 만들어진 BoundingBox 리스트 로그
-                    android.util.Log.d("BoundingBoxDebug", "Bounding boxes: ${boxes.map { "${it.text}(${it.x},${it.y},${it.width},${it.height})" }}")
-
                     if (boxes.isNotEmpty()) {
                         findViewById<ImageView>(R.id.pageImage).post {
                             displayBB(boxes)
                         }
                     }
-                } else {
-                    android.util.Log.e("BoundingBoxDebug", "OCR Response not successful: ${response.code()} / ${response.message()}")
                 }
             }
-
-            override fun onFailure(call: Call<GetOcrTranslationResponse>, t: Throwable) {
-                android.util.Log.e("BoundingBoxDebug", "OCR Request failed", t)
-            }
+            override fun onFailure(call: Call<GetOcrTranslationResponse>, t: Throwable) {}
         })
     }
-
 
     private fun fetchTtsResults() {
         pageApi.getTtsResults(sessionId, pageIndex).enqueue(object : Callback<GetTtsResponse> {
             override fun onResponse(call: Call<GetTtsResponse>, response: Response<GetTtsResponse>) {
                 if (response.isSuccessful) {
                     val audioList = response.body()?.audio_results
-
                     if (!audioList.isNullOrEmpty()) {
-                        // 서버에서 내려주는 리스트 중 첫 번째 bbox, 첫 번째 오디오 사용
-                        val mergedAudio = audioList.first().audio_base64_list.firstOrNull()
-                        if (!mergedAudio.isNullOrEmpty()) {
-                            android.util.Log.d("AudioDebug", "Received audio, enabling button")
-                            updateAudio(mergedAudio)
+                        val fullAudioList = audioList.flatMap { it.audio_base64_list }
+                        if (fullAudioList.isNotEmpty()) {
+                            updateAudioSequential(fullAudioList)
                         } else {
-                            android.util.Log.d("AudioDebug", "audio_base64_list is empty for bbox_index=${audioList.first().bbox_index}")
-                            // 버튼 비활성화
-                            val playButton = findViewById<ImageButton>(R.id.playButton)
-                            playButton.isEnabled = false
-                            playButton.setOnClickListener(null)
+                            disablePlayButton()
                         }
                     } else {
-                        android.util.Log.d("AudioDebug", "audio_results is empty")
-                        val playButton = findViewById<ImageButton>(R.id.playButton)
-                        playButton.isEnabled = false
-                        playButton.setOnClickListener(null)
+                        disablePlayButton()
                     }
                 } else {
-                    android.util.Log.e("AudioDebug", "TTS Response not successful: ${response.code()} / ${response.message()}")
-                    val playButton = findViewById<ImageButton>(R.id.playButton)
-                    playButton.isEnabled = false
-                    playButton.setOnClickListener(null)
+                    disablePlayButton()
                 }
             }
-
             override fun onFailure(call: Call<GetTtsResponse>, t: Throwable) {
-                android.util.Log.e("AudioDebug", "TTS Request failed", t)
-                val playButton = findViewById<ImageButton>(R.id.playButton)
-                playButton.isEnabled = false
-                playButton.setOnClickListener(null)
+                disablePlayButton()
             }
         })
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mediaPlayer?.release()
     }
 }
