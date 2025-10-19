@@ -91,7 +91,7 @@ data class GetTtsRequest(
 
 data class AudioResult(
     val bbox_index: Int,
-    val audio_base64: String
+    val audio_base64_list: List<String> // 단일 String이 아닌 List<String>
 )
 
 data class GetTtsResponse(
