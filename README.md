@@ -4,7 +4,7 @@ For multicultural children to thrive, early exposure to all languages, especiall
 
 **StoryBridge** directly addresses this need by transforming any physical picture book into a **multilingual, interactive resource**, ensuring that reading is inclusive and accessible by delivering translations in the child's home language alongside the original Korean. Going beyond simple text overlays, the application utilizes advanced **Emotional Text-to-Speech (TTS)** to provide a deeply engaging and expressive narration, helping children form a strong, emotional, and cognitive connection with the story in both their native tongue and Korean, making story time a dynamic and comprehensive learning experience.
 
-![Fairytale-like book image](https://images.unsplash.com/photo-1519791883288-dc8bd696e667?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=4800)
+<img src="https://images.unsplash.com/photo-1519791883288-dc8bd696e667?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=4800" alt="Fairytale-like book image" width="500">
 
 ## Features
 
