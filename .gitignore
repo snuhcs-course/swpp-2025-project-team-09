@@ -32,7 +32,7 @@ android-app/captures/
 android-app/.externalNativeBuild
 # android-app/.cxx: C++ 빌드 관련 파일
 android-app/.cxx
-
+android-app/.idea/
 
 # Specific temporary/cache files
 # *.jpeg: 모든 .jpeg 파일을 무시 (대용량 바이너리 파일을 Git으로 추적하지 않기 위함)
