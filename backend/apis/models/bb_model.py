@@ -11,8 +11,7 @@ class BB(models.Model):
     original_text = models.TextField()
     translated_text = models.TextField(null=True, blank=True)
     audio_base64 = models.JSONField(default=list, blank=True)
-    # TODO: Add position fields (x, y, width, height) as needed
-    #position = models.JSONField(default=dict, blank=True)
+    coordinates = models.JSONField(default=dict, blank=True)
 
     def __str__(self):
         return f"BB of Page {self.page.id}"
@@ -26,5 +25,16 @@ class BB(models.Model):
         self.save()
 
     def updatePosition(self, new_position):
-        self.position = new_position
+        if not isinstance(self.coordinates, dict):
+            self.coordinates = {}
+        self.coordinates.update(new_position)
         self.save()
+
+    @property
+    def points(self):
+        return [
+            (self.coordinates.get("x1"), self.coordinates.get("y1")),
+            (self.coordinates.get("x2"), self.coordinates.get("y2")),
+            (self.coordinates.get("x3"), self.coordinates.get("y3")),
+            (self.coordinates.get("x4"), self.coordinates.get("y4")),
+        ]

@@ -126,7 +126,6 @@ class PageGetOCRView(APIView):
         page_index = request.query_params.get("page_index")
         if not session_id or page_index is None:
             return Response(status=status.HTTP_400_BAD_REQUEST)
-        print("session_id:", session_id, "page_index:", page_index)
         try:
             page = Page.objects.filter(session_id=session_id).order_by("id")[int(page_index)]
 
@@ -135,8 +134,7 @@ class PageGetOCRView(APIView):
             ocr_results = []
             for bb in bbs:
                 ocr_results.append({
-                    # TODO: bbox 정보 추가
-                    #"bbox": bb.position,
+                    "bbox": bb.coordinates,
                     "original_txt": bb.original_text,
                     "translation_txt": bb.translated_text
                 })

@@ -80,6 +80,8 @@ class OCRModule:
                         "text": text,
                         "x": float(np.mean(xs)),
                         "y": float(np.mean(ys)),
+                        "xs": xs,
+                        "ys": ys,
                     }
                 )
 
@@ -123,12 +125,33 @@ class OCRModule:
                 line_tokens.sort(key=lambda t: t["x"])
                 line_text = " ".join(t["text"] for t in line_tokens)
                 y_mean = np.mean([t["y"] for t in line_tokens])
-                lines.append({"text": line_text, "y": y_mean})
+                xs = []
+                ys = []
+                for tkn in line_tokens:
+                    xs.extend(tkn["xs"])
+                    ys.extend(tkn["ys"])
+                lines.append({"text": line_text, "y": y_mean, "xs": xs, "ys": ys})
 
             # Sort lines vertically and join into paragraph text
             lines_sorted = sorted(lines, key=lambda l: l["y"])
             paragraph_text = "\n".join(l["text"] for l in lines_sorted)
-            results.append(paragraph_text.strip())
+
+            # Calculate bbox from all vertices in paragraph
+            xs = []
+            ys = []
+            for l in lines_sorted:
+                xs.extend(l["xs"])
+                ys.extend(l["ys"])
+
+            x_min, x_max = float(min(xs)), float(max(xs))
+            y_min, y_max = float(min(ys)), float(max(ys))
+            bbox = {
+                "x1": x_min, "y1": y_min,
+                "x2": x_max, "y2": y_min,
+                "x3": x_max, "y3": y_max,
+                "x4": x_min, "y4": y_max,
+            }
+            results.append({"text": paragraph_text.strip(), "bbox": bbox})
 
         return results
 
@@ -150,66 +173,3 @@ class OCRModule:
         paragraphs = self._parse_infer_text(result)
 
         return paragraphs
-
-# # --- Prompt Templates ---
-
-# TRANSLATION_PROMPT = """
-# You are an expert multilingual children's-story adapter.
-# You will be given a block of Korean text that may contain up to three parts: [PREVIOUS], [CURRENT], and [NEXT].
-# Your task is to translate ONLY the [CURRENT] Korean sentence into a single, fluent {target_lang} sentence.
-# Use the [PREVIOUS] and [NEXT] sentences for context to ensure pronouns, flow, and style are correct.
-# """
-
-# class Translation(BaseModel):
-#     """A single, fluent translation of a Korean sentence."""
-#     translated_text: str = Field(..., description="The translated sentence in the target language.", alias="translation")
-
-# class TranslationProcessor:
-#     def __init__(self, out_dir="out_audio", log_dir="log", target_lang: str = "English"):
-#         self.client = AsyncOpenAI()
-#         self.TTS_MODEL = "gpt-4o-mini-tts"
-#         self.OUT_DIR = Path(out_dir)
-#         self.LOG_DIR = Path(log_dir)
-#         self.CSV_LOG = self.LOG_DIR / "sentence_log.csv"
-        
-#         self.target_lang = target_lang
-#         self.llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
-#         self.translation_chain = self._create_translation_chain()
-#         self.sentiment_chain = self._create_sentiment_chain()
-
-#         # Reset dirs each run
-#         if self.OUT_DIR.exists(): shutil.rmtree(self.OUT_DIR)
-#         if self.LOG_DIR.exists(): shutil.rmtree(self.LOG_DIR)
-#         self.OUT_DIR.mkdir(parents=True)
-#         self.LOG_DIR.mkdir(parents=True)
-
-#     def _create_translation_chain(self):
-#         prompt = ChatPromptTemplate.from_messages([
-#             ("system", TRANSLATION_PROMPT),
-#             ("user", "{text_with_context}")
-#         ])
-#         return prompt | self.llm.with_structured_output(Translation)
-
-#     def _create_sentiment_chain(self):
-#         prompt = ChatPromptTemplate.from_messages([
-#             ("system", SENTIMENT_PROMPT),
-#             ("user", "{korean_text}")
-#         ])
-#         return prompt | self.llm.with_structured_output(Sentiment)
-    
-#     async def translate(self, text_with_context: str) -> Dict[str, Any]:
-#         for attempt in range(3):
-#             try:
-#                 t0 = time.time()
-#                 response = await self.translation_chain.ainvoke({
-#                     "text_with_context": text_with_context,
-#                     "target_lang": self.target_lang
-#                 })
-#                 latency = time.time() - t0
-#                 return {"result": response, "latency": round(latency, 3)}
-#             except Exception as e:
-#                 print(f"Translation attempt {attempt + 1} failed: {e}")
-#                 if attempt == 2:
-#                     return {"result": e, "latency": -1.0}
-#                 await asyncio.sleep(0.7)
-#         return {"result": None, "latency": -1.0}

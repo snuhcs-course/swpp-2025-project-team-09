@@ -37,12 +37,15 @@ class Page(models.Model):
                 page=self,
                 original_text=bbox.get("text", ""),
                 translated_text=translated_list[i] if i < len(translated_list) else "",
-                audio_base64=audio_list[i] if i < len(audio_list) else ""
-                # TODO: Add position info
-                # position={
-                #     "x": bbox.get("x"),
-                #     "y": bbox.get("y"),
-                #     "width": bbox.get("width"),
-                #     "height": bbox.get("height")
-                # }
+                audio_base64=audio_list[i] if i < len(audio_list) else "",
+                coordinates={
+                    "x1": bbox.get("x1"),
+                    "y1": bbox.get("y1"),
+                    "x2": bbox.get("x2"),
+                    "y2": bbox.get("y2"),
+                    "x3": bbox.get("x3"),
+                    "y3": bbox.get("y3"),
+                    "x4": bbox.get("x4"),
+                    "y4": bbox.get("y4"),
+                }
             )
