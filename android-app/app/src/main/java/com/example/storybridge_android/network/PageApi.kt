@@ -60,11 +60,21 @@ data class OcrBox(
 )
 
 data class BBox(
-    val x: Int,
-    val y: Int,
-    val width: Int,
-    val height: Int
-)
+    val x1: Int,
+    val y1: Int,
+    val x2: Int,
+    val y2: Int,
+    val x3: Int,
+    val y3: Int,
+    val x4: Int,
+    val y4: Int
+) {
+    // 편의 프로퍼티: 좌상단(x,y)와 width/height 계산
+    val x: Int get() = minOf(x1, x2, x3, x4)
+    val y: Int get() = minOf(y1, y2, y3, y4)
+    val width: Int get() = maxOf(x1, x2, x3, x4) - x
+    val height: Int get() = maxOf(y1, y2, y3, y4) - y
+}
 
 data class GetOcrTranslationResponse(
     val session_id: String,

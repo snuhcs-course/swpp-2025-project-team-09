@@ -131,6 +131,7 @@ class ReadingActivity : AppCompatActivity() {
         val pageImage = findViewById<ImageView>(R.id.pageImage)
         if (pageImage.drawable == null) return
 
+        // 기존 바운딩 박스 제거
         for (i in mainLayout.childCount - 1 downTo 0) {
             val child = mainLayout.getChildAt(i)
             if (child.tag == "bbox") mainLayout.removeViewAt(i)
@@ -138,6 +139,12 @@ class ReadingActivity : AppCompatActivity() {
 
         val imageMatrix = pageImage.imageMatrix
         for (box in bboxes) {
+            // 좌표 로그 출력
+            android.util.Log.d(
+                "BoundingBoxDebug",
+                "Box: text='${box.text}', x=${box.x}, y=${box.y}, width=${box.width}, height=${box.height}"
+            )
+
             val rect = RectF(
                 box.x.toFloat(),
                 box.y.toFloat(),
@@ -164,6 +171,7 @@ class ReadingActivity : AppCompatActivity() {
             mainLayout.addView(boxView)
         }
     }
+
 
     private fun toggleUI() {
         if (uiVisible) {
@@ -229,9 +237,8 @@ class ReadingActivity : AppCompatActivity() {
     }
 
     private fun fetchPageData() {
-        fetchImage()
-        fetchOcrResults()
-        fetchTtsResults()
+        fetchImage() // OCR은 image 완료 후 호출
+        fetchTtsResults() // TTS는 fetchImage와 병렬 가능
     }
 
     private fun fetchImage() {
@@ -240,6 +247,9 @@ class ReadingActivity : AppCompatActivity() {
                 if (response.isSuccessful) {
                     val imageBase64 = response.body()?.image_base64
                     displayPage(imageBase64)
+
+                    // ✅ image 세팅 완료 후 OCR fetch
+                    fetchOcrResults()
                 }
             }
             override fun onFailure(call: Call<GetImageResponse>, t: Throwable) {
@@ -248,29 +258,40 @@ class ReadingActivity : AppCompatActivity() {
         })
     }
 
+
     private fun fetchOcrResults() {
         pageApi.getOcrResults(sessionId, pageIndex).enqueue(object : Callback<GetOcrTranslationResponse> {
             override fun onResponse(call: Call<GetOcrTranslationResponse>, response: Response<GetOcrTranslationResponse>) {
                 if (response.isSuccessful) {
-                    val ocrList = response.body()?.ocr_results ?: return
-                    val boxes = ocrList.mapNotNull {
+                    val ocrList = response.body()?.ocr_results
+                    // 📌 response 전체 로그
+                    android.util.Log.d("BoundingBoxDebug", "OCR Response: ${response.body()}")
+
+                    val boxes = ocrList?.mapNotNull {
                         it.bbox?.let { box ->
                             BoundingBox(box.x, box.y, box.width, box.height, it.translation_txt)
                         }
-                    }
+                    } ?: emptyList()
+
+                    // 📌 만들어진 BoundingBox 리스트 로그
+                    android.util.Log.d("BoundingBoxDebug", "Bounding boxes: ${boxes.map { "${it.text}(${it.x},${it.y},${it.width},${it.height})" }}")
+
                     if (boxes.isNotEmpty()) {
                         findViewById<ImageView>(R.id.pageImage).post {
                             displayBB(boxes)
                         }
                     }
+                } else {
+                    android.util.Log.e("BoundingBoxDebug", "OCR Response not successful: ${response.code()} / ${response.message()}")
                 }
             }
 
             override fun onFailure(call: Call<GetOcrTranslationResponse>, t: Throwable) {
-                t.printStackTrace()
+                android.util.Log.e("BoundingBoxDebug", "OCR Request failed", t)
             }
         })
     }
+
 
     private fun fetchTtsResults() {
         pageApi.getTtsResults(sessionId, pageIndex).enqueue(object : Callback<GetTtsResponse> {
