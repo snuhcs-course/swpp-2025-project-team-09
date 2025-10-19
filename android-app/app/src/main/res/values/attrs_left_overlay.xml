@@ -1,8 +1,0 @@
-<resources>
-    <declare-styleable name="LeftOverlay">
-        <attr name="exampleStringLeft" format="string" />
-        <attr name="exampleDimensionLeft" format="dimension" />
-        <attr name="exampleColorLeft" format="color" />
-        <attr name="exampleDrawableLeft" format="color|reference" />
-    </declare-styleable>
-</resources>

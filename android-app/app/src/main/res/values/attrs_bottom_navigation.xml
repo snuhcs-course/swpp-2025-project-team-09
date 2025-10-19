@@ -1,8 +1,0 @@
-<resources>
-    <declare-styleable name="BottomNavigation">
-        <attr name="exampleStringBot" format="string" />
-        <attr name="exampleDimensionBot" format="dimension" />
-        <attr name="exampleColorBot" format="color" />
-        <attr name="exampleDrawableBot" format="color|reference" />
-    </declare-styleable>
-</resources>

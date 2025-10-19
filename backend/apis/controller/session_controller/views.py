@@ -37,7 +37,7 @@ class StartSessionView(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            user = User.objects.get(uid=user_id)
+            user = User.objects.get(device_info=user_id)
             session = Session.objects.create(
                 user=user,
                 title=f"Reading Session {timezone.now().strftime('%Y-%m-%d %H:%M')}",

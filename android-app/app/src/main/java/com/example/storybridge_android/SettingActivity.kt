@@ -1,12 +1,25 @@
 package com.example.storybridge_android
 
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
+import android.widget.Button
 import android.widget.RadioButton
+import android.widget.RadioGroup
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import com.example.storybridge_android.network.RetrofitClient
+import com.example.storybridge_android.network.UserLangRequest
+import com.example.storybridge_android.network.UserLangResponse
 import com.example.storybridge_android.ui.TopNavigationBar
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class SettingActivity : AppCompatActivity() {
+
+    private lateinit var languageGroup: RadioGroup
+    private lateinit var voiceGroup: RadioGroup
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -16,50 +29,38 @@ class SettingActivity : AppCompatActivity() {
         setupTopBar()
         setupLanguageOptions()
         setupVoiceOptions()
+        setupSaveButton()
     }
 
     private fun navigateToMain() {
-        //TODO: MainActivity로 이동하는 로직 구현
+        val intent = Intent(this, MainActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        startActivity(intent)
+        finish()
     }
-
-    private fun setLangPreference() {
-        //TODO: 유저의 language preference 업데이트
-    }
-
-
-    // 아래 함수는 적당히 수정 부탁드립니다.
-    // 사실 top navigation이 그닥 재사용이 안 될 것 같아서 걍 없애도 될 것 같아요
-
 
     private fun setupTopBar() {
         val topBar = findViewById<TopNavigationBar>(R.id.topNavigationBar)
-
-        topBar.setOnSettingsClickListener {
-            // SettingsActivity 안에선 굳이 다른 Settings를 열 필요가 없음
-            finish() // or Toast.makeText(this, "Already in settings", Toast.LENGTH_SHORT).show()
-        }
+        topBar.setOnSettingsClickListener { finish() }
     }
 
     private fun setupLanguageOptions() {
+        languageGroup = findViewById(R.id.languageGroup)
         val english = findViewById<RadioButton>(R.id.radioEnglish)
-        val vietnamese = findViewById<RadioButton>(R.id.radioVietnamese)
+        val Chinese = findViewById<RadioButton>(R.id.radioChinese)
 
-        // 현재 선택된 언어 불러오기
         val currentLang = AppSettings.getLanguage(this)
         when (currentLang) {
             "en" -> english.isChecked = true
-            "vi" -> vietnamese.isChecked = true
+            "cn" -> Chinese.isChecked = true
         }
 
-        english.setOnClickListener {
-            AppSettings.setLanguage(this, "en")
-        }
-        vietnamese.setOnClickListener {
-            AppSettings.setLanguage(this, "vi")
-        }
+        english.setOnClickListener { AppSettings.setLanguage(this, "en") }
+        Chinese.setOnClickListener { AppSettings.setLanguage(this, "cn") }
     }
 
     private fun setupVoiceOptions() {
+        voiceGroup = findViewById(R.id.voiceGroup)
         val male = findViewById<RadioButton>(R.id.radioMan)
         val female = findViewById<RadioButton>(R.id.radioWoman)
 
@@ -69,11 +70,52 @@ class SettingActivity : AppCompatActivity() {
             "WOMAN" -> female.isChecked = true
         }
 
-        male.setOnClickListener {
-            AppSettings.setVoice(this, "MAN")
-        }
-        female.setOnClickListener {
-            AppSettings.setVoice(this, "WOMAN")
+        male.setOnClickListener { AppSettings.setVoice(this, "MAN") }
+        female.setOnClickListener { AppSettings.setVoice(this, "WOMAN") }
+    }
+
+    private fun setupSaveButton() {
+        val saveButton = findViewById<Button>(R.id.btnSaveSettings)
+
+        saveButton.setOnClickListener {
+            val deviceInfo = android.provider.Settings.Secure.getString(
+                contentResolver,
+                android.provider.Settings.Secure.ANDROID_ID
+            )
+
+            // 선택된 언어 확인
+            val selectedLang = when (findViewById<RadioGroup>(R.id.languageGroup).checkedRadioButtonId) {
+                R.id.radioEnglish -> "en"
+                R.id.radioChinese -> "cn"
+                else -> "en"
+            }
+
+            // 요청 바디 생성
+            val request = UserLangRequest(
+                device_info = deviceInfo,
+                language_preference = selectedLang
+            )
+
+            // PATCH 요청
+            val call = RetrofitClient.userApi.userLang(request)
+            call.enqueue(object : Callback<UserLangResponse> {
+                override fun onResponse(
+                    call: Call<UserLangResponse>,
+                    response: Response<UserLangResponse>
+                ) {
+                    if (response.isSuccessful) {
+                        // 로컬에도 반영
+                        AppSettings.setLanguage(this@SettingActivity, selectedLang)
+                        finish() // 설정 저장 후 종료
+                    } else {
+                        Log.e("SettingActivity", "PATCH failed: ${response.code()}")
+                    }
+                }
+
+                override fun onFailure(call: Call<UserLangResponse>, t: Throwable) {
+                    Log.e("SettingActivity", "API error: ${t.message}")
+                }
+            })
         }
     }
 }

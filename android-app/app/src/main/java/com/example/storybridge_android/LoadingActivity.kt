@@ -4,13 +4,26 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Base64
+import android.util.Log
 import android.widget.ProgressBar
 import androidx.appcompat.app.AppCompatActivity
+import com.example.storybridge_android.network.*
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import java.io.File
+import java.io.FileInputStream
 
 class LoadingActivity : AppCompatActivity() {
+
     private lateinit var loadingBar: ProgressBar
     private val handler = Handler(Looper.getMainLooper())
-    private var progress = 0
+    private var isPolling = true
+    private lateinit var sessionId: String
+    private var pageIndex: Int = 0
+    private var lang: String = "en"
+    private var imagePath: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -18,43 +31,131 @@ class LoadingActivity : AppCompatActivity() {
 
         loadingBar = findViewById(R.id.loadingBar)
 
-        // 3초 동안 0 → 100% 진행
-        val updateInterval = 30L      // ms 단위 (Long)
-        val totalDuration = 3000      // 전체 시간 (ms)
-        val steps = totalDuration / updateInterval   // 몇 번 업데이트 되는지
-        val stepSize = 100 / steps.toInt()           // 한 번 업데이트 시 증가할 퍼센트
+        sessionId = intent.getStringExtra("session_id") ?: return finish()
+        pageIndex = intent.getIntExtra("page_index", 0)
+        lang = intent.getStringExtra("lang") ?: "en"
+        imagePath = intent.getStringExtra("image_path")
 
-        val runnable = object : Runnable {
-            override fun run() {
-                if (progress < 100) {
-                    progress += stepSize
-                    loadingBar.progress = progress
-                    handler.postDelayed(this, updateInterval) // ✅ Long 타입 사용
-                } else {
-                    // 다 차면 ReadingActivity로 이동
-                    startActivity(Intent(this@LoadingActivity, ReadingActivity::class.java))
+        if (imagePath == null) {
+            Log.e("LoadingActivity", "No image path provided")
+            finish()
+            return
+        }
+
+        uploadImage()
+    }
+
+    private fun uploadImage() {
+        val file = File(imagePath!!)
+        val bytes = FileInputStream(file).readBytes()
+        val base64 = Base64.encodeToString(bytes, Base64.DEFAULT)
+
+        val req = UploadImageRequest(
+            session_id = sessionId,
+            page_index = pageIndex,
+            lang = lang,
+            image_base64 = base64
+        )
+
+        RetrofitClient.processApi.uploadImage(req)
+            .enqueue(object : Callback<UploadImageResponse> {
+                override fun onResponse(
+                    call: Call<UploadImageResponse>,
+                    response: Response<UploadImageResponse>
+                ) {
+                    if (response.isSuccessful) {
+                        Log.d("LoadingActivity", "Upload success → start polling")
+                        pollStatus()
+                    } else {
+                        Log.e("LoadingActivity", "Upload failed: ${response.code()}")
+                        finish()
+                    }
+                }
+
+                override fun onFailure(call: Call<UploadImageResponse>, t: Throwable) {
+                    Log.e("LoadingActivity", "Upload error: ${t.message}")
                     finish()
                 }
-            }
+            })
+    }
+
+    private fun pollStatus() {
+        val api = RetrofitClient.processApi
+        var runnable: Runnable? = null
+
+        runnable = Runnable {
+            if (!isPolling) return@Runnable
+
+            api.checkOcrTranslationStatus(sessionId, pageIndex)
+                .enqueue(object : Callback<CheckOcrTranslationResponse> {
+                    override fun onResponse(
+                        call: Call<CheckOcrTranslationResponse>,
+                        response: Response<CheckOcrTranslationResponse>
+                    ) {
+                        val body = response.body()
+                        if (body != null) {
+                            loadingBar.progress = body.progress
+                            Log.d("LoadingActivity", "OCR progress: ${body.progress}")
+
+                            if (body.status == "ready") {
+                                Log.d("LoadingActivity", "OCR ready → checking TTS")
+                                checkTtsStatus()
+                            } else {
+                                handler.postDelayed(runnable!!, 1000)
+                            }
+                        }
+                    }
+
+                    override fun onFailure(
+                        call: Call<CheckOcrTranslationResponse>,
+                        t: Throwable
+                    ) {
+                        Log.e("LoadingActivity", "Polling error: ${t.message}")
+                        handler.postDelayed(runnable!!, 1500)
+                    }
+                })
         }
+
         handler.post(runnable)
     }
 
+    private fun checkTtsStatus() {
+        val api = RetrofitClient.processApi
+
+        api.checkTtsStatus(sessionId, pageIndex)
+            .enqueue(object : Callback<CheckTtsResponse> {
+                override fun onResponse(
+                    call: Call<CheckTtsResponse>,
+                    response: Response<CheckTtsResponse>
+                ) {
+                    val body = response.body()
+                    if (body != null && body.status == "ready") {
+                        Log.d("LoadingActivity", "TTS ready → moving to ReadingActivity")
+                        isPolling = false
+                        navigateToReading()
+                    } else {
+                        handler.postDelayed({ checkTtsStatus() }, 1000)
+                    }
+                }
+
+                override fun onFailure(call: Call<CheckTtsResponse>, t: Throwable) {
+                    Log.e("LoadingActivity", "TTS polling error: ${t.message}")
+                    handler.postDelayed({ checkTtsStatus() }, 1500)
+                }
+            })
+    }
 
     private fun navigateToReading() {
-        // TODO: ReadingActivity로 이동하는 로직 구현
-        // TODO: 일단 OCR + Translation 결과가 오면 이동
+        val intent = Intent(this, ReadingActivity::class.java)
+        intent.putExtra("session_id", sessionId)
+        intent.putExtra("page_index", pageIndex)
+        startActivity(intent)
+        finish()
     }
 
-    private fun showProgress() {
-        // TODO: 대략적인 프로그레스 바 형태로 진행도 보여주기
-    }
-
-    fun waifForServerResponse(){
-        // TODO: OCR, TTS 진행도를 서버에서 받아오기
-    }
-
-    fun onApiResponse(){
-
+    override fun onDestroy() {
+        super.onDestroy()
+        isPolling = false
+        handler.removeCallbacksAndMessages(null)
     }
 }

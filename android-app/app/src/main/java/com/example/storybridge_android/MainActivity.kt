@@ -3,11 +3,22 @@ package com.example.storybridge_android
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
+import android.graphics.BitmapFactory
+import android.util.Base64
+import android.util.Log
+import android.widget.ImageView
+import android.widget.LinearLayout
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.example.storybridge_android.network.RetrofitClient
+import com.example.storybridge_android.network.UserInfoResponse
 import com.example.storybridge_android.ui.TopNavigationBar
+import com.example.storybridge_android.ui.SessionCard
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -23,25 +34,75 @@ class MainActivity : AppCompatActivity() {
 
         setupTopNavigationBar()
         setupStartButton()
+        loadSessionCard()
     }
 
     private fun navigateToSettings() {
-        // TODO: SettinsActivity로 이동하는 로직 구현
-        // TODO: onCreate에서 이 함수를 버튼에 바인딩하는 함수를 호출하면 될 것 같습니다.
+        startActivity(Intent(this, SettingActivity::class.java))
     }
 
     private fun navigateToStartSession() {
-        // TODO: StartSession.Activity로 이동하는 로직 구현
+        startActivity(Intent(this, StartSessionActivity::class.java))
     }
 
     private fun navigateToLoadingSession() {
-        // TODO: LoadingActivity로 이동하는 로직 구현
+        startActivity(Intent(this, LoadingActivity::class.java))
     }
 
     private fun loadSessionCard() {
-        // TODO: SessionCard.kt 컴포넌트들을 화면에 로딩
-    }
+        val deviceInfo = android.provider.Settings.Secure.getString(
+            contentResolver,
+            android.provider.Settings.Secure.ANDROID_ID
+        )
+        val call = RetrofitClient.userApi.userInfo(deviceInfo)
 
+        val container = findViewById<LinearLayout>(R.id.cardContainer)
+        val emptyContainer = findViewById<LinearLayout>(R.id.emptyContainer)
+
+        call.enqueue(object : Callback<UserInfoResponse> {
+            override fun onResponse(
+                call: Call<UserInfoResponse>,
+                response: Response<UserInfoResponse>
+            ) {
+                if (response.isSuccessful) {
+                    val data = response.body()
+
+                    if (data == null || data.title.isNullOrEmpty() || data.started_at.isNullOrEmpty()) {
+                        container.visibility = LinearLayout.GONE
+                        emptyContainer.visibility = LinearLayout.VISIBLE
+                        return
+                    }
+
+                    container.removeAllViews()
+                    val sessionCard = SessionCard(this@MainActivity)
+                    sessionCard.setBookTitle(data.title)
+                    sessionCard.setBookProgress("Started: ${data.started_at}")
+                    sessionCard.setOnNextClickListener { navigateToLoadingSession() }
+
+                    if (!data.image_base64.isNullOrEmpty()) {
+                        val imageBytes = Base64.decode(data.image_base64, Base64.DEFAULT)
+                        val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                        sessionCard.findViewById<ImageView>(R.id.bookImage).setImageBitmap(bitmap)
+                    }
+
+                    container.addView(sessionCard)
+                    container.visibility = LinearLayout.VISIBLE
+                    emptyContainer.visibility = LinearLayout.GONE
+
+                } else {
+                    Log.e("MainActivity", "Error: ${response.code()}")
+                    container.visibility = LinearLayout.GONE
+                    emptyContainer.visibility = LinearLayout.VISIBLE
+                }
+            }
+
+            override fun onFailure(call: Call<UserInfoResponse>, t: Throwable) {
+                Log.e("MainActivity", "API failed: ${t.message}")
+                container.visibility = LinearLayout.GONE
+                emptyContainer.visibility = LinearLayout.VISIBLE
+            }
+        })
+    }
 
 
     /**
@@ -50,8 +111,7 @@ class MainActivity : AppCompatActivity() {
     private fun setupTopNavigationBar() {
         val topNav = findViewById<TopNavigationBar>(R.id.topNavigationBar)
         topNav.setOnSettingsClickListener {
-            onSettingsClick()
-            // TODO: 이 부분을 navigateToSettings()로 대체하는 식으로 구현하면 될 것 같습니다.
+            navigateToSettings()
         }
     }
 
@@ -61,23 +121,7 @@ class MainActivity : AppCompatActivity() {
     private fun setupStartButton() {
         val startButton = findViewById<Button>(R.id.startNewReadingButton)
         startButton.setOnClickListener {
-            onStartNewReadingClick()
+            navigateToStartSession()
         }
-    }
-
-    /**
-     * ⚙️ 설정 버튼 클릭 시 호출
-     */
-    private fun onSettingsClick() {
-        val intent = Intent(this, SettingActivity::class.java)
-        startActivity(intent)
-    }
-
-    /**
-     * Start New Reading 버튼 클릭 시 호출
-     */
-    private fun onStartNewReadingClick() {
-        val intent = Intent(this, VoiceSelectActivity::class.java)
-        startActivity(intent)
     }
 }
