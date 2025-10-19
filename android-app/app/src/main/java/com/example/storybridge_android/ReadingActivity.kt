@@ -1,7 +1,9 @@
 package com.example.storybridge_android
 
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.RectF
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.util.Base64
@@ -39,6 +41,8 @@ class ReadingActivity : AppCompatActivity() {
     private lateinit var dimBackground: View
     private var isOverlayVisible = false
     private var mediaPlayer: MediaPlayer? = null
+    private var pageBitmap: Bitmap? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,6 +63,7 @@ class ReadingActivity : AppCompatActivity() {
         bottomUi = findViewById(R.id.bottomUi)
         overlay = findViewById(R.id.sideOverlay)
         dimBackground = findViewById(R.id.dimBackground)
+        findViewById<ImageButton>(R.id.playButton).isEnabled = false
     }
 
     private fun initUiState() {
@@ -107,6 +112,7 @@ class ReadingActivity : AppCompatActivity() {
         try {
             val decodedBytes = Base64.decode(base64Image, Base64.DEFAULT)
             val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+            pageBitmap = bitmap
             pageImage.setImageBitmap(bitmap)
         } catch (e: Exception) {
             e.printStackTrace()
@@ -122,12 +128,24 @@ class ReadingActivity : AppCompatActivity() {
     )
 
     private fun displayBB(bboxes: List<BoundingBox>) {
+        val pageImage = findViewById<ImageView>(R.id.pageImage)
+        if (pageImage.drawable == null) return
+
         for (i in mainLayout.childCount - 1 downTo 0) {
             val child = mainLayout.getChildAt(i)
             if (child.tag == "bbox") mainLayout.removeViewAt(i)
         }
+
+        val imageMatrix = pageImage.imageMatrix
         for (box in bboxes) {
-            android.util.Log.d("BB_DEBUG",  "text: '${box.text}'")
+            val rect = RectF(
+                box.x.toFloat(),
+                box.y.toFloat(),
+                (box.x + box.width).toFloat(),
+                (box.y + box.height).toFloat()
+            )
+            imageMatrix.mapRect(rect)
+
             val boxView = TextView(this).apply {
                 text = box.text
                 setBackgroundColor(getColor(R.color.black_50))
@@ -136,12 +154,13 @@ class ReadingActivity : AppCompatActivity() {
                 gravity = Gravity.CENTER
                 tag = "bbox"
             }
-            val params = ConstraintLayout.LayoutParams(box.width, box.height)
-            params.startToStart = ConstraintLayout.LayoutParams.PARENT_ID
-            params.topToTop = ConstraintLayout.LayoutParams.PARENT_ID
+
+            val params = ConstraintLayout.LayoutParams(rect.width().toInt(), rect.height().toInt())
+            params.startToStart = pageImage.id
+            params.topToTop = pageImage.id
             boxView.layoutParams = params
-            boxView.translationX = box.x.toFloat()
-            boxView.translationY = box.y.toFloat()
+            boxView.translationX = rect.left
+            boxView.translationY = rect.top
             mainLayout.addView(boxView)
         }
     }
@@ -187,54 +206,26 @@ class ReadingActivity : AppCompatActivity() {
             val audioBytes = Base64.decode(base64Audio, Base64.DEFAULT)
             FileOutputStream(audioFile).use { it.write(audioBytes) }
             playButton.isEnabled = true
-            playButton.setOnClickListener { playAudio(audioFile) }
         } catch (e: Exception) {
             e.printStackTrace()
             playButton.isEnabled = false
         }
     }
 
-    private fun playAudio(audioFile: File? = null) {
+    private fun playAudio() {
         try {
             mediaPlayer?.release()
             mediaPlayer = MediaPlayer()
-            if (audioFile != null) {
-                mediaPlayer?.setDataSource(audioFile.absolutePath)
-            } else {
-                val audioFileDefault = File(cacheDir, "temp_audio.mp3")
-                if (!audioFileDefault.exists()) return
-                mediaPlayer?.setDataSource(audioFileDefault.absolutePath)
-            }
+            val audioFile = File(cacheDir, "temp_audio.mp3")
+            if (!audioFile.exists()) return
+
+            mediaPlayer?.setDataSource(audioFile.absolutePath)
             mediaPlayer?.setOnPreparedListener { it.start() }
             mediaPlayer?.setOnCompletionListener { it.release() }
             mediaPlayer?.prepareAsync()
         } catch (e: Exception) {
             e.printStackTrace()
         }
-    }
-
-    private fun addOverlayBox(
-        x: Int,
-        y: Int,
-        width: Int,
-        height: Int,
-        text: String
-    ) {
-        val boxView = TextView(this).apply {
-            this.text = text
-            setBackgroundColor(getColor(R.color.black_50))
-            setTextColor(getColor(R.color.white))
-            textSize = 16f
-            gravity = Gravity.CENTER
-            id = View.generateViewId()
-        }
-        val params = ConstraintLayout.LayoutParams(width, height)
-        params.startToStart = ConstraintLayout.LayoutParams.PARENT_ID
-        params.topToTop = ConstraintLayout.LayoutParams.PARENT_ID
-        boxView.layoutParams = params
-        boxView.translationX = x.toFloat()
-        boxView.translationY = y.toFloat()
-        mainLayout.addView(boxView)
     }
 
     private fun fetchPageData() {
@@ -267,7 +258,11 @@ class ReadingActivity : AppCompatActivity() {
                             BoundingBox(box.x, box.y, box.width, box.height, it.translation_txt)
                         }
                     }
-                    if (boxes.isNotEmpty()) displayBB(boxes)
+                    if (boxes.isNotEmpty()) {
+                        findViewById<ImageView>(R.id.pageImage).post {
+                            displayBB(boxes)
+                        }
+                    }
                 }
             }
 
