@@ -2,7 +2,7 @@
 
 ## Demo video
 [Google Drive Video Link](https://drive.google.com/file/d/1--f2O0EBmdfJ4LIOAiRf4Nkua0eDT1nl/view?usp=sharing)
-
+<br><br>
 ## How to run
 To demonstrate the app with a local backend, we used **ngrok** to expose the backend server to your mobile emulator. Make sure the mobile device is connected to the same Wi-Fi as your local machine.
 
@@ -45,7 +45,7 @@ ngrok http 8000
 ### 4. Demo
 Once ngrok is running, you can run the Android emulator or connect a physical device to the same Wi-Fi. All API calls will be forwarded to your local backend via the ngrok URL.
 
-
+<br><br>
 ## Implemented Features
 
 During Iteration 2, we successfully implemented almost all of the features we initially aimed for:
