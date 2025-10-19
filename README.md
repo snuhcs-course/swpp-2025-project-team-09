@@ -1,28 +1,24 @@
-# SNU-SWPP-Template
+# StoryBridge
 
-You can use the README file to showcase and promote your mobile app. The template provided below is just a starting point. Feel free to craft your README as you see fit. 
+For multicultural children to thrive, early exposure to all languages, especially Korean during the crucial kindergarten stage, is essential; however, many currently face significant educational challenges due to a lack of tailored Korean language materials and effective learning methods. 
 
-Please note that the README doesn't affect your grade and is not included in documentation(Wiki).
+**StoryBridge** directly addresses this need by transforming any physical picture book into a **multilingual, interactive resource**, ensuring that reading is inclusive and accessible by delivering translations in the child's home language alongside the original Korean. Going beyond simple text overlays, the application utilizes advanced **Emotional Text-to-Speech (TTS)** to provide a deeply engaging and expressive narration, helping children form a strong, emotional, and cognitive connection with the story in both their native tongue and Korean, making story time a dynamic and comprehensive learning experience.
 
-# [Learning Seed]
-
-[Short application description here]
-
-![Application Screenshot](path_to_screenshot.png)
 
 ## Features
 
-- Feature 1: Brief description
-- Feature 2: Brief description
-- ...
+- **Live AI-Powered Translation**: The app uses Naver OCR for Text Recognition to instantly identify the words on the page. The recognized text is then translated into the user's preferred language using gpt-4o-mini. The translated text can be overlaid on the book in an augmented reality view.
+
+- **Emotion-Based Text-to-Speech (TTS)**: This is a crucial AI feature designed to bring stories to life. Instead of a monotone narration, the app will analyze the translated text to infer its emotional context (e.g., happy, sad, excited) and use an expressive TTS engine to read the story aloud with appropriate feeling and intonation. This creates a more natural and engaging storytelling experience for the child.
 
 ## Getting Started
 
 ### Prerequisites
 
-- Android Studio [version, e.g., 4.2.1]
-- Minimum Android SDK Version [e.g., 21]
+- Android Studio Version [e.g. Android Studio Narwhal Feature Drop | 2025.1.2 Patch 2]
+
+- Minimum Android SDK Version [e.g. 24]
 
 ### Installation
 
-[Installation link here]
+TBD
