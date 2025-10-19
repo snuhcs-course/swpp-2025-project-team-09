@@ -8,7 +8,7 @@ import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.example.storybridge_android.R
 
-class CardItem @JvmOverloads constructor(
+class SessionCard @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
@@ -17,7 +17,7 @@ class CardItem @JvmOverloads constructor(
     private val bookImage: ImageView
     private val bookTitle: TextView
     private val bookProgress: TextView
-    private val nextButton: ImageView
+    private val nextButton: ConstraintLayout
 
     init {
         LayoutInflater.from(context).inflate(R.layout.card_item, this, true)

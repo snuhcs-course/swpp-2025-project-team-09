@@ -136,6 +136,16 @@
                          android:layout_marginStart="32dp"/>
                 </LinearLayout>
 
+                <LinearLayout
+                    android:id="@+id/emptyContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="300dp"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:background="@color/white"
+                    android:visibility="gone">
+                </LinearLayout>
+
             </LinearLayout>
 
 
