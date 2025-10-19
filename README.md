@@ -1,27 +1,44 @@
-# StoryBridge
+# StoryBridge Iteration 2 demo
 
-For multicultural children to thrive, early exposure to all languages, especially Korean during the crucial kindergarten stage, is essential; however, many currently face significant educational challenges due to a lack of tailored Korean language materials and effective learning methods. 
+## How to run
+To demonstrate the app with a local backend, we used **ngrok** to expose the backend server to your mobile emulator. Make sure the mobile device is connected to the same Wi-Fi as your local machine.
 
-**StoryBridge** directly addresses this need by transforming any physical picture book into a **multilingual, interactive resource**, ensuring that reading is inclusive and accessible by delivering translations in the child's home language alongside the original Korean. Going beyond simple text overlays, the application utilizes advanced **Emotional Text-to-Speech (TTS)** to provide a deeply engaging and expressive narration, helping children form a strong, emotional, and cognitive connection with the story in both their native tongue and Korean, making story time a dynamic and comprehensive learning experience.
+### 1. Start Django Backend
+Open a terminal and run:
 
-<center>
-    <img src="https://images.unsplash.com/photo-1519791883288-dc8bd696e667?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=4800" alt="Fairytale-like book image" width="800">
-</center>
+```bash
+cd backend
+python manage.py runserver 0.0.0.0:8000
+```
+This will start the Django development server accessible on your local network.
 
-## Features
+### 2. Start ngrok
+In a separate terminal, run:
+```bash
+cd backend
+python ngrok.py
+```
+If you encounter an authentication error, follow these steps:
 
-- **Live AI-Powered Translation**: The app uses Naver OCR for Text Recognition to instantly identify the words on the page. The recognized text is then translated into the user's preferred language using gpt-4o-mini. The translated text can be overlaid on the book in an augmented reality view.
+1. Sign up at https://ngrok.com/.  
+2. Go to **Your Authtoken** from the left menu and copy your token.  
+3. Add your token via terminal and restart ngrok:
+```bash
+ngrok config add-authtoken <YOUR_TOKEN>
+python ngrok.py
+```
 
-- **Emotion-Based Text-to-Speech (TTS)**: This is a crucial AI feature designed to bring stories to life. Instead of a monotone narration, the app will analyze the translated text to infer its emotional context (e.g., happy, sad, excited) and use an expressive TTS engine to read the story aloud with appropriate feeling and intonation. This creates a more natural and engaging storytelling experience for the child.
+Then run:
+```bash
+ngrok http 8000
+```
+It opens UI:
+![image.png](attachment:90f8bf33-9d89-4f66-9b22-649c8f2af480:image.png)
 
-## Getting Started
+### 3. Accessing the Web Interface
+- ngrok provides a **Web Interface** where you can monitor incoming HTTP requests.
+- The **Forwarding URL** should be used as the `BASE_URL` in `RetrofitClient` in your Android app.
+  ![Screenshot 2025-10-19 at 8.17.26 PM.png](attachment:b0402190-50d2-4ea9-ad0a-d4c9041ce549:Screenshot_2025-10-19_at_8.17.26_PM.png)
 
-### Prerequisites
-
-- Android Studio Version [e.g. Android Studio Narwhal Feature Drop | 2025.1.2 Patch 2]
-
-- Minimum Android SDK Version [e.g. 24]
-
-### Installation
-
-TBD
+### 4. Demo
+Once ngrok is running, you can run the Android emulator or connect a physical device to the same Wi-Fi. All API calls will be forwarded to your local backend via the ngrok URL.
