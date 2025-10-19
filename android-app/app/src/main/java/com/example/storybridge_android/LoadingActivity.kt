@@ -64,8 +64,16 @@ class LoadingActivity : AppCompatActivity() {
                     response: Response<UploadImageResponse>
                 ) {
                     if (response.isSuccessful) {
-                        Log.d("LoadingActivity", "Upload success → start polling")
-                        pollStatus()
+                        val body = response.body()
+                        if (body != null) {
+                            // 서버가 반환한 최신 page_index로 업데이트
+                            pageIndex = body.page_index
+                            Log.d("LoadingActivity", "Upload success → new page_index: $pageIndex")
+                            pollStatus()
+                        } else {
+                            Log.e("LoadingActivity", "Upload success but body is null")
+                            finish()
+                        }
                     } else {
                         Log.e("LoadingActivity", "Upload failed: ${response.code()}")
                         finish()

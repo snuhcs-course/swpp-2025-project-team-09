@@ -12,8 +12,8 @@ load_dotenv()
 
 class OCRModule:
     def __init__(self, conf_threshold: float = 0.8):
-        self.api_url = ''
-        self.secret_key = ''
+        self.api_url = os.getenv("OCR_API_URL", "")
+        self.secret_key = os.getenv("OCR_SECRET", "")
         self.conf_threshold = conf_threshold
 
     def _filter_low_confidence(self, result_json: Dict[str, Any]) -> Dict[str, Any]:
@@ -168,7 +168,12 @@ class OCRModule:
             "file": open(image_path, "rb"),
             "message": (None, json.dumps(request_json), "application/json"),
         }
+        #디버깅용
+        print(f"[DEBUG] Sending OCR request for {image_path}")
+        start = time.time()
         response = requests.post(self.api_url, headers=headers, files=files)
+        # 디버깅용
+        print(f"[DEBUG] OCR API call took {time.time() - start:.2f}s")
         result = response.json()
         paragraphs = self._parse_infer_text(result)
 

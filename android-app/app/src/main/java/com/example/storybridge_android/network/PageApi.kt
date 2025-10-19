@@ -10,19 +10,19 @@ import retrofit2.http.Query
 // Retrofit API Interface
 interface PageApi {
 
-    @GET("/page/get_image")
+    @GET("/page/get_image/")
     fun getImage(
         @Query("session_id") session_id: String,
         @Query("page_index") page_index: Int
     ): Call<GetImageResponse>
 
-    @GET("/page/get_ocr_translation")
+    @GET("/page/get_ocr/")
     fun getOcrResults(
         @Query("session_id") session_id: String,
         @Query("page_index") page_index: Int
     ): Call<GetOcrTranslationResponse>
 
-    @GET("/page/get_tts")
+    @GET("/page/get_tts/")
     fun getTtsResults(
         @Query("session_id") session_id: String,
         @Query("page_index") page_index: Int
@@ -60,11 +60,21 @@ data class OcrBox(
 )
 
 data class BBox(
-    val x: Int,
-    val y: Int,
-    val width: Int,
-    val height: Int
-)
+    val x1: Int,
+    val y1: Int,
+    val x2: Int,
+    val y2: Int,
+    val x3: Int,
+    val y3: Int,
+    val x4: Int,
+    val y4: Int
+) {
+    // 편의 프로퍼티: 좌상단(x,y)와 width/height 계산
+    val x: Int get() = minOf(x1, x2, x3, x4)
+    val y: Int get() = minOf(y1, y2, y3, y4)
+    val width: Int get() = maxOf(x1, x2, x3, x4) - x
+    val height: Int get() = maxOf(y1, y2, y3, y4) - y
+}
 
 data class GetOcrTranslationResponse(
     val session_id: String,
@@ -81,7 +91,7 @@ data class GetTtsRequest(
 
 data class AudioResult(
     val bbox_index: Int,
-    val audio_base64: String
+    val audio_base64_list: List<String> // 단일 String이 아닌 List<String>
 )
 
 data class GetTtsResponse(

@@ -1,0 +1,3 @@
+page_file,index,ko,translation,tone,emotion,pacing,voice,path,trans_latency,senti_latency,tts_latency
+27f45260-2980-4653-844b-7cf1680dfc1b_1_1.jpg,1,맥스는 큰 소리로 외쳤어.,Max shouted loudly.,Excited and exuberant,Joyful enthusiasm,Quick and dynamic,shimmer,out_audio/27f45260-2980-4653-844b-7cf1680dfc1b_1_1_sent1.mp3,1.16,0.76,0.903
+27f45260-2980-4653-844b-7cf1680dfc1b_1_1.jpg,2,"""이제 괴물 소동을 벌이자!""","""Now, let's cause a monster commotion!""",Excited and mischievous,Enthusiastically adventurous and slightly cheeky,"Quick and energetic, with a playful rhythm",shimmer,out_audio/27f45260-2980-4653-844b-7cf1680dfc1b_1_1_sent2.mp3,0.827,1.078,1.034
