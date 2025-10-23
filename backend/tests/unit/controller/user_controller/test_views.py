@@ -13,7 +13,7 @@ class TestUserRegisterView(APITestCase):
         """Set up test client and test data"""
         self.client = APIClient()
 
-    def test_register_success(self):
+    def test_01_register_success(self):
         """Test successful user registration"""
         data = {
             "device_info": "test-device-123",
@@ -29,7 +29,7 @@ class TestUserRegisterView(APITestCase):
         user = User.objects.get(device_info="test-device-123")
         self.assertEqual(user.language_preference, "en")
 
-    def test_register_missing_device_info(self):
+    def test_02_register_missing_device_info(self):
         """Test registration with missing device_info"""
         data = {"language_preference": "en"}
         response = self.client.post("/user/register", data, format='json')
@@ -38,7 +38,7 @@ class TestUserRegisterView(APITestCase):
         self.assertEqual(response.data["error_code"], 400)
         self.assertEqual(response.data["message"], "USER__INVALID_REQUEST_BODY")
 
-    def test_register_missing_language_preference(self):
+    def test_03_register_missing_language_preference(self):
         """Test registration with missing language_preference"""
         data = {"device_info": "test-device-456"}
         response = self.client.post("/user/register", data, format='json')
@@ -47,7 +47,7 @@ class TestUserRegisterView(APITestCase):
         self.assertEqual(response.data["error_code"], 400)
         self.assertEqual(response.data["message"], "USER__INVALID_REQUEST_BODY")
 
-    def test_register_duplicate_device(self):
+    def test_04_register_duplicate_device(self):
         """Test registration with already registered device"""
         # Create existing user
         User.objects.create(
@@ -82,7 +82,7 @@ class TestUserLoginView(APITestCase):
             created_at=timezone.now()
         )
 
-    def test_login_success(self):
+    def test_01_login_success(self):
         """Test successful user login"""
         data = {"device_info": "test-login-device"}
         response = self.client.post("/user/login", data, format='json')
@@ -91,14 +91,14 @@ class TestUserLoginView(APITestCase):
         self.assertEqual(response.data["user_id"], str(self.test_user.uid))
         self.assertEqual(response.data["language_preference"], "en")
 
-    def test_login_missing_device_info(self):
+    def test_02_login_missing_device_info(self):
         """Test login with missing device_info"""
         data = {}
         response = self.client.post("/user/login", data, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_login_device_not_registered(self):
+    def test_03_login_device_not_registered(self):
         """Test login with non-existent device"""
         data = {"device_info": "non-existent-device"}
         response = self.client.post("/user/login", data, format='json')
@@ -122,7 +122,7 @@ class TestUserChangeLangView(APITestCase):
             created_at=timezone.now()
         )
 
-    def test_change_language_success(self):
+    def test_01_change_language_success(self):
         """Test successful language change"""
         data = {
             "device_info": "test-lang-device",
@@ -139,21 +139,21 @@ class TestUserChangeLangView(APITestCase):
         self.test_user.refresh_from_db()
         self.assertEqual(self.test_user.language_preference, "ko")
 
-    def test_change_language_missing_device_info(self):
+    def test_02_change_language_missing_device_info(self):
         """Test language change with missing device_info"""
         data = {"language_preference": "ko"}
         response = self.client.patch("/user/lang", data, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_change_language_missing_language_preference(self):
+    def test_03_change_language_missing_language_preference(self):
         """Test language change with missing language_preference"""
         data = {"device_info": "test-lang-device"}
         response = self.client.patch("/user/lang", data, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_change_language_device_not_found(self):
+    def test_04_change_language_device_not_found(self):
         """Test language change for non-existent device"""
         data = {
             "device_info": "non-existent-device",
@@ -180,7 +180,7 @@ class TestUserInfoView(APITestCase):
             created_at=timezone.now()
         )
 
-    def test_get_user_info_no_sessions(self):
+    def test_01_get_user_info_no_sessions(self):
         """Test getting user info with no sessions"""
         response = self.client.get("/user/info", {"device_info": "test-info-device"})
 
@@ -188,7 +188,7 @@ class TestUserInfoView(APITestCase):
         self.assertEqual(response.data["user_id"], str(self.test_user.uid))
         self.assertEqual(response.data["sessions"], [])
 
-    def test_get_user_info_with_sessions(self):
+    def test_02_get_user_info_with_sessions(self):
         """Test getting user info with sessions"""
         # Create test session
         session = Session.objects.create(
@@ -204,13 +204,13 @@ class TestUserInfoView(APITestCase):
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]["title"], "Test Book")
 
-    def test_get_user_info_missing_device_info(self):
+    def test_03_get_user_info_missing_device_info(self):
         """Test getting user info without device_info parameter"""
         response = self.client.get("/user/info")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_get_user_info_device_not_found(self):
+    def test_04_get_user_info_device_not_found(self):
         """Test getting user info for non-existent device"""
         response = self.client.get("/user/info", {"device_info": "non-existent-device"})
 
