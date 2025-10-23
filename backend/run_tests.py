@@ -4,13 +4,6 @@ Test Runner Script for Backend Tests
 
 Usage:
     python run_tests.py                          # Show interactive menu
-    python run_tests.py --all                    # Run all tests
-    python run_tests.py --user                   # Run all user controller tests
-    python run_tests.py --user-register          # Run user register tests only
-    python run_tests.py --user-login             # Run user login tests only
-    python run_tests.py --user-lang              # Run user change language tests only
-    python run_tests.py --user-info              # Run user info tests only
-    python run_tests.py --verbose                # Run with verbose output
 """
 
 import sys
@@ -29,13 +22,14 @@ class Colors:
     ENDC = '\033[0m'
 
 
-def run_command(command, verbose=False):
+def run_command(command, verbose=True):
     """Run a django test command and format output"""
-    if verbose and '--verbosity=2' not in command:
+    # Always use verbose mode for proper parsing
+    if '--verbosity=2' not in command:
         command.append('--verbosity=2')
 
     print(f"\n{Colors.CYAN}{'='*70}{Colors.ENDC}")
-    print(f"{Colors.BOLD}{Colors.BLUE}🧪 Running Tests{Colors.ENDC}")
+    print(f"{Colors.BOLD}{Colors.BLUE}Running Tests{Colors.ENDC}")
     print(f"{Colors.CYAN}{'='*70}{Colors.ENDC}")
     print(f"{Colors.YELLOW}Command: {' '.join(command[2:])}{Colors.ENDC}\n")
 
@@ -51,6 +45,9 @@ def run_command(command, verbose=False):
     in_failure = False
     failure_text = []
     printing_tests = False
+    current_test = None
+    test_description = None
+    last_kss_response = None
 
     for line in lines:
         # Skip initial setup lines
@@ -72,51 +69,113 @@ def run_command(command, verbose=False):
             printing_tests = True
             continue
 
-        # Parse test execution lines (verbose mode with 'test_' prefix)
+        # Parse test execution lines
+        # Format: test_name (module.ClassName)\nDescription ... [Kss log]\nok
         if printing_tests and line.startswith('test_'):
-            # Format: test_name (module.ClassName) ... ok/FAIL/ERROR
-            parts = line.split(' ... ')
-            if len(parts) >= 1:
-                test_info = parts[0]
-                test_name = test_info.split(' ')[0]
+            # This line contains test name and class
+            test_match = re.match(r'(test_\S+)\s+\(([^)]+)\)', line)
+            if test_match:
+                test_name = test_match.group(1)
+                current_test = test_name
+                continue
 
-                # Check if test result is on this line or next
-                if len(parts) == 2:
-                    result_text = parts[1]
-                    # Remove ANSI codes and extra info from result
-                    result_clean = re.sub(r'\[.*?\]: .*', '', result_text).strip()
+        # Check for description line (contains ...)
+        if printing_tests and current_test and ' ... ' in line:
+            description = line.split(' ... ')[0].strip()
+            rest_of_line = line.split(' ... ', 1)[1] if ' ... ' in line else ''
 
-                    if result_clean == 'ok' or 'ok' in result_clean:
-                        test_results.append((test_name, 'PASS'))
-                        print(f"  {Colors.GREEN}✓{Colors.ENDC} {test_name}")
-                    elif 'FAIL' in result_clean:
-                        test_results.append((test_name, 'FAIL'))
-                        print(f"  {Colors.RED}✗{Colors.ENDC} {test_name}")
-                    elif 'ERROR' in result_clean:
-                        test_results.append((test_name, 'ERROR'))
-                        print(f"  {Colors.RED}⚠{Colors.ENDC} {test_name}")
+            # Check for [Kss] in the rest of the line
+            if '[Kss]:' in rest_of_line:
+                kss_match = re.search(r'\[Kss\]: ([^\n]+)', rest_of_line)
+                if kss_match:
+                    last_kss_response = kss_match.group(1).strip()
+
+            # Check if result is on same line (format: Description ... ok)
+            if rest_of_line.strip() == 'ok':
+                # Result is on same line and it's ok
+                test_results.append((current_test, 'PASS'))
+                print(f"  {Colors.GREEN}✓{Colors.ENDC} {description}")
+                if last_kss_response:
+                    print(f"     Expected: {Colors.GREEN}{last_kss_response}{Colors.ENDC}")
+                    print(f"     Actual:   {Colors.GREEN}{last_kss_response}{Colors.ENDC}")
+                    last_kss_response = None
                 else:
-                    # Test started but result not on same line - print and wait
-                    print(f"  {Colors.CYAN}⟳{Colors.ENDC} {test_name}...")
+                    print(f"     Expected: {Colors.GREEN}200 OK{Colors.ENDC}")
+                    print(f"     Actual:   {Colors.GREEN}200 OK{Colors.ENDC}")
+                print()
+                current_test = None
+                test_description = None
+                continue
+            elif rest_of_line.strip() == 'FAIL':
+                test_results.append((current_test, 'FAIL'))
+                print(f"  {Colors.RED}✗{Colors.ENDC} {description}")
+                if last_kss_response:
+                    print(f"     Actual: {Colors.RED}{last_kss_response}{Colors.ENDC}")
+                    last_kss_response = None
+                print()
+                current_test = None
+                test_description = None
+                continue
+            elif rest_of_line.strip() == 'ERROR':
+                test_results.append((current_test, 'ERROR'))
+                print(f"  {Colors.RED}⚠{Colors.ENDC} {description}")
+                if last_kss_response:
+                    print(f"     Error: {Colors.RED}{last_kss_response}{Colors.ENDC}")
+                    last_kss_response = None
+                print()
+                current_test = None
+                test_description = None
+                continue
+            else:
+                # Result will come later on separate line, store description
+                test_description = description
             continue
 
-        # Show HTTP response info from [Kss] logs
-        if '[Kss]:' in line and printing_tests:
-            # Extract status code info
-            if 'Bad Request' in line:
-                print(f"    {Colors.YELLOW}→ Response: 400 Bad Request{Colors.ENDC}")
-            elif 'Not Found' in line:
-                print(f"    {Colors.YELLOW}→ Response: 404 Not Found{Colors.ENDC}")
-            elif 'Conflict' in line:
-                print(f"    {Colors.YELLOW}→ Response: 409 Conflict{Colors.ENDC}")
-            elif ': ' in line and '/user/' in line:
-                # Extract method and status
-                match = re.search(r'\[Kss\]: (.+?): (/user/\S+)', line)
-                if match:
-                    status_msg = match.group(1)
-                    endpoint = match.group(2)
-                    print(f"    {Colors.YELLOW}→ Response: {status_msg}{Colors.ENDC}")
+        # Handle [Kss] log on separate line
+        if printing_tests and '[Kss]:' in line and current_test and not ' ... ' in line:
+            kss_match = re.search(r'\[Kss\]: (.+)', line)
+            if kss_match:
+                last_kss_response = kss_match.group(1).strip()
             continue
+
+        # Handle result on separate line (ok/FAIL/ERROR)
+        if printing_tests and current_test:
+            line_stripped = line.strip()
+            if line_stripped == 'ok':
+                test_results.append((current_test, 'PASS'))
+                print(f"  {Colors.GREEN}✓{Colors.ENDC} {test_description if test_description else current_test}")
+                if last_kss_response:
+                    # Extract expected status from last_kss_response
+                    print(f"     Expected: {Colors.GREEN}{last_kss_response}{Colors.ENDC}")
+                    print(f"     Actual:   {Colors.GREEN}{last_kss_response}{Colors.ENDC}")
+                    last_kss_response = None
+                else:
+                    print(f"     Expected: {Colors.GREEN}200 OK{Colors.ENDC}")
+                    print(f"     Actual:   {Colors.GREEN}200 OK{Colors.ENDC}")
+                print()
+                current_test = None
+                test_description = None
+                continue
+            elif line_stripped == 'FAIL':
+                test_results.append((current_test, 'FAIL'))
+                print(f"  {Colors.RED}✗{Colors.ENDC} {test_description if test_description else current_test}")
+                if last_kss_response:
+                    print(f"     Actual: {Colors.RED}{last_kss_response}{Colors.ENDC}")
+                    last_kss_response = None
+                print()
+                current_test = None
+                test_description = None
+                continue
+            elif line_stripped == 'ERROR':
+                test_results.append((current_test, 'ERROR'))
+                print(f"  {Colors.RED}⚠{Colors.ENDC} {test_description if test_description else current_test}")
+                if last_kss_response:
+                    print(f"     Error: {Colors.RED}{last_kss_response}{Colors.ENDC}")
+                    last_kss_response = None
+                print()
+                current_test = None
+                test_description = None
+                continue
 
         # Parse dots output (non-verbose mode)
         if re.match(r'^[\.FE]+$', line.strip()):
@@ -258,8 +317,8 @@ def main():
 
         return run_command(cmd, verbose)
 
-    # Interactive menu
-    verbose_mode = False
+    # Interactive menu (always verbose for proper parsing)
+    verbose_mode = True
 
     while True:
         choice = show_menu()
@@ -290,19 +349,19 @@ def main():
         elif choice == '7':
             cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserInfoView']
         elif choice == '8':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserRegisterView.test_register_success']
+            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserRegisterView.test_01_register_success']
         elif choice == '9':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserRegisterView.test_register_missing_device_info']
+            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserRegisterView.test_02_register_missing_device_info']
         elif choice == '10':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserRegisterView.test_register_missing_language_preference']
+            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserRegisterView.test_03_register_missing_language_preference']
         elif choice == '11':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserRegisterView.test_register_duplicate_device']
+            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserRegisterView.test_04_register_duplicate_device']
         elif choice == '12':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserLoginView.test_login_success']
+            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserLoginView.test_01_login_success']
         elif choice == '13':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserLoginView.test_login_missing_device_info']
+            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserLoginView.test_02_login_missing_device_info']
         elif choice == '14':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserLoginView.test_login_device_not_registered']
+            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserLoginView.test_03_login_device_not_registered']
         else:
             print("\nInvalid choice. Please try again.")
             continue

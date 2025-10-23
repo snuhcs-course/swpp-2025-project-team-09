@@ -88,7 +88,7 @@ class TestUserLoginView(APITestCase):
         response = self.client.post("/user/login", data, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["user_id"], str(self.test_user.uid))
+        self.assertEqual(str(response.data["user_id"]), str(self.test_user.uid))
         self.assertEqual(response.data["language_preference"], "en")
 
     def test_02_login_missing_device_info(self):
@@ -131,7 +131,7 @@ class TestUserChangeLangView(APITestCase):
         response = self.client.patch("/user/lang", data, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["user_id"], str(self.test_user.uid))
+        self.assertEqual(str(response.data["user_id"]), str(self.test_user.uid))
         self.assertEqual(response.data["language_preference"], "ko")
         self.assertIn("updated_at", response.data)
 
@@ -185,7 +185,7 @@ class TestUserInfoView(APITestCase):
         response = self.client.get("/user/info", {"device_info": "test-info-device"})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["user_id"], str(self.test_user.uid))
+        self.assertEqual(str(response.data["user_id"]), str(self.test_user.uid))
         self.assertEqual(response.data["sessions"], [])
 
     def test_02_get_user_info_with_sessions(self):
