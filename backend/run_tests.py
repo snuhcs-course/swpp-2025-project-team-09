@@ -278,6 +278,14 @@ def show_menu():
     print("  12. test_login_success")
     print("  13. test_login_missing_device_info")
     print("  14. test_login_device_not_registered")
+    print("\n[Session Controller Tests]")
+    print("  15. Run all session controller tests")
+    print("  16. test_start_session_success")
+    print("  17. test_select_voice_success")
+    print("  18. test_end_session_success")
+    print("  19. test_get_session_info_success")
+    print("  20. test_get_session_stats_success")
+    print("  21. test_get_session_review_success")
     print("\n[Options]")
     print("  v. Toggle verbose mode (currently: OFF)")
     print("  q. Quit")
@@ -362,6 +370,20 @@ def main():
             cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserLoginView.test_02_login_missing_device_info']
         elif choice == '14':
             cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserLoginView.test_03_login_device_not_registered']
+        elif choice == '15':
+            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.session_controller']
+        elif choice == '16':
+            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.session_controller.test_views.TestSessionController.test_01_start_session_success']
+        elif choice == '17':
+            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.session_controller.test_views.TestSessionController.test_04_select_voice_success']
+        elif choice == '18':
+            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.session_controller.test_views.TestSessionController.test_07_end_session_success']
+        elif choice == '19':
+            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.session_controller.test_views.TestSessionController.test_10_get_session_info_success']
+        elif choice == '20':
+            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.session_controller.test_views.TestSessionController.test_13_get_session_stats_success']
+        elif choice == '21':
+            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.session_controller.test_views.TestSessionController.test_16_get_session_review_success']
         else:
             print("\nInvalid choice. Please try again.")
             continue
