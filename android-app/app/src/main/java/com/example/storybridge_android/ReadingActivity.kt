@@ -230,7 +230,7 @@ class ReadingActivity : AppCompatActivity() {
         val playButton = ImageButton(this).apply {
             setImageResource(android.R.drawable.ic_media_play)
             setBackgroundResource(R.drawable.circle_dark)
-            alpha = 0.9f
+            alpha = 1.0f
             tag = "play_button"
             contentDescription = "Play audio for box $bboxIndex"
             scaleType = ImageView.ScaleType.CENTER_INSIDE
