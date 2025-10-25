@@ -26,6 +26,7 @@ import retrofit2.Callback
 import retrofit2.Response
 import java.io.File
 import java.io.FileOutputStream
+import kotlin.math.min
 
 class ReadingActivity : AppCompatActivity() {
 
@@ -179,30 +180,47 @@ class ReadingActivity : AppCompatActivity() {
             )
             imageMatrix.mapRect(rect)
 
-            // 🔹 텍스트 박스 생성 - WRAP_CONTENT로 변경하여 텍스트 크기에 맞춤
             val boxView = TextView(this).apply {
                 text = box.text
                 setBackgroundColor(getColor(R.color.black_50))
                 setTextColor(getColor(R.color.white))
-                textSize = 14f
                 gravity = Gravity.START or Gravity.TOP
                 setPadding(8, 8, 8, 8)
                 tag = "bbox"
             }
 
-            // 🔹 텍스트 크기를 측정하기 위해 먼저 measure 호출
+            // Measure once at default size
+            val baseTextSize = 14f
+            boxView.textSize = baseTextSize
             boxView.measure(
-                View.MeasureSpec.makeMeasureSpec(rect.width().toInt(), View.MeasureSpec.AT_MOST),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+            )
+            val measuredWidth = boxView.measuredWidth.toFloat()
+            val measuredHeight = boxView.measuredHeight.toFloat()
+
+            val desiredWidth = rect.width()
+            val desiredHeight = rect.height()
+
+            // Compute proportional scaling
+            val widthRatio = desiredWidth / measuredWidth
+            val heightRatio = desiredHeight / measuredHeight
+            val scaleRatio = min(widthRatio, heightRatio)
+
+            // Clamp and apply new size
+            val newTextSize = (baseTextSize * scaleRatio).coerceIn(16f, 30f)
+            boxView.textSize = newTextSize
+
+            // Measure again with final size
+            boxView.measure(
+                View.MeasureSpec.makeMeasureSpec(desiredWidth.toInt(), View.MeasureSpec.EXACTLY),
                 View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
             )
 
-            // 🔹 측정된 크기로 레이아웃 파라미터 설정
-            val textWidth = boxView.measuredWidth
-            val textHeight = boxView.measuredHeight
+            val finalTextWidth = desiredWidth
+            val finalTextHeight = boxView.measuredHeight.toFloat()
 
-            Log.d(TAG, "Box ${box.index} - Original: ${rect.width().toInt()}x${rect.height().toInt()}, Text needs: ${textWidth}x${textHeight}")
-
-            val params = ConstraintLayout.LayoutParams(textWidth, textHeight)
+            val params = ConstraintLayout.LayoutParams(finalTextWidth.toInt(), finalTextHeight.toInt())
             params.startToStart = pageImage.id
             params.topToTop = pageImage.id
             boxView.layoutParams = params
@@ -214,7 +232,7 @@ class ReadingActivity : AppCompatActivity() {
             if (audioResultsMap.containsKey(box.index)) {
                 Log.d(TAG, "Box ${box.index} has audio, creating play button")
             // 텍스트 박스의 실제 크기를 사용
-                val textRect = RectF(rect.left, rect.top, rect.left + textWidth, rect.top + textHeight)
+                val textRect = RectF(rect.left, rect.top, rect.left + finalTextWidth, rect.top + finalTextHeight)
                 createPlayButton(box.index, textRect, pageImage.id)
             } else {
                 Log.d(TAG, "Box ${box.index} has NO audio")
@@ -230,7 +248,7 @@ class ReadingActivity : AppCompatActivity() {
         val playButton = ImageButton(this).apply {
             setImageResource(android.R.drawable.ic_media_play)
             setBackgroundResource(R.drawable.circle_dark)
-            alpha = 1.0f
+            alpha = 0.9f
             tag = "play_button"
             contentDescription = "Play audio for box $bboxIndex"
             scaleType = ImageView.ScaleType.CENTER_INSIDE
