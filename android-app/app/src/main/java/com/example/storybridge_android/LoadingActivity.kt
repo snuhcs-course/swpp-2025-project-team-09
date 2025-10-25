@@ -27,13 +27,11 @@ class LoadingActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "LoadingActivity"
-        // Progress ranges for each phase
+        // Progress ranges
         private const val UPLOAD_PROGRESS_START = 0
-        private const val UPLOAD_PROGRESS_END = 60
-        private const val OCR_PROGRESS_START = 60
-        private const val OCR_PROGRESS_END = 80
-        private const val TTS_PROGRESS_START = 80
-        private const val TTS_PROGRESS_END = 100
+        private const val UPLOAD_PROGRESS_END = 50
+        private const val OCR_PROGRESS_START = 50
+        private const val OCR_PROGRESS_END = 100
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,27 +69,38 @@ class LoadingActivity : AppCompatActivity() {
     }
 
     /**
-     * Continuously increments the progress bar within a given range.
-     * The animation will keep moving until stopped or the max is reached.
-     * Designed to move slowly enough that server updates will catch up.
+     * Smoothly animates progress bar to a target value
      */
-    private fun startContinuousProgress(start: Int, max: Int, incrementDelayMs: Long = 500) {
-        loadingBar.progress = start
+    private fun animateProgressTo(target: Int, durationMs: Long = 500) {
+        val start = loadingBar.progress
+        val diff = target - start
+        if (diff <= 0) {
+            loadingBar.progress = target
+            return
+        }
 
+        val steps = 20
+        val stepDelay = durationMs / steps
+        val increment = diff.toFloat() / steps
+
+        var currentStep = 0
         val progressRunnable = object : Runnable {
             override fun run() {
-                val currentProgress = loadingBar.progress
-                if (currentProgress < max && isPolling) {
-                    loadingBar.progress = currentProgress + 1
-                    handler.postDelayed(this, incrementDelayMs)
+                if (currentStep < steps && isPolling) {
+                    currentStep++
+                    val newProgress = start + (increment * currentStep).toInt()
+                    loadingBar.progress = newProgress.coerceAtMost(target)
+                    handler.postDelayed(this, stepDelay)
+                } else {
+                    loadingBar.progress = target
                 }
             }
         }
-        handler.postDelayed(progressRunnable, incrementDelayMs)
+        handler.post(progressRunnable)
     }
 
     /**
-     * Stops any continuous progress and sets to specific value
+     * Sets progress immediately
      */
     private fun setProgressTo(progress: Int) {
         handler.removeCallbacksAndMessages(null)
@@ -111,9 +120,8 @@ class LoadingActivity : AppCompatActivity() {
         Log.d(TAG, "File exists: ${file.absolutePath}")
         Log.d(TAG, "File size: ${file.length()} bytes")
 
-        // Start continuous progress animation for upload phase
-        // 10% over ~3 seconds (300ms per 1%)
-        startContinuousProgress(UPLOAD_PROGRESS_START, UPLOAD_PROGRESS_END, 300)
+        // Start with upload progress
+        animateProgressTo(UPLOAD_PROGRESS_END, 2000)
 
         val bytes = FileInputStream(file).readBytes()
         val base64 = Base64.encodeToString(bytes, Base64.DEFAULT)
@@ -146,12 +154,9 @@ class LoadingActivity : AppCompatActivity() {
                             Log.d(TAG, "Updated page_index: $pageIndex")
                             Log.d(TAG, "Status: ${body.status}")
 
-                            // Set to end of upload phase and start OCR phase
-                            setProgressTo(UPLOAD_PROGRESS_END)
+                            // Move to OCR phase immediately
+                            setProgressTo(OCR_PROGRESS_START)
                             handler.postDelayed({
-                                // OCR phase: 50% over ~25 seconds (500ms per 1%)
-                                // Server progress will jump ahead as needed
-                                startContinuousProgress(OCR_PROGRESS_START, OCR_PROGRESS_END, 500)
                                 pollStatus()
                             }, 100)
                         } else {
@@ -177,7 +182,7 @@ class LoadingActivity : AppCompatActivity() {
     }
 
     private fun pollStatus() {
-        Log.d(TAG, "=== Starting OCR Status Polling ===")
+        Log.d(TAG, "=== Starting OCR/Translation Status Polling ===")
 
         val api = RetrofitClient.processApi
         var runnable: Runnable? = null
@@ -190,7 +195,7 @@ class LoadingActivity : AppCompatActivity() {
             }
 
             pollCount++
-            Log.d(TAG, "OCR Poll attempt #$pollCount")
+            Log.d(TAG, "OCR/Translation Poll attempt #$pollCount")
 
             api.checkOcrStatus(sessionId, pageIndex)
                 .enqueue(object : Callback<CheckOcrResponse> {
@@ -206,28 +211,25 @@ class LoadingActivity : AppCompatActivity() {
 
                         val body = response.body()
                         if (body != null) {
-                            // Map OCR progress (0-100) to our allocated range (10-60)
+                            // Map server progress (0-100) to our allocated range (30-100)
+                            val serverProgress = body.progress
                             val mappedProgress = OCR_PROGRESS_START +
-                                    ((body.progress * (OCR_PROGRESS_END - OCR_PROGRESS_START)) / 100)
+                                    ((serverProgress * (OCR_PROGRESS_END - OCR_PROGRESS_START)) / 100)
 
-                            // Update to server's progress if we're behind
-                            if (mappedProgress > loadingBar.progress) {
-                                loadingBar.progress = mappedProgress
-                            }
+                            Log.d(TAG, "OCR/Translation Status: ${body.status}, Server Progress: $serverProgress%, Mapped: $mappedProgress%")
 
-                            Log.d(TAG, "OCR Status: ${body.status}, Server Progress: ${body.progress}%, Display: ${loadingBar.progress}%")
+                            // Smoothly animate to the server's reported progress
+                            animateProgressTo(mappedProgress, 300)
 
                             if (body.status == "ready") {
-                                Log.d(TAG, "✓ OCR is ready! Moving to TTS check...")
+                                Log.d(TAG, "✓ OCR and Translation ready! Moving to ReadingActivity...")
                                 setProgressTo(OCR_PROGRESS_END)
+                                isPolling = false
                                 handler.postDelayed({
-                                    // TTS phase: 40% over ~20 seconds (500ms per 1%)
-                                    // Server progress will jump ahead as needed
-                                    startContinuousProgress(TTS_PROGRESS_START, TTS_PROGRESS_END, 500)
-                                    checkTtsStatus()
-                                }, 100)
+                                    navigateToReading()
+                                }, 300)
                             } else {
-                                Log.d(TAG, "OCR still processing, will retry in 1 second...")
+                                Log.d(TAG, "OCR/Translation still processing, will retry in 1 second...")
                                 handler.postDelayed(runnable!!, 1000)
                             }
                         } else {
@@ -247,71 +249,6 @@ class LoadingActivity : AppCompatActivity() {
         }
 
         handler.post(runnable)
-    }
-
-    private fun checkTtsStatus() {
-        Log.d(TAG, "=== Checking TTS Status ===")
-
-        val api = RetrofitClient.processApi
-        var ttsCheckCount = 0
-
-        fun checkStatus() {
-            if (!isPolling) {
-                Log.d(TAG, "Polling stopped")
-                return
-            }
-
-            ttsCheckCount++
-            Log.d(TAG, "TTS check attempt #$ttsCheckCount")
-
-            api.checkTtsStatus(sessionId, pageIndex)
-                .enqueue(object : Callback<CheckTtsResponse> {
-                    override fun onResponse(
-                        call: Call<CheckTtsResponse>,
-                        response: Response<CheckTtsResponse>
-                    ) {
-                        if (!response.isSuccessful) {
-                            Log.e(TAG, "TTS status check failed: ${response.code()}")
-                            handler.postDelayed({ checkStatus() }, 1500)
-                            return
-                        }
-
-                        val body = response.body()
-                        if (body != null) {
-                            // Map TTS progress (0-100) to our allocated range (60-100)
-                            val mappedProgress = TTS_PROGRESS_START +
-                                    ((body.progress * (TTS_PROGRESS_END - TTS_PROGRESS_START)) / 100)
-
-                            // Update to server's progress if we're behind
-                            if (mappedProgress > loadingBar.progress) {
-                                loadingBar.progress = mappedProgress
-                            }
-
-                            Log.d(TAG, "TTS Status: ${body.status}, Server Progress: ${body.progress}%, Display: ${loadingBar.progress}%")
-
-                            if (body.status == "ready") {
-                                Log.d(TAG, "✓ TTS is ready! Navigating to ReadingActivity...")
-                                setProgressTo(TTS_PROGRESS_END)
-                                isPolling = false
-                                navigateToReading()
-                            } else {
-                                Log.d(TAG, "TTS still processing, will retry in 1 second...")
-                                handler.postDelayed({ checkStatus() }, 1000)
-                            }
-                        } else {
-                            Log.e(TAG, "TTS response body is null")
-                            handler.postDelayed({ checkStatus() }, 1500)
-                        }
-                    }
-
-                    override fun onFailure(call: Call<CheckTtsResponse>, t: Throwable) {
-                        Log.e(TAG, "TTS polling error: ${t.message}", t)
-                        handler.postDelayed({ checkStatus() }, 1500)
-                    }
-                })
-        }
-
-        checkStatus()
     }
 
     private fun navigateToReading() {
