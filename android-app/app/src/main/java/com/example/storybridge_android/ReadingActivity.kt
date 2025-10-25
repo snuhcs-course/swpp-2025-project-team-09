@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.util.Base64
 import android.util.Log
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
@@ -26,6 +27,7 @@ import retrofit2.Callback
 import retrofit2.Response
 import java.io.File
 import java.io.FileOutputStream
+import kotlin.math.min
 
 class ReadingActivity : AppCompatActivity() {
 
@@ -41,6 +43,7 @@ class ReadingActivity : AppCompatActivity() {
     private var isOverlayVisible = false
     private var mediaPlayer: MediaPlayer? = null
     private var pageBitmap: Bitmap? = null
+    private lateinit var pageImage: ImageView
 
     companion object {
         private const val TAG = "ReadingActivity"
@@ -54,8 +57,14 @@ class ReadingActivity : AppCompatActivity() {
     // 🔹 play button 참조 저장 (색상 변경용)
     private val playButtonsMap: MutableMap<Int, ImageButton> = mutableMapOf()
 
+    // 🔹 bounding box 참조 저장 (드래그용)
+    private val boundingBoxViewsMap: MutableMap<Int, TextView> = mutableMapOf()
+
     // 🔹 OCR 결과 저장 (TTS 데이터 로드 후 버튼 추가를 위해)
     private var cachedBoundingBoxes: List<BoundingBox> = emptyList()
+
+    // 🔹 Touch and drag constant
+    private val TOUCH_SLOP = 10f // Minimum movement to start dragging
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,8 +92,9 @@ class ReadingActivity : AppCompatActivity() {
         bottomUi = findViewById(R.id.bottomUi)
         overlay = findViewById(R.id.sideOverlay)
         dimBackground = findViewById(R.id.dimBackground)
+        pageImage = findViewById(R.id.pageImage)
 
-    // 기존 global play button은 숨김 처리
+        // 기존 global play button은 숨김 처리
         findViewById<ImageButton>(R.id.playButton).visibility = View.GONE
     }
 
@@ -99,12 +109,64 @@ class ReadingActivity : AppCompatActivity() {
         val closeButton = findViewById<Button>(R.id.closeOverlayButton)
         val finishButton = findViewById<Button>(R.id.finishButton)
 
+        // Simple click listener for toggling UI
         mainLayout.setOnClickListener { toggleUI() }
+
         startButton.setOnClickListener { navigateToCamera() }
         menuButton.setOnClickListener { toggleOverlay(true) }
         closeButton.setOnClickListener { toggleOverlay(false) }
         dimBackground.setOnClickListener { toggleOverlay(false) }
         finishButton.setOnClickListener { navigateToFinish() }
+    }
+
+    private fun setupBoundingBoxTouchListener(boxView: TextView, boxIndex: Int) {
+        var boxLastTouchX = 0f
+        var boxLastTouchY = 0f
+        var boxIsDragging = false
+
+        boxView.setOnTouchListener { view, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    boxLastTouchX = event.rawX
+                    boxLastTouchY = event.rawY
+                    boxIsDragging = false
+                    return@setOnTouchListener true
+                }
+
+                MotionEvent.ACTION_MOVE -> {
+                    val deltaX = event.rawX - boxLastTouchX
+                    val deltaY = event.rawY - boxLastTouchY
+
+                    // Check if movement exceeds touch slop to start dragging
+                    if (!boxIsDragging && (Math.abs(deltaX) > TOUCH_SLOP || Math.abs(deltaY) > TOUCH_SLOP)) {
+                        boxIsDragging = true
+                    }
+
+                    if (boxIsDragging) {
+                        // Move this specific bounding box
+                        boxView.translationX += deltaX
+                        boxView.translationY += deltaY
+
+                        // Move the corresponding play button
+                        playButtonsMap[boxIndex]?.let { button ->
+                            button.translationX += deltaX
+                            button.translationY += deltaY
+                        }
+
+                        boxLastTouchX = event.rawX
+                        boxLastTouchY = event.rawY
+                    }
+                    return@setOnTouchListener true
+                }
+
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    boxIsDragging = false
+                    return@setOnTouchListener true
+                }
+
+                else -> return@setOnTouchListener false
+            }
+        }
     }
 
     private fun navigateToFinish() {
@@ -123,7 +185,6 @@ class ReadingActivity : AppCompatActivity() {
     }
 
     private fun displayPage(base64Image: String?) {
-        val pageImage = findViewById<ImageView>(R.id.pageImage)
         try {
             val decodedBytes = Base64.decode(base64Image, Base64.DEFAULT)
             val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
@@ -149,7 +210,6 @@ class ReadingActivity : AppCompatActivity() {
         Log.d(TAG, "=== Displaying Bounding Boxes ===")
         Log.d(TAG, "Number of boxes: ${bboxes.size}")
 
-        val pageImage = findViewById<ImageView>(R.id.pageImage)
         if (pageImage.drawable == null) {
             Log.e(TAG, "✗ Page image not loaded yet")
             return
@@ -163,8 +223,9 @@ class ReadingActivity : AppCompatActivity() {
             }
         }
 
-        // playButtonsMap 초기화
+        // playButtonsMap과 boundingBoxViewsMap 초기화
         playButtonsMap.clear()
+        boundingBoxViewsMap.clear()
 
         val imageMatrix = pageImage.imageMatrix
 
@@ -179,30 +240,47 @@ class ReadingActivity : AppCompatActivity() {
             )
             imageMatrix.mapRect(rect)
 
-            // 🔹 텍스트 박스 생성 - WRAP_CONTENT로 변경하여 텍스트 크기에 맞춤
             val boxView = TextView(this).apply {
                 text = box.text
                 setBackgroundColor(getColor(R.color.black_50))
                 setTextColor(getColor(R.color.white))
-                textSize = 14f
                 gravity = Gravity.START or Gravity.TOP
                 setPadding(8, 8, 8, 8)
                 tag = "bbox"
             }
 
-            // 🔹 텍스트 크기를 측정하기 위해 먼저 measure 호출
+            // Measure once at default size
+            val baseTextSize = 14f
+            boxView.textSize = baseTextSize
             boxView.measure(
-                View.MeasureSpec.makeMeasureSpec(rect.width().toInt(), View.MeasureSpec.AT_MOST),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+            )
+            val measuredWidth = boxView.measuredWidth.toFloat()
+            val measuredHeight = boxView.measuredHeight.toFloat()
+
+            val desiredWidth = rect.width()
+            val desiredHeight = rect.height()
+
+            // Compute proportional scaling
+            val widthRatio = desiredWidth / measuredWidth
+            val heightRatio = desiredHeight / measuredHeight
+            val scaleRatio = min(widthRatio, heightRatio)
+
+            // Clamp and apply new size
+            val newTextSize = (baseTextSize * scaleRatio).coerceIn(16f, 30f)
+            boxView.textSize = newTextSize
+
+            // Measure again with final size
+            boxView.measure(
+                View.MeasureSpec.makeMeasureSpec(desiredWidth.toInt(), View.MeasureSpec.EXACTLY),
                 View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
             )
 
-            // 🔹 측정된 크기로 레이아웃 파라미터 설정
-            val textWidth = boxView.measuredWidth
-            val textHeight = boxView.measuredHeight
+            val finalTextWidth = desiredWidth
+            val finalTextHeight = boxView.measuredHeight.toFloat()
 
-            Log.d(TAG, "Box ${box.index} - Original: ${rect.width().toInt()}x${rect.height().toInt()}, Text needs: ${textWidth}x${textHeight}")
-
-            val params = ConstraintLayout.LayoutParams(textWidth, textHeight)
+            val params = ConstraintLayout.LayoutParams(finalTextWidth.toInt(), finalTextHeight.toInt())
             params.startToStart = pageImage.id
             params.topToTop = pageImage.id
             boxView.layoutParams = params
@@ -210,11 +288,17 @@ class ReadingActivity : AppCompatActivity() {
             boxView.translationY = rect.top
             mainLayout.addView(boxView)
 
+            // 🔹 Store bounding box reference for dragging
+            boundingBoxViewsMap[box.index] = boxView
+
+            // 🔹 Setup touch listener for this bounding box
+            setupBoundingBoxTouchListener(boxView, box.index)
+
             // 🔹 play button 생성 (이 box에 오디오가 있는 경우에만)
             if (audioResultsMap.containsKey(box.index)) {
                 Log.d(TAG, "Box ${box.index} has audio, creating play button")
-            // 텍스트 박스의 실제 크기를 사용
-                val textRect = RectF(rect.left, rect.top, rect.left + textWidth, rect.top + textHeight)
+                // 텍스트 박스의 실제 크기를 사용
+                val textRect = RectF(rect.left, rect.top, rect.left + finalTextWidth, rect.top + finalTextHeight)
                 createPlayButton(box.index, textRect, pageImage.id)
             } else {
                 Log.d(TAG, "Box ${box.index} has NO audio")
@@ -230,7 +314,7 @@ class ReadingActivity : AppCompatActivity() {
         val playButton = ImageButton(this).apply {
             setImageResource(android.R.drawable.ic_media_play)
             setBackgroundResource(R.drawable.circle_dark)
-            alpha = 1.0f
+            alpha = 0.9f
             tag = "play_button"
             contentDescription = "Play audio for box $bboxIndex"
             scaleType = ImageView.ScaleType.CENTER_INSIDE
@@ -468,7 +552,7 @@ class ReadingActivity : AppCompatActivity() {
                     cachedBoundingBoxes = boxes
 
                     if (boxes.isNotEmpty()) {
-                        findViewById<ImageView>(R.id.pageImage).post {
+                        pageImage.post {
                             displayBB(boxes)
                         }
                     } else {
@@ -494,15 +578,15 @@ class ReadingActivity : AppCompatActivity() {
                     Log.d(TAG, "TTS results count: ${audioList?.size ?: 0}")
 
                     if (!audioList.isNullOrEmpty()) {
-// 🔹 bbox_index를 키로 하는 맵 생성
+                        // 🔹 bbox_index를 키로 하는 맵 생성
                         audioResultsMap = audioList.associate { audioResult ->
                             Log.d(TAG, "Audio for bbox ${audioResult.bbox_index}: ${audioResult.audio_base64_list.size} clips")
                             audioResult.bbox_index to audioResult.audio_base64_list
                         }
 
-// 🔹 OCR 결과가 이미 표시되었다면 play button 추가
+                        // 🔹 OCR 결과가 이미 표시되었다면 play button 추가
                         if (cachedBoundingBoxes.isNotEmpty()) {
-                            findViewById<ImageView>(R.id.pageImage).post {
+                            pageImage.post {
                                 Log.d(TAG, "Re-displaying bounding boxes with audio buttons")
                                 displayBB(cachedBoundingBoxes)
                             }
@@ -524,6 +608,7 @@ class ReadingActivity : AppCompatActivity() {
         super.onDestroy()
         mediaPlayer?.release()
         playButtonsMap.clear()
+        boundingBoxViewsMap.clear()
         Log.d(TAG, "=== Activity destroyed ===")
     }
 }

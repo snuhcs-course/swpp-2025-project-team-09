@@ -27,6 +27,13 @@ class LoadingActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "LoadingActivity"
+        // Progress ranges for each phase
+        private const val UPLOAD_PROGRESS_START = 0
+        private const val UPLOAD_PROGRESS_END = 60
+        private const val OCR_PROGRESS_START = 60
+        private const val OCR_PROGRESS_END = 80
+        private const val TTS_PROGRESS_START = 80
+        private const val TTS_PROGRESS_END = 100
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,7 +64,38 @@ class LoadingActivity : AppCompatActivity() {
             return
         }
 
+        // Initialize progress bar
+        loadingBar.progress = UPLOAD_PROGRESS_START
+
         uploadImage()
+    }
+
+    /**
+     * Continuously increments the progress bar within a given range.
+     * The animation will keep moving until stopped or the max is reached.
+     * Designed to move slowly enough that server updates will catch up.
+     */
+    private fun startContinuousProgress(start: Int, max: Int, incrementDelayMs: Long = 500) {
+        loadingBar.progress = start
+
+        val progressRunnable = object : Runnable {
+            override fun run() {
+                val currentProgress = loadingBar.progress
+                if (currentProgress < max && isPolling) {
+                    loadingBar.progress = currentProgress + 1
+                    handler.postDelayed(this, incrementDelayMs)
+                }
+            }
+        }
+        handler.postDelayed(progressRunnable, incrementDelayMs)
+    }
+
+    /**
+     * Stops any continuous progress and sets to specific value
+     */
+    private fun setProgressTo(progress: Int) {
+        handler.removeCallbacksAndMessages(null)
+        loadingBar.progress = progress
     }
 
     private fun uploadImage() {
@@ -72,6 +110,10 @@ class LoadingActivity : AppCompatActivity() {
 
         Log.d(TAG, "File exists: ${file.absolutePath}")
         Log.d(TAG, "File size: ${file.length()} bytes")
+
+        // Start continuous progress animation for upload phase
+        // 10% over ~3 seconds (300ms per 1%)
+        startContinuousProgress(UPLOAD_PROGRESS_START, UPLOAD_PROGRESS_END, 300)
 
         val bytes = FileInputStream(file).readBytes()
         val base64 = Base64.encodeToString(bytes, Base64.DEFAULT)
@@ -103,7 +145,15 @@ class LoadingActivity : AppCompatActivity() {
                             Log.d(TAG, "✓ Upload successful")
                             Log.d(TAG, "Updated page_index: $pageIndex")
                             Log.d(TAG, "Status: ${body.status}")
-                            pollStatus()
+
+                            // Set to end of upload phase and start OCR phase
+                            setProgressTo(UPLOAD_PROGRESS_END)
+                            handler.postDelayed({
+                                // OCR phase: 50% over ~25 seconds (500ms per 1%)
+                                // Server progress will jump ahead as needed
+                                startContinuousProgress(OCR_PROGRESS_START, OCR_PROGRESS_END, 500)
+                                pollStatus()
+                            }, 100)
                         } else {
                             Log.e(TAG, "✗ Upload success but body is null")
                             finish()
@@ -156,12 +206,26 @@ class LoadingActivity : AppCompatActivity() {
 
                         val body = response.body()
                         if (body != null) {
-                            loadingBar.progress = body.progress
-                            Log.d(TAG, "OCR Status: ${body.status}, Progress: ${body.progress}%")
+                            // Map OCR progress (0-100) to our allocated range (10-60)
+                            val mappedProgress = OCR_PROGRESS_START +
+                                    ((body.progress * (OCR_PROGRESS_END - OCR_PROGRESS_START)) / 100)
+
+                            // Update to server's progress if we're behind
+                            if (mappedProgress > loadingBar.progress) {
+                                loadingBar.progress = mappedProgress
+                            }
+
+                            Log.d(TAG, "OCR Status: ${body.status}, Server Progress: ${body.progress}%, Display: ${loadingBar.progress}%")
 
                             if (body.status == "ready") {
                                 Log.d(TAG, "✓ OCR is ready! Moving to TTS check...")
-                                checkTtsStatus()
+                                setProgressTo(OCR_PROGRESS_END)
+                                handler.postDelayed({
+                                    // TTS phase: 40% over ~20 seconds (500ms per 1%)
+                                    // Server progress will jump ahead as needed
+                                    startContinuousProgress(TTS_PROGRESS_START, TTS_PROGRESS_END, 500)
+                                    checkTtsStatus()
+                                }, 100)
                             } else {
                                 Log.d(TAG, "OCR still processing, will retry in 1 second...")
                                 handler.postDelayed(runnable!!, 1000)
@@ -214,10 +278,20 @@ class LoadingActivity : AppCompatActivity() {
 
                         val body = response.body()
                         if (body != null) {
-                            Log.d(TAG, "TTS Status: ${body.status}, Progress: ${body.progress}%")
+                            // Map TTS progress (0-100) to our allocated range (60-100)
+                            val mappedProgress = TTS_PROGRESS_START +
+                                    ((body.progress * (TTS_PROGRESS_END - TTS_PROGRESS_START)) / 100)
+
+                            // Update to server's progress if we're behind
+                            if (mappedProgress > loadingBar.progress) {
+                                loadingBar.progress = mappedProgress
+                            }
+
+                            Log.d(TAG, "TTS Status: ${body.status}, Server Progress: ${body.progress}%, Display: ${loadingBar.progress}%")
 
                             if (body.status == "ready") {
                                 Log.d(TAG, "✓ TTS is ready! Navigating to ReadingActivity...")
+                                setProgressTo(TTS_PROGRESS_END)
                                 isPolling = false
                                 navigateToReading()
                             } else {
@@ -260,6 +334,6 @@ class LoadingActivity : AppCompatActivity() {
         super.onDestroy()
         isPolling = false
         handler.removeCallbacksAndMessages(null)
-        Log.d(TAG, "=== Activity destroyed ===")
+        Log.d(TAG, "=== Activity destroyed, all progress animations stopped ===")
     }
 }
