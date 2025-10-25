@@ -130,9 +130,15 @@ class TTSModule:
             print(f"TTS error for {out_path.name}: {e}")
             return -1.0, None
 
-    async def process_paragraph(self, page: Dict[str, str], log_csv: bool, check_latency: bool, response_format: str = "mp3"):
+    async def process_paragraph(self, page: Dict[str, str], log_csv: bool, check_latency: bool, voice: str, response_format: str = "mp3", split_sentences: bool = True) -> Dict[str, Any]:
         file_name = page["fileName"]
-        sentences = kss.split_sentences(page["text"].strip())
+        text = page["text"].strip()
+        
+        if split_sentences:
+            sentences = kss.split_sentences(text)
+        else:
+            sentences = [text] 
+            
         if not sentences:
             return {"status": "no_sentences"}
 
@@ -162,7 +168,6 @@ class TTSModule:
                 return None
             
             # Immediately start TTS (don't wait for other sentences)
-            voice = "shimmer"
             out_file = self.OUT_DIR / f"{stem}_sent{i+1}.{response_format}"
             tts_instr = (
                 f"[Affect: A gentle, curious narrator with a clear accent, guiding a magical, child-friendly adventure through a fairy tale world.]"

@@ -16,7 +16,8 @@ class Page(models.Model):
     translation_text = models.TextField(null=True, blank=True)
     bbox_json = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
-
+    isFrontPage = models.BooleanField(default=False)
+    
     def __str__(self):
         return f"Page {self.id} of Session {self.session.id}"
 
