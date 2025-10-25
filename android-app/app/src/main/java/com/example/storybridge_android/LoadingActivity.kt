@@ -29,10 +29,10 @@ class LoadingActivity : AppCompatActivity() {
         private const val TAG = "LoadingActivity"
         // Progress ranges for each phase
         private const val UPLOAD_PROGRESS_START = 0
-        private const val UPLOAD_PROGRESS_END = 10
-        private const val OCR_PROGRESS_START = 10
-        private const val OCR_PROGRESS_END = 60
-        private const val TTS_PROGRESS_START = 60
+        private const val UPLOAD_PROGRESS_END = 60
+        private const val OCR_PROGRESS_START = 60
+        private const val OCR_PROGRESS_END = 80
+        private const val TTS_PROGRESS_START = 80
         private const val TTS_PROGRESS_END = 100
     }
 
