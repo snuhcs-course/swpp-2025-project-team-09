@@ -85,7 +85,7 @@ class ReadingActivity : AppCompatActivity() {
         overlay = findViewById(R.id.sideOverlay)
         dimBackground = findViewById(R.id.dimBackground)
 
-    // 기존 global play button은 숨김 처리
+        // 기존 global play button은 숨김 처리
         findViewById<ImageButton>(R.id.playButton).visibility = View.GONE
     }
 
@@ -231,7 +231,7 @@ class ReadingActivity : AppCompatActivity() {
             // 🔹 play button 생성 (이 box에 오디오가 있는 경우에만)
             if (audioResultsMap.containsKey(box.index)) {
                 Log.d(TAG, "Box ${box.index} has audio, creating play button")
-            // 텍스트 박스의 실제 크기를 사용
+                // 텍스트 박스의 실제 크기를 사용
                 val textRect = RectF(rect.left, rect.top, rect.left + finalTextWidth, rect.top + finalTextHeight)
                 createPlayButton(box.index, textRect, pageImage.id)
             } else {
@@ -512,13 +512,13 @@ class ReadingActivity : AppCompatActivity() {
                     Log.d(TAG, "TTS results count: ${audioList?.size ?: 0}")
 
                     if (!audioList.isNullOrEmpty()) {
-// 🔹 bbox_index를 키로 하는 맵 생성
+                        // 🔹 bbox_index를 키로 하는 맵 생성
                         audioResultsMap = audioList.associate { audioResult ->
                             Log.d(TAG, "Audio for bbox ${audioResult.bbox_index}: ${audioResult.audio_base64_list.size} clips")
                             audioResult.bbox_index to audioResult.audio_base64_list
                         }
 
-// 🔹 OCR 결과가 이미 표시되었다면 play button 추가
+                        // 🔹 OCR 결과가 이미 표시되었다면 play button 추가
                         if (cachedBoundingBoxes.isNotEmpty()) {
                             findViewById<ImageView>(R.id.pageImage).post {
                                 Log.d(TAG, "Re-displaying bounding boxes with audio buttons")
