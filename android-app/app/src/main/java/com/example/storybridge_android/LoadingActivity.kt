@@ -1,6 +1,8 @@
 package com.example.storybridge_android
 
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -12,8 +14,10 @@ import com.example.storybridge_android.network.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.FileInputStream
+import kotlin.math.max
+import androidx.core.graphics.scale
 
 class LoadingActivity : AppCompatActivity() {
 
@@ -29,9 +33,11 @@ class LoadingActivity : AppCompatActivity() {
         private const val TAG = "LoadingActivity"
         // Progress ranges
         private const val UPLOAD_PROGRESS_START = 0
-        private const val UPLOAD_PROGRESS_END = 50
-        private const val OCR_PROGRESS_START = 50
+        private const val UPLOAD_PROGRESS_END = 80
+        private const val OCR_PROGRESS_START = 80
         private const val OCR_PROGRESS_END = 100
+        private const val COMPRESSION_QUALITY = 80 // JPEG compression quality (0-100)
+        private const val MAX_IMAGE_DIMENSION = 1920 // Maximum width/height for scaling
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -107,8 +113,54 @@ class LoadingActivity : AppCompatActivity() {
         loadingBar.progress = progress
     }
 
+    /**
+     * Decodes an image file and scales it down if necessary, maintaining aspect ratio.
+     * The maximum width or height will be MAX_IMAGE_DIMENSION.
+     */
+    private fun decodeAndScaleImage(filePath: String): Bitmap? {
+        val options = BitmapFactory.Options().apply {
+            // First decode to get image dimensions
+            inJustDecodeBounds = true
+        }
+        BitmapFactory.decodeFile(filePath, options)
+
+        val imageWidth = options.outWidth
+        val imageHeight = options.outHeight
+
+        // Calculate inSampleSize to scale the image down
+        var inSampleSize = 1
+        if (max(imageWidth, imageHeight) > MAX_IMAGE_DIMENSION) {
+            val scaleFactor = max(imageWidth, imageHeight).toFloat() / MAX_IMAGE_DIMENSION
+            inSampleSize = scaleFactor.toInt()
+        }
+
+        Log.d(TAG, "Image Original Size: ${imageWidth}x${imageHeight}, InSampleSize: $inSampleSize")
+
+        // Decode with inSampleSize set
+        options.inJustDecodeBounds = false
+        options.inSampleSize = inSampleSize
+
+        val scaledBitmap = BitmapFactory.decodeFile(filePath, options)
+
+        // Final scaling if inSampleSize was not enough or to hit the target exactly
+        if (scaledBitmap != null && max(scaledBitmap.width, scaledBitmap.height) > MAX_IMAGE_DIMENSION) {
+            val scaleRatio = MAX_IMAGE_DIMENSION.toFloat() / max(scaledBitmap.width, scaledBitmap.height)
+            val newWidth = (scaledBitmap.width * scaleRatio).toInt()
+            val newHeight = (scaledBitmap.height * scaleRatio).toInt()
+
+            val finalBitmap = scaledBitmap.scale(newWidth, newHeight)
+            if (finalBitmap != scaledBitmap) {
+                scaledBitmap.recycle() // Free the intermediate bitmap
+            }
+            Log.d(TAG, "Image Final Size: ${finalBitmap.width}x${finalBitmap.height}")
+            return finalBitmap
+        }
+
+        return scaledBitmap
+    }
+
     private fun uploadImage() {
-        Log.d(TAG, "=== Uploading Image ===")
+        Log.d(TAG, "=== Uploading Image (Scaled & Compressed) ===")
 
         val file = File(imagePath!!)
         if (!file.exists()) {
@@ -117,16 +169,32 @@ class LoadingActivity : AppCompatActivity() {
             return
         }
 
-        Log.d(TAG, "File exists: ${file.absolutePath}")
-        Log.d(TAG, "File size: ${file.length()} bytes")
+        Log.d(TAG, "Original File size: ${file.length()} bytes")
 
         // Start with upload progress
-        animateProgressTo(UPLOAD_PROGRESS_END, 2000)
+        animateProgressTo(UPLOAD_PROGRESS_END, 6000)
 
-        val bytes = FileInputStream(file).readBytes()
-        val base64 = Base64.encodeToString(bytes, Base64.DEFAULT)
+        // --- Scaling & Compression Logic ---
+        val bitmap = decodeAndScaleImage(file.absolutePath)
+        if (bitmap == null) {
+            Log.e(TAG, "✗ Could not decode or scale bitmap from file path")
+            finish()
+            return
+        }
+
+        val outputStream = ByteArrayOutputStream()
+        // Compress the scaled bitmap
+        bitmap.compress(Bitmap.CompressFormat.JPEG, COMPRESSION_QUALITY, outputStream)
+        val byteArray = outputStream.toByteArray()
+
+        Log.d(TAG, "Compressed byte array size: ${byteArray.size} bytes (Quality: $COMPRESSION_QUALITY%)")
+
+        // Encode the compressed byte array to Base64
+        val base64 = Base64.encodeToString(byteArray, Base64.DEFAULT)
+        bitmap.recycle() // Release the bitmap memory immediately
 
         Log.d(TAG, "Base64 encoded, length: ${base64.length}")
+        // --- End of Scaling & Compression Logic ---
 
         val req = UploadImageRequest(
             session_id = sessionId,
