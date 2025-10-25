@@ -142,11 +142,11 @@ class LoadingActivity : AppCompatActivity() {
             pollCount++
             Log.d(TAG, "OCR Poll attempt #$pollCount")
 
-            api.checkOcrTranslationStatus(sessionId, pageIndex)
-                .enqueue(object : Callback<CheckOcrTranslationResponse> {
+            api.checkOcrStatus(sessionId, pageIndex)
+                .enqueue(object : Callback<CheckOcrResponse> {
                     override fun onResponse(
-                        call: Call<CheckOcrTranslationResponse>,
-                        response: Response<CheckOcrTranslationResponse>
+                        call: Call<CheckOcrResponse>,
+                        response: Response<CheckOcrResponse>
                     ) {
                         if (!response.isSuccessful) {
                             Log.e(TAG, "OCR status check failed: ${response.code()}")
@@ -173,7 +173,7 @@ class LoadingActivity : AppCompatActivity() {
                     }
 
                     override fun onFailure(
-                        call: Call<CheckOcrTranslationResponse>,
+                        call: Call<CheckOcrResponse>,
                         t: Throwable
                     ) {
                         Log.e(TAG, "OCR polling error: ${t.message}", t)

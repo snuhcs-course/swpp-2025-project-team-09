@@ -15,10 +15,10 @@ interface ProcessApi {
     ): Call<UploadImageResponse>
 
     @GET("/process/check_ocr/")
-    fun checkOcrTranslationStatus(
+    fun checkOcrStatus(
         @Query("session_id") session_id: String,
         @Query("page_index") page_index: Int
-    ): Call<CheckOcrTranslationResponse>
+    ): Call<CheckOcrResponse>
 
     @GET("/process/check_tts/")
     fun checkTtsStatus(
@@ -47,12 +47,12 @@ data class UploadImageResponse(
 )
 
 // 3-2. Check OCR, Translation Status
-data class CheckOcrTranslationRequest(
+data class CheckOcrRequest(
     val session_id: String,
     val page_index: Int
 )
 
-data class CheckOcrTranslationResponse(
+data class CheckOcrResponse(
     val session_id: String,
     val page_index: Int,
     val status: String,           // "pending", "processing", "ready"
