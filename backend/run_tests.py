@@ -2,8 +2,15 @@
 """
 Test Runner Script for Backend Tests
 
+This script provides an interactive menu and command-line interface for running
+Django tests with formatted output and detailed test results.
+
 Usage:
     python run_tests.py                          # Show interactive menu
+    python run_tests.py --all                    # Run all tests
+    python run_tests.py --unit                   # Run all unit tests
+    python run_tests.py --user                   # Run user controller tests
+    python run_tests.py --help                   # Show help message
 """
 
 import sys
@@ -11,15 +18,16 @@ import subprocess
 import re
 
 
-# ANSI color codes
+# ANSI color codes for terminal output formatting
 class Colors:
-    GREEN = '\033[92m'
-    RED = '\033[91m'
-    YELLOW = '\033[93m'
-    BLUE = '\033[94m'
-    CYAN = '\033[96m'
-    BOLD = '\033[1m'
-    ENDC = '\033[0m'
+    """ANSI escape codes for colored terminal output"""
+    GREEN = '\033[92m'      # Success messages
+    RED = '\033[91m'        # Error/failure messages
+    YELLOW = '\033[93m'     # Warning messages
+    BLUE = '\033[94m'       # Header messages
+    CYAN = '\033[96m'       # Info messages
+    BOLD = '\033[1m'        # Bold text
+    ENDC = '\033[0m'        # Reset color
 
 
 def run_command(command, verbose=True):
@@ -255,43 +263,71 @@ def run_command(command, verbose=True):
     return result.returncode
 
 
+# Common test path prefixes
+USER_CONTROLLER = 'tests.unit.controller.user_controller'
+SESSION_CONTROLLER = 'tests.unit.controller.session_controller'
+
+# Test menu configuration
+# Each entry: (choice_number, description, test_path)
+# test_path will be automatically prefixed with 'python manage.py test'
+TEST_MENU = {
+    'All Tests': [
+        ('1', 'Run all tests', 'tests'),
+        ('2', 'Run all unit tests', 'tests.unit'),
+    ],
+    'User Controller Tests': [
+        ('3', 'Run all user controller tests', USER_CONTROLLER),
+        ('4', 'Run user register tests', f'{USER_CONTROLLER}.test_views.TestUserRegisterView'),
+        ('5', 'Run user login tests', f'{USER_CONTROLLER}.test_views.TestUserLoginView'),
+        ('6', 'Run user change language tests', f'{USER_CONTROLLER}.test_views.TestUserChangeLangView'),
+        ('7', 'Run user info tests', f'{USER_CONTROLLER}.test_views.TestUserInfoView'),
+    ],
+    'Session Controller Tests': [
+        ('8', 'Run all session controller tests', SESSION_CONTROLLER),
+        ('9', 'test_start_session_success', f'{SESSION_CONTROLLER}.test_views.TestSessionController.test_01_start_session_success'),
+        ('10', 'test_select_voice_success', f'{SESSION_CONTROLLER}.test_views.TestSessionController.test_04_select_voice_success'),
+        ('11', 'test_end_session_success', f'{SESSION_CONTROLLER}.test_views.TestSessionController.test_07_end_session_success'),
+        ('12', 'test_get_session_info_success', f'{SESSION_CONTROLLER}.test_views.TestSessionController.test_10_get_session_info_success'),
+        ('13', 'test_get_session_stats_success', f'{SESSION_CONTROLLER}.test_views.TestSessionController.test_13_get_session_stats_success'),
+        ('14', 'test_get_session_review_success', f'{SESSION_CONTROLLER}.test_views.TestSessionController.test_16_get_session_review_success'),
+    ],
+}
+
+
+def build_test_command(test_path):
+    """Build a django test command from a test path"""
+    return ['python', 'manage.py', 'test', test_path]
+
+
 def show_menu():
     """Display interactive menu for test selection"""
     print("\n" + "="*60)
     print("Backend Test Runner - Interactive Menu")
     print("="*60)
-    print("\n[All Tests]")
-    print("  1. Run all tests")
-    print("  2. Run all unit tests")
-    print("\n[User Controller Tests]")
-    print("  3. Run all user controller tests")
-    print("  4. Run user register tests")
-    print("  5. Run user login tests")
-    print("  6. Run user change language tests")
-    print("  7. Run user info tests")
-    print("\n[Individual User Register Tests]")
-    print("  8. test_register_success")
-    print("  9. test_register_missing_device_info")
-    print("  10. test_register_missing_language_preference")
-    print("  11. test_register_duplicate_device")
-    print("\n[Individual User Login Tests]")
-    print("  12. test_login_success")
-    print("  13. test_login_missing_device_info")
-    print("  14. test_login_device_not_registered")
-    print("\n[Session Controller Tests]")
-    print("  15. Run all session controller tests")
-    print("  16. test_start_session_success")
-    print("  17. test_select_voice_success")
-    print("  18. test_end_session_success")
-    print("  19. test_get_session_info_success")
-    print("  20. test_get_session_stats_success")
-    print("  21. test_get_session_review_success")
+
+    for category, tests in TEST_MENU.items():
+        print(f"\n[{category}]")
+        for choice, description, _test_path in tests:
+            print(f"  {choice}. {description}")
+
     print("\n[Options]")
     print("  v. Toggle verbose mode (currently: OFF)")
     print("  q. Quit")
     print("="*60)
 
     return input("\nSelect option: ").strip()
+
+
+# Command line argument mapping
+CLI_ARGS = {
+    '--all': 'tests',
+    '--unit': 'tests.unit',
+    '--user': USER_CONTROLLER,
+    '--user-register': f'{USER_CONTROLLER}.test_views.TestUserRegisterView',
+    '--user-login': f'{USER_CONTROLLER}.test_views.TestUserLoginView',
+    '--user-lang': f'{USER_CONTROLLER}.test_views.TestUserChangeLangView',
+    '--user-info': f'{USER_CONTROLLER}.test_views.TestUserInfoView',
+}
 
 
 def main():
@@ -301,32 +337,26 @@ def main():
     if len(sys.argv) > 1:
         arg = sys.argv[1]
 
-        if arg == '--all':
-            cmd = ['python', 'manage.py', 'test', 'tests']
-        elif arg == '--unit':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit']
-        elif arg == '--user':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller']
-        elif arg == '--user-register':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserRegisterView']
-        elif arg == '--user-login':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserLoginView']
-        elif arg == '--user-lang':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserChangeLangView']
-        elif arg == '--user-info':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserInfoView']
-        elif arg in ['--help', '-h']:
+        if arg in ['--help', '-h']:
             print(__doc__)
             return 0
+        elif arg in CLI_ARGS:
+            test_path = CLI_ARGS[arg]
+            cmd = build_test_command(test_path)
+            return run_command(cmd, verbose)
         else:
             print(f"Unknown argument: {arg}")
             print(__doc__)
             return 1
 
-        return run_command(cmd, verbose)
-
     # Interactive menu (always verbose for proper parsing)
     verbose_mode = True
+
+    # Build choice-to-test-path mapping from TEST_MENU
+    choice_map = {}
+    for tests in TEST_MENU.values():
+        for choice, _description, test_path in tests:
+            choice_map[choice] = test_path
 
     while True:
         choice = show_menu()
@@ -339,58 +369,16 @@ def main():
             print(f"\nVerbose mode: {'ON' if verbose_mode else 'OFF'}")
             continue
 
-        cmd = None
+        # Look up test path and build command
+        test_path = choice_map.get(choice)
 
-        # Map choices to commands
-        if choice == '1':
-            cmd = ['python', 'manage.py', 'test', 'tests']
-        elif choice == '2':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit']
-        elif choice == '3':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller']
-        elif choice == '4':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserRegisterView']
-        elif choice == '5':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserLoginView']
-        elif choice == '6':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserChangeLangView']
-        elif choice == '7':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserInfoView']
-        elif choice == '8':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserRegisterView.test_01_register_success']
-        elif choice == '9':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserRegisterView.test_02_register_missing_device_info']
-        elif choice == '10':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserRegisterView.test_03_register_missing_language_preference']
-        elif choice == '11':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserRegisterView.test_04_register_duplicate_device']
-        elif choice == '12':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserLoginView.test_01_login_success']
-        elif choice == '13':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserLoginView.test_02_login_missing_device_info']
-        elif choice == '14':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.user_controller.test_views.TestUserLoginView.test_03_login_device_not_registered']
-        elif choice == '15':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.session_controller']
-        elif choice == '16':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.session_controller.test_views.TestSessionController.test_01_start_session_success']
-        elif choice == '17':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.session_controller.test_views.TestSessionController.test_04_select_voice_success']
-        elif choice == '18':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.session_controller.test_views.TestSessionController.test_07_end_session_success']
-        elif choice == '19':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.session_controller.test_views.TestSessionController.test_10_get_session_info_success']
-        elif choice == '20':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.session_controller.test_views.TestSessionController.test_13_get_session_stats_success']
-        elif choice == '21':
-            cmd = ['python', 'manage.py', 'test', 'tests.unit.controller.session_controller.test_views.TestSessionController.test_16_get_session_review_success']
+        if test_path:
+            cmd = build_test_command(test_path)
+            run_command(cmd, verbose_mode)
+            input("\nPress Enter to continue...")
         else:
             print("\nInvalid choice. Please try again.")
             continue
-
-        if cmd:
-            run_command(cmd, verbose_mode)
-            input("\nPress Enter to continue...")
 
     return 0
 
