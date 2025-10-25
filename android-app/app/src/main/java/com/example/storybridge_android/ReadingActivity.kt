@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.util.Base64
 import android.util.Log
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
@@ -42,6 +43,7 @@ class ReadingActivity : AppCompatActivity() {
     private var isOverlayVisible = false
     private var mediaPlayer: MediaPlayer? = null
     private var pageBitmap: Bitmap? = null
+    private lateinit var pageImage: ImageView
 
     companion object {
         private const val TAG = "ReadingActivity"
@@ -55,8 +57,14 @@ class ReadingActivity : AppCompatActivity() {
     // 🔹 play button 참조 저장 (색상 변경용)
     private val playButtonsMap: MutableMap<Int, ImageButton> = mutableMapOf()
 
+    // 🔹 bounding box 참조 저장 (드래그용)
+    private val boundingBoxViewsMap: MutableMap<Int, TextView> = mutableMapOf()
+
     // 🔹 OCR 결과 저장 (TTS 데이터 로드 후 버튼 추가를 위해)
     private var cachedBoundingBoxes: List<BoundingBox> = emptyList()
+
+    // 🔹 Touch and drag constant
+    private val TOUCH_SLOP = 10f // Minimum movement to start dragging
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -84,6 +92,7 @@ class ReadingActivity : AppCompatActivity() {
         bottomUi = findViewById(R.id.bottomUi)
         overlay = findViewById(R.id.sideOverlay)
         dimBackground = findViewById(R.id.dimBackground)
+        pageImage = findViewById(R.id.pageImage)
 
         // 기존 global play button은 숨김 처리
         findViewById<ImageButton>(R.id.playButton).visibility = View.GONE
@@ -100,12 +109,64 @@ class ReadingActivity : AppCompatActivity() {
         val closeButton = findViewById<Button>(R.id.closeOverlayButton)
         val finishButton = findViewById<Button>(R.id.finishButton)
 
+        // Simple click listener for toggling UI
         mainLayout.setOnClickListener { toggleUI() }
+
         startButton.setOnClickListener { navigateToCamera() }
         menuButton.setOnClickListener { toggleOverlay(true) }
         closeButton.setOnClickListener { toggleOverlay(false) }
         dimBackground.setOnClickListener { toggleOverlay(false) }
         finishButton.setOnClickListener { navigateToFinish() }
+    }
+
+    private fun setupBoundingBoxTouchListener(boxView: TextView, boxIndex: Int) {
+        var boxLastTouchX = 0f
+        var boxLastTouchY = 0f
+        var boxIsDragging = false
+
+        boxView.setOnTouchListener { view, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    boxLastTouchX = event.rawX
+                    boxLastTouchY = event.rawY
+                    boxIsDragging = false
+                    return@setOnTouchListener true
+                }
+
+                MotionEvent.ACTION_MOVE -> {
+                    val deltaX = event.rawX - boxLastTouchX
+                    val deltaY = event.rawY - boxLastTouchY
+
+                    // Check if movement exceeds touch slop to start dragging
+                    if (!boxIsDragging && (Math.abs(deltaX) > TOUCH_SLOP || Math.abs(deltaY) > TOUCH_SLOP)) {
+                        boxIsDragging = true
+                    }
+
+                    if (boxIsDragging) {
+                        // Move this specific bounding box
+                        boxView.translationX += deltaX
+                        boxView.translationY += deltaY
+
+                        // Move the corresponding play button
+                        playButtonsMap[boxIndex]?.let { button ->
+                            button.translationX += deltaX
+                            button.translationY += deltaY
+                        }
+
+                        boxLastTouchX = event.rawX
+                        boxLastTouchY = event.rawY
+                    }
+                    return@setOnTouchListener true
+                }
+
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    boxIsDragging = false
+                    return@setOnTouchListener true
+                }
+
+                else -> return@setOnTouchListener false
+            }
+        }
     }
 
     private fun navigateToFinish() {
@@ -124,7 +185,6 @@ class ReadingActivity : AppCompatActivity() {
     }
 
     private fun displayPage(base64Image: String?) {
-        val pageImage = findViewById<ImageView>(R.id.pageImage)
         try {
             val decodedBytes = Base64.decode(base64Image, Base64.DEFAULT)
             val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
@@ -150,7 +210,6 @@ class ReadingActivity : AppCompatActivity() {
         Log.d(TAG, "=== Displaying Bounding Boxes ===")
         Log.d(TAG, "Number of boxes: ${bboxes.size}")
 
-        val pageImage = findViewById<ImageView>(R.id.pageImage)
         if (pageImage.drawable == null) {
             Log.e(TAG, "✗ Page image not loaded yet")
             return
@@ -164,8 +223,9 @@ class ReadingActivity : AppCompatActivity() {
             }
         }
 
-        // playButtonsMap 초기화
+        // playButtonsMap과 boundingBoxViewsMap 초기화
         playButtonsMap.clear()
+        boundingBoxViewsMap.clear()
 
         val imageMatrix = pageImage.imageMatrix
 
@@ -227,6 +287,12 @@ class ReadingActivity : AppCompatActivity() {
             boxView.translationX = rect.left
             boxView.translationY = rect.top
             mainLayout.addView(boxView)
+
+            // 🔹 Store bounding box reference for dragging
+            boundingBoxViewsMap[box.index] = boxView
+
+            // 🔹 Setup touch listener for this bounding box
+            setupBoundingBoxTouchListener(boxView, box.index)
 
             // 🔹 play button 생성 (이 box에 오디오가 있는 경우에만)
             if (audioResultsMap.containsKey(box.index)) {
@@ -486,7 +552,7 @@ class ReadingActivity : AppCompatActivity() {
                     cachedBoundingBoxes = boxes
 
                     if (boxes.isNotEmpty()) {
-                        findViewById<ImageView>(R.id.pageImage).post {
+                        pageImage.post {
                             displayBB(boxes)
                         }
                     } else {
@@ -520,7 +586,7 @@ class ReadingActivity : AppCompatActivity() {
 
                         // 🔹 OCR 결과가 이미 표시되었다면 play button 추가
                         if (cachedBoundingBoxes.isNotEmpty()) {
-                            findViewById<ImageView>(R.id.pageImage).post {
+                            pageImage.post {
                                 Log.d(TAG, "Re-displaying bounding boxes with audio buttons")
                                 displayBB(cachedBoundingBoxes)
                             }
@@ -542,6 +608,7 @@ class ReadingActivity : AppCompatActivity() {
         super.onDestroy()
         mediaPlayer?.release()
         playButtonsMap.clear()
+        boundingBoxViewsMap.clear()
         Log.d(TAG, "=== Activity destroyed ===")
     }
 }
