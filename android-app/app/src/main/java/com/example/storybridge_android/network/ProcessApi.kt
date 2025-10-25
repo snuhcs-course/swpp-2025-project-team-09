@@ -14,6 +14,11 @@ interface ProcessApi {
         @Body request: UploadImageRequest
     ): Call<UploadImageResponse>
 
+    @POST("/process/upload_front/")
+    fun uploadFront(
+        @Body request: UploadFrontRequest
+    ): Call<UploadFrontResponse>
+
     @GET("/process/check_ocr/")
     fun checkOcrStatus(
         @Query("session_id") session_id: String,
@@ -44,6 +49,19 @@ data class UploadImageResponse(
     val page_index: Int,
     val status: String,
     val submitted_at: String // datetime as ISO string
+)
+
+data class UploadFrontRequest(
+    val session_id: String,
+    val lang: String,
+    val image_base64: String
+)
+
+data class UploadFrontResponse(
+    val session_id: String,
+    val page_index: Int,
+    val status: String,         // "ready" 기대
+    val submitted_at: String
 )
 
 // 3-2. Check OCR, Translation Status

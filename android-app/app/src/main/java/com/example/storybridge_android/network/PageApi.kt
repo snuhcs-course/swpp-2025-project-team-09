@@ -27,6 +27,12 @@ interface PageApi {
         @Query("session_id") session_id: String,
         @Query("page_index") page_index: Int
     ): Call<GetTtsResponse>
+
+    @GET("/page/get_tts_front/")
+    fun getTTSFront(
+        @Query("session_id") sessionId: String,
+        @Query("page_index") pageIndex: Int
+    ): Call<GetTTSFrontResponse>
 }
 
 
@@ -87,6 +93,13 @@ data class GetOcrTranslationResponse(
 data class GetTtsRequest(
     val session_id: String,
     val page_index: Int
+)
+
+data class GetTTSFrontResponse(
+    val session_id: String,
+    val page_index: Int,
+    val audio_results: List<AudioResult>,
+    val generated_at: String
 )
 
 data class AudioResult(

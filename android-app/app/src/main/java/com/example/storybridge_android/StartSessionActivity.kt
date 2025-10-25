@@ -68,7 +68,7 @@ class StartSessionActivity : AppCompatActivity() {
                     if (sessionId != null) {
                         Log.d(TAG, "✓ Session created successfully: $sessionId")
                         Log.d(TAG, "Navigating to VoiceSelectActivity...")
-                        navigateToVoiceSelect(sessionId)
+                        navigateToCoverCamera(sessionId)
                     } else {
                         Log.e(TAG, "✗ Session ID is null in response body")
                         Log.e(TAG, "Full response body: $session")
@@ -102,17 +102,12 @@ class StartSessionActivity : AppCompatActivity() {
         Log.d(TAG, "API call enqueued, waiting for response...")
     }
 
-    private fun navigateToVoiceSelect(sessionId: String) {
-        Log.d(TAG, "=== Navigating to VoiceSelectActivity ===")
-        Log.d(TAG, "Session ID to pass: $sessionId")
-
-        val intent = Intent(this, VoiceSelectActivity::class.java)
+    private fun navigateToCoverCamera(sessionId: String) {
+        val intent = Intent(this, CameraSessionActivity::class.java)
         intent.putExtra("session_id", sessionId)
-
-        Log.d(TAG, "Starting VoiceSelectActivity...")
+        intent.putExtra("page_index", 0)     // 표지
+        intent.putExtra("is_front", true)    // 표지 플래그
         startActivity(intent)
-
-        Log.d(TAG, "Finishing StartSessionActivity")
         finish()
     }
 

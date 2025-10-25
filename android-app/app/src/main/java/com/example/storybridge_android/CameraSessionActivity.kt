@@ -5,11 +5,22 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.core.ImageProcessor
+import com.example.storybridge_android.network.RetrofitClient
+import com.example.storybridge_android.network.UploadFrontRequest
+import com.example.storybridge_android.network.UploadFrontResponse
+import com.example.storybridge_android.network.UploadImageResponse
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import java.io.File
 
 class CameraSessionActivity : AppCompatActivity() {
 
     private var sessionId: String? = null
     private var pageIndex: Int = 0
+    private var isFront: Boolean = false
+
 
     companion object {
         private const val TAG = "CameraSessionActivity"
@@ -26,7 +37,7 @@ class CameraSessionActivity : AppCompatActivity() {
 
                 if (!imagePath.isNullOrEmpty()) {
                     Log.d(TAG, "✓ Valid image path received")
-                    navigateToLoading(imagePath)
+                    navigateAfterScan(imagePath)
                 } else {
                     Log.e(TAG, "✗ Image path is null or empty")
                     finish()
@@ -44,6 +55,7 @@ class CameraSessionActivity : AppCompatActivity() {
 
         sessionId = intent.getStringExtra("session_id")
         pageIndex = intent.getIntExtra("page_index", 0)
+        isFront = intent.getBooleanExtra("is_front", false)
 
         Log.d(TAG, "Received session_id: $sessionId")
         Log.d(TAG, "Received page_index: $pageIndex")
@@ -63,6 +75,53 @@ class CameraSessionActivity : AppCompatActivity() {
         Log.d(TAG, "Launching CameraActivity...")
         cameraLauncher.launch(intent)
         Log.d(TAG, "CameraActivity launched, waiting for result...")
+    }
+
+    private fun navigateAfterScan(imagePath: String) {
+        if (isFront) {
+            // ✅ 표지: 로딩 화면 없이 업로드만 수행하고 보이스 선택으로
+            uploadFrontAndGoToVoiceSelect(imagePath)
+        } else {
+            // ✅ 내부 페이지: 기존 로딩 화면 사용
+            navigateToLoading(imagePath)
+        }
+    }
+
+    private fun uploadFrontAndGoToVoiceSelect(imagePath: String, lang: String = "en") {
+        val sid = sessionId ?: return finish()
+        val file = File(imagePath)
+        if (!file.exists()) { finish(); return }
+
+        val base64 = android.util.Base64.encodeToString(file.readBytes(), android.util.Base64.DEFAULT)
+        val req = UploadFrontRequest(session_id = sid, lang = lang, image_base64 = base64)
+
+        RetrofitClient.processApi.uploadFront(req)
+            .enqueue(object : retrofit2.Callback<UploadFrontResponse> {
+                override fun onResponse(
+                    call: Call<UploadFrontResponse>,
+                    response: Response<UploadFrontResponse>   // ← 네 코드의 ImageProcessor.Response 는 오타
+                ) {
+                    if (response.isSuccessful) {
+                        val newIndex = response.body()?.page_index ?: 0
+                        goToVoiceSelect(newIndex)   // 서버가 준 page_index를 그대로 사용
+                    } else {
+                        finish()
+                    }
+                }
+                override fun onFailure(call: Call<UploadFrontResponse>, t: Throwable) {
+                    finish()
+                }
+            })
+    }
+
+
+
+    private fun goToVoiceSelect(pageIdx: Int) {
+        val intent = Intent(this, VoiceSelectActivity::class.java)
+        intent.putExtra("session_id", sessionId)
+        intent.putExtra("page_index", pageIdx) // 일반적으로 0
+        startActivity(intent)
+        finish()
     }
 
     private fun navigateToLoading(imagePath: String) {
