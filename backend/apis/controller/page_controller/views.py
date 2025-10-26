@@ -152,6 +152,86 @@ class PageGetOCRView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+class PageGetTTSFrontView(APIView):
+    """
+    [GET] /page/get_tts_front
+    - 표지 제목의 TTS 오디오(base64 리스트) 반환 (0번째는 male, 1번째는 female)
+    
+    Endpoint: /page/get_tts_front
+
+    - Request (GET)
+
+        {
+        "session_id": "string",
+        "page_index": Integer,
+        }
+    
+    - Response
+
+        Status: 200 OK
+
+        {
+        "session_id": "string",
+        "page_index": "integer",
+        "audio_results": [
+            {
+            "bbox_index": "integer",   
+            "male": "string (base64 or null)",
+            "female": "string (base64 or null)"
+            }
+        ],
+        "generated_at": "string (datetime)"
+        }
+    """
+
+    def get(self, request):
+        session_id = request.query_params.get("session_id")
+        page_index = request.query_params.get("page_index")
+
+        if not session_id or page_index is None:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            page = Page.objects.filter(session__id=session_id).order_by("id")[int(page_index)]
+            
+            if not page.isFrontPage:
+                return Response(
+                    {
+                        "error_code": 403,
+                        "message": "PAGE__NOT_FRONT_PAGE"
+                    },
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            bbs = page.getBBs()
+
+            audio_results = []
+            for i, bb in enumerate(bbs):
+                audio_list = (
+                    json.loads(bb.audio_base64)
+                    if isinstance(bb.audio_base64, str)
+                    else bb.audio_base64
+                )
+                male_audio = audio_list[0] if len(audio_list) > 0 else None
+                female_audio = audio_list[1] if len(audio_list) > 1 else None
+                audio_results.append({
+                    "bbox_index": i,
+                    "male": male_audio,
+                    "female": female_audio
+                })
+
+            return Response({
+                "session_id": session_id,
+                "page_index": int(page_index),
+                "audio_results": audio_results,
+                "generated_at": page.created_at
+            }, status=status.HTTP_200_OK)
+
+        except (Page.DoesNotExist, IndexError):
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 class PageGetTTSView(APIView):
     """
     [GET] /page/get_tts
@@ -192,6 +272,15 @@ class PageGetTTSView(APIView):
 
         try:
             page = Page.objects.filter(session__id=session_id).order_by("id")[int(page_index)]
+            if page.isFrontPage:
+                return Response(
+                    {
+                        "error_code": 403,
+                        "message": "PAGE__FRONT_PAGE_NOT_ALLOWED"
+                    },
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
             bbs = page.getBBs()
 
             audio_results = []
