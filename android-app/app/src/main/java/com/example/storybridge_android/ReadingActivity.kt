@@ -1,11 +1,14 @@
 package com.example.storybridge_android
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.RectF
 import android.media.MediaPlayer
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Base64
 import android.util.Log
 import android.view.Gravity
@@ -44,27 +47,30 @@ class ReadingActivity : AppCompatActivity() {
     private var mediaPlayer: MediaPlayer? = null
     private var pageBitmap: Bitmap? = null
     private lateinit var pageImage: ImageView
+    private val handler = Handler(Looper.getMainLooper())
+    private var isTtsPolling = false
+    private val TTS_POLL_INTERVAL = 2000L
 
     companion object {
         private const val TAG = "ReadingActivity"
     }
 
-    // 🔹 각 bounding box별 오디오 데이터 저장
+    // Audio data storage per bounding box
     private var audioResultsMap: Map<Int, List<String>> = emptyMap()
     private var currentPlayingIndex: Int = -1
     private var currentAudioIndex: Int = 0
 
-    // 🔹 play button 참조 저장 (색상 변경용)
+    // Play button references for state changes
     private val playButtonsMap: MutableMap<Int, ImageButton> = mutableMapOf()
 
-    // 🔹 bounding box 참조 저장 (드래그용)
+    // Bounding box references for dragging
     private val boundingBoxViewsMap: MutableMap<Int, TextView> = mutableMapOf()
 
-    // 🔹 OCR 결과 저장 (TTS 데이터 로드 후 버튼 추가를 위해)
+    // Cached OCR results for adding buttons after TTS load
     private var cachedBoundingBoxes: List<BoundingBox> = emptyList()
 
-    // 🔹 Touch and drag constant
-    private val TOUCH_SLOP = 10f // Minimum movement to start dragging
+    // Touch and drag constant
+    private val TOUCH_SLOP = 10f
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -94,7 +100,7 @@ class ReadingActivity : AppCompatActivity() {
         dimBackground = findViewById(R.id.dimBackground)
         pageImage = findViewById(R.id.pageImage)
 
-        // 기존 global play button은 숨김 처리
+        // Hide global play button
         findViewById<ImageButton>(R.id.playButton).visibility = View.GONE
     }
 
@@ -109,7 +115,6 @@ class ReadingActivity : AppCompatActivity() {
         val closeButton = findViewById<Button>(R.id.closeOverlayButton)
         val finishButton = findViewById<Button>(R.id.finishButton)
 
-        // Simple click listener for toggling UI
         mainLayout.setOnClickListener { toggleUI() }
 
         startButton.setOnClickListener { navigateToCamera() }
@@ -119,6 +124,7 @@ class ReadingActivity : AppCompatActivity() {
         finishButton.setOnClickListener { navigateToFinish() }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private fun setupBoundingBoxTouchListener(boxView: TextView, boxIndex: Int) {
         var boxLastTouchX = 0f
         var boxLastTouchY = 0f
@@ -137,17 +143,14 @@ class ReadingActivity : AppCompatActivity() {
                     val deltaX = event.rawX - boxLastTouchX
                     val deltaY = event.rawY - boxLastTouchY
 
-                    // Check if movement exceeds touch slop to start dragging
                     if (!boxIsDragging && (Math.abs(deltaX) > TOUCH_SLOP || Math.abs(deltaY) > TOUCH_SLOP)) {
                         boxIsDragging = true
                     }
 
                     if (boxIsDragging) {
-                        // Move this specific bounding box
                         boxView.translationX += deltaX
                         boxView.translationY += deltaY
 
-                        // Move the corresponding play button
                         playButtonsMap[boxIndex]?.let { button ->
                             button.translationX += deltaX
                             button.translationY += deltaY
@@ -179,7 +182,7 @@ class ReadingActivity : AppCompatActivity() {
     private fun navigateToCamera() {
         val intent = Intent(this, CameraSessionActivity::class.java)
         intent.putExtra("session_id", sessionId)
-        intent.putExtra("page_index", pageIndex + 1) // Next page
+        intent.putExtra("page_index", pageIndex + 1)
         startActivity(intent)
         finish()
     }
@@ -215,7 +218,7 @@ class ReadingActivity : AppCompatActivity() {
             return
         }
 
-        // 기존 bounding box 및 play button 제거
+        // Remove existing boxes and buttons
         for (i in mainLayout.childCount - 1 downTo 0) {
             val child = mainLayout.getChildAt(i)
             if (child.tag == "bbox" || child.tag == "play_button") {
@@ -223,7 +226,6 @@ class ReadingActivity : AppCompatActivity() {
             }
         }
 
-        // playButtonsMap과 boundingBoxViewsMap 초기화
         playButtonsMap.clear()
         boundingBoxViewsMap.clear()
 
@@ -249,7 +251,6 @@ class ReadingActivity : AppCompatActivity() {
                 tag = "bbox"
             }
 
-            // Measure once at default size
             val baseTextSize = 14f
             boxView.textSize = baseTextSize
             boxView.measure(
@@ -262,16 +263,13 @@ class ReadingActivity : AppCompatActivity() {
             val desiredWidth = rect.width()
             val desiredHeight = rect.height()
 
-            // Compute proportional scaling
             val widthRatio = desiredWidth / measuredWidth
             val heightRatio = desiredHeight / measuredHeight
             val scaleRatio = min(widthRatio, heightRatio)
 
-            // Clamp and apply new size
             val newTextSize = (baseTextSize * scaleRatio).coerceIn(16f, 30f)
             boxView.textSize = newTextSize
 
-            // Measure again with final size
             boxView.measure(
                 View.MeasureSpec.makeMeasureSpec(desiredWidth.toInt(), View.MeasureSpec.EXACTLY),
                 View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
@@ -288,16 +286,13 @@ class ReadingActivity : AppCompatActivity() {
             boxView.translationY = rect.top
             mainLayout.addView(boxView)
 
-            // 🔹 Store bounding box reference for dragging
             boundingBoxViewsMap[box.index] = boxView
 
-            // 🔹 Setup touch listener for this bounding box
             setupBoundingBoxTouchListener(boxView, box.index)
 
-            // 🔹 play button 생성 (이 box에 오디오가 있는 경우에만)
+            // Create play button if audio exists for this box
             if (audioResultsMap.containsKey(box.index)) {
                 Log.d(TAG, "Box ${box.index} has audio, creating play button")
-                // 텍스트 박스의 실제 크기를 사용
                 val textRect = RectF(rect.left, rect.top, rect.left + finalTextWidth, rect.top + finalTextHeight)
                 createPlayButton(box.index, textRect, pageImage.id)
             } else {
@@ -321,7 +316,6 @@ class ReadingActivity : AppCompatActivity() {
             setPadding(8, 8, 8, 8)
         }
 
-        // 버튼 크기 설정 (예: 54dp x 54dp)
         val buttonSize = (54 * resources.displayMetrics.density).toInt()
         val params = ConstraintLayout.LayoutParams(buttonSize, buttonSize)
         params.startToStart = pageImageId
@@ -329,14 +323,11 @@ class ReadingActivity : AppCompatActivity() {
 
         playButton.layoutParams = params
 
-        // 🔹 bottom-right 위치 계산
         playButton.translationX = rect.right - buttonSize/2 + 4
         playButton.translationY = rect.bottom - buttonSize/2 + 4
 
-        // 🔹 Z-order를 높여서 다른 요소 위에 표시
         playButton.elevation = 8f
 
-        // 클릭 리스너 설정
         playButton.setOnClickListener {
             Log.d(TAG, "Play button clicked for box $bboxIndex")
             playAudioForBox(bboxIndex)
@@ -344,7 +335,6 @@ class ReadingActivity : AppCompatActivity() {
 
         mainLayout.addView(playButton)
 
-        // 🔹 버튼 참조 저장
         playButtonsMap[bboxIndex] = playButton
 
         Log.d(TAG, "✓ Play button created for box $bboxIndex")
@@ -354,7 +344,6 @@ class ReadingActivity : AppCompatActivity() {
         playButtonsMap[bboxIndex]?.apply {
             setImageResource(android.R.drawable.ic_media_play)
             setBackgroundResource(R.drawable.circle_dark)
-
             alpha = 1.0f
             Log.d(TAG, "✓ Button $bboxIndex set to paused state")
         }
@@ -366,11 +355,11 @@ class ReadingActivity : AppCompatActivity() {
         if (currentPlayingIndex == bboxIndex) {
             if (mediaPlayer?.isPlaying == true) {
                 mediaPlayer?.pause()
-                updateButtonToPaused(bboxIndex) // Change to play icon but keep dark background
+                updateButtonToPaused(bboxIndex)
                 Log.d(TAG, "Audio paused for box $bboxIndex at ${mediaPlayer?.currentPosition}")
             } else if (mediaPlayer != null) {
                 mediaPlayer?.start()
-                updateButtonToPlaying(bboxIndex) // Change to pause icon
+                updateButtonToPlaying(bboxIndex)
                 Log.d(TAG, "Audio resumed for box $bboxIndex")
             }
             return
@@ -384,19 +373,17 @@ class ReadingActivity : AppCompatActivity() {
 
         Log.d(TAG, "Audio list size: ${audioList.size}")
 
-        // 🔹 이전에 재생 중이던 버튼 상태 복원
+        // Reset previous button state
         if (currentPlayingIndex != -1 && currentPlayingIndex != bboxIndex) {
             resetButtonState(currentPlayingIndex)
         }
 
-        // 현재 재생 중인 것 중지
         mediaPlayer?.release()
         mediaPlayer = null
 
         currentPlayingIndex = bboxIndex
         currentAudioIndex = 0
 
-        // 🔹 버튼 상태를 재생 중으로 변경
         updateButtonToPlaying(bboxIndex)
 
         playNextAudioInBox(audioList)
@@ -405,7 +392,6 @@ class ReadingActivity : AppCompatActivity() {
     private fun playNextAudioInBox(audioList: List<String>) {
         if (currentAudioIndex >= audioList.size) {
             Log.d(TAG, "✓ All audio clips played for box $currentPlayingIndex")
-            // 🔹 모든 오디오 재생 완료 - 버튼 상태 복원
             resetButtonState(currentPlayingIndex)
             currentAudioIndex = 0
             currentPlayingIndex = -1
@@ -437,7 +423,6 @@ class ReadingActivity : AppCompatActivity() {
                 }
                 setOnErrorListener { _, what, extra ->
                     Log.e(TAG, "MediaPlayer error: what=$what, extra=$extra")
-                    // 🔹 에러 발생 시에도 버튼 상태 복원
                     resetButtonState(currentPlayingIndex)
                     currentPlayingIndex = -1
                     true
@@ -448,28 +433,24 @@ class ReadingActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e(TAG, "✗ Error playing audio", e)
             e.printStackTrace()
-            // 🔹 예외 발생 시 버튼 상태 복원
             resetButtonState(currentPlayingIndex)
             currentPlayingIndex = -1
         }
     }
 
-    // 🎵 버튼을 재생 중 상태로 업데이트
     private fun updateButtonToPlaying(bboxIndex: Int) {
         playButtonsMap[bboxIndex]?.apply {
             setImageResource(android.R.drawable.ic_media_pause)
             setBackgroundResource(R.drawable.circle_dark)
-
             alpha = 1.0f
             Log.d(TAG, "✓ Button $bboxIndex set to playing state")
         }
     }
-    // 🔹 버튼을 기본 상태로 복원
+
     private fun resetButtonState(bboxIndex: Int) {
         playButtonsMap[bboxIndex]?.apply {
             setImageResource(android.R.drawable.ic_media_play)
             setBackgroundResource(R.drawable.circle_dark)
-
             alpha = 0.9f
             Log.d(TAG, "✓ Button $bboxIndex reset to default state")
         }
@@ -505,13 +486,14 @@ class ReadingActivity : AppCompatActivity() {
         }
     }
 
-// -------------------
-// 🔹 서버 통신
-// -------------------
+    // Server communication
 
     private fun fetchPageData() {
         Log.d(TAG, "=== Fetching Page Data ===")
         fetchImage()
+        fetchOcrResults()
+        fetchTtsResults()
+        startTtsPolling()
     }
 
     private fun fetchImage() {
@@ -521,8 +503,6 @@ class ReadingActivity : AppCompatActivity() {
                 if (response.isSuccessful) {
                     Log.d(TAG, "✓ Image fetched successfully")
                     displayPage(response.body()?.image_base64)
-                    fetchOcrResults()
-                    fetchTtsResults()
                 } else {
                     Log.e(TAG, "✗ Image fetch failed: ${response.code()}")
                 }
@@ -578,13 +558,13 @@ class ReadingActivity : AppCompatActivity() {
                     Log.d(TAG, "TTS results count: ${audioList?.size ?: 0}")
 
                     if (!audioList.isNullOrEmpty()) {
-                        // 🔹 bbox_index를 키로 하는 맵 생성
+                        // Create map with bbox_index as key
                         audioResultsMap = audioList.associate { audioResult ->
                             Log.d(TAG, "Audio for bbox ${audioResult.bbox_index}: ${audioResult.audio_base64_list.size} clips")
                             audioResult.bbox_index to audioResult.audio_base64_list
                         }
 
-                        // 🔹 OCR 결과가 이미 표시되었다면 play button 추가
+                        // If OCR results already displayed, add play buttons
                         if (cachedBoundingBoxes.isNotEmpty()) {
                             pageImage.post {
                                 Log.d(TAG, "Re-displaying bounding boxes with audio buttons")
@@ -604,8 +584,80 @@ class ReadingActivity : AppCompatActivity() {
         })
     }
 
+    private fun startTtsPolling() {
+        if (isTtsPolling) {
+            Log.d(TAG, "TTS polling already active")
+            return
+        }
+
+        isTtsPolling = true
+        Log.d(TAG, "=== Starting TTS Polling ===")
+        pollTtsStatus()
+    }
+
+    private fun pollTtsStatus() {
+        if (!isTtsPolling) {
+            Log.d(TAG, "TTS polling stopped")
+            return
+        }
+
+        Log.d(TAG, "Polling TTS status...")
+
+        pageApi.getTtsResults(sessionId, pageIndex).enqueue(object : Callback<GetTtsResponse> {
+            override fun onResponse(call: Call<GetTtsResponse>, response: Response<GetTtsResponse>) {
+                if (response.isSuccessful) {
+                    val audioList = response.body()?.audio_results
+                    Log.d(TAG, "TTS poll: ${audioList?.size ?: 0} boxes have audio")
+
+                    if (!audioList.isNullOrEmpty()) {
+                        val oldSize = audioResultsMap.size
+
+                        // Update audio map
+                        audioResultsMap = audioList.associate { audioResult ->
+                            audioResult.bbox_index to audioResult.audio_base64_list
+                        }
+
+                        val newSize = audioResultsMap.size
+
+                        // If new audio appeared, update UI
+                        if (newSize > oldSize) {
+                            Log.d(TAG, "New audio detected! Updating buttons ($oldSize → $newSize)")
+
+                            if (cachedBoundingBoxes.isNotEmpty()) {
+                                pageImage.post {
+                                    displayBB(cachedBoundingBoxes)
+                                }
+                            }
+                        }
+
+                        // Check if all boxes have audio
+                        val totalBoxes = cachedBoundingBoxes.size
+                        if (newSize >= totalBoxes) {
+                            Log.d(TAG, "✓ All TTS complete! Stopping polling")
+                            isTtsPolling = false
+                            return
+                        }
+                    }
+
+                    // Continue polling
+                    handler.postDelayed({ pollTtsStatus() }, TTS_POLL_INTERVAL)
+                } else {
+                    Log.e(TAG, "✗ TTS poll failed: ${response.code()}")
+                    handler.postDelayed({ pollTtsStatus() }, TTS_POLL_INTERVAL)
+                }
+            }
+
+            override fun onFailure(call: Call<GetTtsResponse>, t: Throwable) {
+                Log.e(TAG, "✗ TTS poll error", t)
+                handler.postDelayed({ pollTtsStatus() }, TTS_POLL_INTERVAL)
+            }
+        })
+    }
+
     override fun onDestroy() {
         super.onDestroy()
+        isTtsPolling = false
+        handler.removeCallbacksAndMessages(null)
         mediaPlayer?.release()
         playButtonsMap.clear()
         boundingBoxViewsMap.clear()

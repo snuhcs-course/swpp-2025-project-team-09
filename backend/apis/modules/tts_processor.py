@@ -4,9 +4,7 @@
 import csv
 import time
 import asyncio
-import argparse
-import sys
-import kss
+import base64
 import shutil
 from pathlib import Path
 from typing import Dict, List, Any
@@ -15,10 +13,12 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
+import kss
+
 load_dotenv()
 
-# --- Prompt Templates ---
 
+# Prompt Templates
 TRANSLATION_PROMPT = """
 You are an expert multilingual children's-story adapter.
 You will be given a block of Korean text that may contain up to three parts: [PREVIOUS], [CURRENT], and [NEXT].
@@ -31,15 +31,19 @@ You are an expert children's audiobook voice director.
 Analyze the sentiment of this Korean sentence and provide expressive ENGLISH directions for Tone, Pacing, and Emotion.
 """
 
+
+# Pydantic Models
 class Translation(BaseModel):
     """A single, fluent translation of a Korean sentence."""
     translated_text: str = Field(..., description="The translated sentence in the target language.", alias="translation")
 
+
 class Sentiment(BaseModel):
     """Performance direction for a voice actor based on sentiment analysis."""
-    tone: str = Field(..., description="The tone of voice to use (e.g. 'Gently chiding, inquisitive').")
-    pacing: str = Field(..., description="The pacing of the speech (e.g. 'Direct, with a slight upward inflection').")
-    emotion: str = Field(..., description="The emotion to convey (e.g. 'Mildly exasperated but friendly').")
+    tone: str = Field(..., description="The tone of voice to use.")
+    pacing: str = Field(..., description="The pacing of the speech.")
+    emotion: str = Field(..., description="The emotion to convey.")
+
 
 class TTSModule:
     def __init__(self, out_dir="out_audio", log_dir="log", target_lang: str = "English"):
@@ -54,9 +58,11 @@ class TTSModule:
         self.translation_chain = self._create_translation_chain()
         self.sentiment_chain = self._create_sentiment_chain()
 
-        # Reset dirs each run
-        if self.OUT_DIR.exists(): shutil.rmtree(self.OUT_DIR)
-        if self.LOG_DIR.exists(): shutil.rmtree(self.LOG_DIR)
+        # Reset directories
+        if self.OUT_DIR.exists():
+            shutil.rmtree(self.OUT_DIR)
+        if self.LOG_DIR.exists():
+            shutil.rmtree(self.LOG_DIR)
         self.OUT_DIR.mkdir(parents=True)
         self.LOG_DIR.mkdir(parents=True)
 
@@ -75,6 +81,7 @@ class TTSModule:
         return prompt | self.llm.with_structured_output(Sentiment)
     
     async def translate(self, text_with_context: str) -> Dict[str, Any]:
+        """Translate text with retry logic."""
         for attempt in range(3):
             try:
                 t0 = time.time()
@@ -92,12 +99,11 @@ class TTSModule:
         return {"result": None, "latency": -1.0}
 
     async def sentiment(self, korean_text: str) -> Dict[str, Any]:
+        """Analyze sentiment with retry logic."""
         for attempt in range(3):
             try:
                 t0 = time.time()
-                response = await self.sentiment_chain.ainvoke(
-                    {"korean_text": korean_text}
-                )
+                response = await self.sentiment_chain.ainvoke({"korean_text": korean_text})
                 latency = time.time() - t0
                 return {"result": response, "latency": round(latency, 3)}
             except Exception as e:
@@ -108,6 +114,7 @@ class TTSModule:
         return {"result": None, "latency": -1.0}
 
     async def synthesize_tts(self, voice: str, text: str, instructions: str, out_path: Path, response_format: str) -> tuple[float, bytes]:
+        """Synthesize TTS audio."""
         out_path.parent.mkdir(parents=True, exist_ok=True)
         t0 = time.time()
         try:
@@ -123,29 +130,43 @@ class TTSModule:
             with open(out_path, "wb") as f:
                 f.write(audio_bytes)
             
-            return round(time.time() - t0, 3), response.content
-        
+            return round(time.time() - t0, 3), audio_bytes
         
         except Exception as e:
             print(f"TTS error for {out_path.name}: {e}")
             return -1.0, None
 
-    async def process_paragraph(self, page: Dict[str, str], log_csv: bool, check_latency: bool, response_format: str = "mp3"):
-        file_name = page["fileName"]
+    async def get_translations_only(self, page: Dict[str, str]) -> Dict[str, Any]:
+        """
+        Get translations and sentiment for all sentences WITHOUT running TTS.
+        Used by backend to get translations before TTS.
+        
+        Args:
+            page: {"fileName": "...", "text": "..."}
+            
+        Returns:
+            {
+                "status": "ok",
+                "sentences": [
+                    {"translation": "...", "tone": "...", "emotion": "...", "pacing": "...", "korean": "..."},
+                    ...
+                ]
+            }
+        """
         sentences = kss.split_sentences(page["text"].strip())
         if not sentences:
-            return {"status": "no_sentences"}
-
-        stem = Path(file_name).stem
+            return {"status": "no_sentences", "sentences": []}
         
-        async def process_single_sentence(i: int, sentence: str):
-            # Build context for translation
+        async def process_sentence(i: int, sentence: str):
+            # Build context
             context = [f"[CURRENT]: {sentence}"]
-            if i > 0: context.insert(0, f"[PREVIOUS]: {sentences[i-1]}")
-            if i < len(sentences) - 1: context.append(f"[NEXT]: {sentences[i+1]}")
+            if i > 0:
+                context.insert(0, f"[PREVIOUS]: {sentences[i-1]}")
+            if i < len(sentences) - 1:
+                context.append(f"[NEXT]: {sentences[i+1]}")
             context_prompt = "\n".join(context)
             
-            # Run translation and sentiment in parallel for this sentence
+            # Run translation and sentiment in parallel
             trans_response, senti_response = await asyncio.gather(
                 self.translate(context_prompt),
                 self.sentiment(sentence)
@@ -161,7 +182,113 @@ class TTSModule:
             if not translated:
                 return None
             
-            # Immediately start TTS (don't wait for other sentences)
+            return {
+                "translation": translated,
+                "tone": senti_result.tone,
+                "emotion": senti_result.emotion,
+                "pacing": senti_result.pacing,
+                "korean": sentence
+            }
+        
+        # Process all sentences in parallel
+        results = await asyncio.gather(*[
+            process_sentence(i, sent) for i, sent in enumerate(sentences)
+        ])
+        
+        # Filter out None results
+        ok_results = [r for r in results if r is not None]
+        
+        return {
+            "status": "ok" if ok_results else "failed",
+            "sentences": ok_results
+        }
+
+    async def run_tts_only(self, translation_data: Dict[str, Any], session_id: str, page_index: int, para_index: int) -> List[str]:
+        """
+        Run TTS using pre-computed translations.
+        Used by backend background thread.
+        
+        Args:
+            translation_data: Result from get_translations_only()
+            session_id, page_index, para_index: For file naming
+            
+        Returns:
+            List of base64-encoded audio clips
+        """
+        sentences_data = translation_data["sentences"]
+        if not sentences_data:
+            return []
+        
+        stem = f"{session_id}_{page_index}_{para_index}"
+        
+        async def synthesize_sentence(i: int, sentence_data: dict):
+            voice = "shimmer"
+            out_file = self.OUT_DIR / f"{stem}_sent{i+1}.mp3"
+            
+            tts_instr = (
+                f"[Affect: A gentle, curious narrator with a clear accent, guiding a magical, child-friendly adventure through a fairy tale world.]"
+                f"[Pronunciation: Clear and precise, with an emphasis on storytelling, ensuring the words are easy to follow and enchanting to listen to.]"
+                f"[Tone: {sentence_data['tone']}] [Emotion: {sentence_data['emotion']}] [Pacing: {sentence_data['pacing']}]"
+            )
+            
+            tts_latency, tts_result = await self.synthesize_tts(
+                voice=voice,
+                text=sentence_data["translation"],
+                instructions=tts_instr,
+                out_path=out_file,
+                response_format="mp3"
+            )
+            
+            if tts_result:
+                return base64.b64encode(tts_result).decode("utf-8")
+            return None
+        
+        # Run TTS for all sentences in parallel
+        audio_results = await asyncio.gather(*[
+            synthesize_sentence(i, sent_data) for i, sent_data in enumerate(sentences_data)
+        ])
+        
+        # Filter out None results
+        return [audio for audio in audio_results if audio is not None]
+
+    async def process_paragraph(self, page: Dict[str, str], log_csv: bool, check_latency: bool, response_format: str = "mp3"):
+        """
+        Complete processing: translation + sentiment + TTS.
+        Legacy method - kept for backwards compatibility.
+        """
+        file_name = page["fileName"]
+        sentences = kss.split_sentences(page["text"].strip())
+        if not sentences:
+            return {"status": "no_sentences"}
+
+        stem = Path(file_name).stem
+        
+        async def process_single_sentence(i: int, sentence: str):
+            # Build context
+            context = [f"[CURRENT]: {sentence}"]
+            if i > 0:
+                context.insert(0, f"[PREVIOUS]: {sentences[i-1]}")
+            if i < len(sentences) - 1:
+                context.append(f"[NEXT]: {sentences[i+1]}")
+            context_prompt = "\n".join(context)
+            
+            # Run translation and sentiment in parallel
+            trans_response, senti_response = await asyncio.gather(
+                self.translate(context_prompt),
+                self.sentiment(sentence)
+            )
+            
+            trans_result = trans_response["result"]
+            senti_result = senti_response["result"]
+            
+            if isinstance(trans_result, Exception) or isinstance(senti_result, Exception):
+                return None
+            
+            translated = trans_result.translated_text.strip()
+            if not translated:
+                return None
+            
+            # Run TTS
             voice = "shimmer"
             out_file = self.OUT_DIR / f"{stem}_sent{i+1}.{response_format}"
             tts_instr = (
@@ -173,14 +300,21 @@ class TTSModule:
             tts_latency, tts_result = await self.synthesize_tts(voice, translated, tts_instr, out_file, response_format)
             
             return {
-                "ko_sentence": sentence, "translation": translated, "path": str(out_file),
-                "tone": senti_result.tone, "emotion": senti_result.emotion, "pacing": senti_result.pacing,
-                "voice": voice, "trans_latency": trans_response["latency"], 
-                "senti_latency": senti_response["latency"], "tts_latency": tts_latency, "tts_result": tts_result,
+                "ko_sentence": sentence,
+                "translation": translated,
+                "path": str(out_file),
+                "tone": senti_result.tone,
+                "emotion": senti_result.emotion,
+                "pacing": senti_result.pacing,
+                "voice": voice,
+                "trans_latency": trans_response["latency"], 
+                "senti_latency": senti_response["latency"],
+                "tts_latency": tts_latency,
+                "tts_result": tts_result,
                 "status": "ok"
             }
         
-        # Process all sentences in pipeline - each starts TTS immediately when ready
+        # Process all sentences in parallel
         results = await asyncio.gather(*[
             process_single_sentence(i, sent) for i, sent in enumerate(sentences)
         ])
@@ -194,9 +328,11 @@ class TTSModule:
         return {"status": "ok" if ok_results else "failed", "details": ok_results}
 
     def _write_to_csv(self, results: List[Dict], file_name: str, check_latency: bool):
+        """Write results to CSV log."""
         header = ["page_file", "index", "ko", "translation", "tone", "emotion", "pacing", "voice", "path"]
         if check_latency:
             header += ["trans_latency", "senti_latency", "tts_latency"]
+        
         if not self.CSV_LOG.exists():
             with open(self.CSV_LOG, "w", newline="", encoding="utf-8") as f:
                 csv.writer(f).writerow(header)
