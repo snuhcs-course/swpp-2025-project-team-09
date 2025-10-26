@@ -67,6 +67,7 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     // ML Kit
     implementation("com.google.android.gms:play-services-mlkit-document-scanner:16.0.0")
+    implementation("com.google.android.gms:play-services-base:18.5.0")
 
     // Test
     testImplementation(libs.junit)

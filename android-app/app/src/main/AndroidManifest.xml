@@ -5,10 +5,18 @@
     <uses-permission
         android:name="com.example.unwanted.PERMISSION"
         tools:node="remove" />
-    <uses-permission android:name="android.permission.CAMERA" /> <!-- Features -->
-    <uses-feature android:name="android.hardware.camera.any" />
-
+    <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Features -->
+    <uses-feature android:name="android.hardware.camera.any" />
+    <!-- 🔹 Add these camera features for better compatibility -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.autofocus"
+        android:required="false" />
 
     <application
         android:allowBackup="true"
@@ -19,12 +27,20 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Storybridgeandroid">
+
+        <!-- 🔹 CRITICAL: ML Kit document scanner metadata -->
+        <!-- This tells Google Play Services to download the ML Kit module -->
+        <meta-data
+            android:name="com.google.mlkit.vision.DEPENDENCIES"
+            android:value="document_scanner" />
+
         <activity
             android:name=".StartSessionActivity"
             android:exported="false" />
         <activity
             android:name=".LoadingActivity"
-            android:exported="false" /> <!-- Launcher Activity -->
+            android:exported="false" />
+        <!-- Launcher Activity -->
         <activity
             android:name=".LandingActivity"
             android:exported="true">
@@ -33,7 +49,8 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity> <!-- Other Activities (Consider alphabetical or flow order) -->
+        </activity>
+        <!-- Other Activities (Consider alphabetical or flow order) -->
         <activity
             android:name=".CameraActivity"
             android:exported="false" />

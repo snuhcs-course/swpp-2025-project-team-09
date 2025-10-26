@@ -202,10 +202,13 @@ class PageGetTTSView(APIView):
                     else bb.audio_base64
                 )
 
-                audio_results.append({
-                    "bbox_index": i,
-                    "audio_base64_list": audio_list
-                })
+                # 🔹 CRITICAL FIX: Only include boxes that have audio
+                # This prevents returning empty audio arrays for boxes where TTS hasn't completed
+                if audio_list and len(audio_list) > 0:
+                    audio_results.append({
+                        "bbox_index": i,
+                        "audio_base64_list": audio_list
+                    })
 
             return Response({
                 "session_id": session_id,
