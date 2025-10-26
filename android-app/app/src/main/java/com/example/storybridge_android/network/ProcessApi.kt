@@ -1,5 +1,6 @@
 package com.example.storybridge_android.network
 
+import com.google.gson.annotations.SerializedName
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -64,7 +65,6 @@ data class UploadFrontResponse(
     val submitted_at: String
 )
 
-// 3-2. Check OCR, Translation Status
 data class CheckOcrRequest(
     val session_id: String,
     val page_index: Int
@@ -85,11 +85,27 @@ data class CheckTtsRequest(
     val page_index: Int
 )
 
+/**
+ * Updated to match new backend response format
+ * Backend now returns bb_status for granular TTS progress tracking
+ */
 data class CheckTtsResponse(
     val session_id: String,
     val page_index: Int,
     val status: String,           // "pending", "processing", "ready"
     val progress: Int,            // 0-100
-    val submitted_at: String,
-    val processed_at: String?     // nullable, if not ready
+    @SerializedName("bb_status")
+    val bb_status: List<BBoxStatus>? = null  // New field for per-bbox status
+)
+
+/**
+ * Status information for individual bounding boxes
+ * Allows tracking which specific text boxes have audio ready
+ */
+data class BBoxStatus(
+    @SerializedName("bbox_index")
+    val bbox_index: Int,
+    val status: String,  // "pending", "processing", "ready", "failed"
+    @SerializedName("has_audio")
+    val has_audio: Boolean
 )
