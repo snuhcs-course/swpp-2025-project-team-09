@@ -1,4 +1,4 @@
-package com.example.storybridge_android
+package com.example.storybridge_android.ui.session
 
 import android.content.Intent
 import android.graphics.Bitmap
@@ -10,14 +10,19 @@ import android.util.Base64
 import android.util.Log
 import android.widget.ProgressBar
 import androidx.appcompat.app.AppCompatActivity
-import com.example.storybridge_android.network.*
+import androidx.core.graphics.scale
+import com.example.storybridge_android.R
+import com.example.storybridge_android.network.CheckOcrResponse
+import com.example.storybridge_android.network.RetrofitClient
+import com.example.storybridge_android.network.UploadImageRequest
+import com.example.storybridge_android.network.UploadImageResponse
+import com.example.storybridge_android.ui.reading.ReadingActivity
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.io.ByteArrayOutputStream
 import java.io.File
 import kotlin.math.max
-import androidx.core.graphics.scale
 
 class LoadingActivity : AppCompatActivity() {
 
@@ -144,7 +149,10 @@ class LoadingActivity : AppCompatActivity() {
 
         // Final scaling if inSampleSize was not enough or to hit the target exactly
         if (scaledBitmap != null && max(scaledBitmap.width, scaledBitmap.height) > MAX_IMAGE_DIMENSION) {
-            val scaleRatio = MAX_IMAGE_DIMENSION.toFloat() / max(scaledBitmap.width, scaledBitmap.height)
+            val scaleRatio = MAX_IMAGE_DIMENSION.toFloat() / max(
+                scaledBitmap.width,
+                scaledBitmap.height
+            )
             val newWidth = (scaledBitmap.width * scaleRatio).toInt()
             val newHeight = (scaledBitmap.height * scaleRatio).toInt()
 

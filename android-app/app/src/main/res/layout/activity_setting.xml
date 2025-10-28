@@ -7,7 +7,7 @@
     android:background="@color/white">
 
     <!-- 상단바 -->
-    <com.example.storybridge_android.ui.TopNavigationBar
+    <com.example.storybridge_android.ui.common.TopNavigationBar
         android:id="@+id/topNavigationBar"
         android:layout_width="0dp"
         android:layout_height="120dp"

@@ -1,14 +1,7 @@
-package com.example.storybridge_android
+package com.example.storybridge_android.ui.setting
 
 import android.content.Context
 import android.content.SharedPreferences
-
-/**
- * AppSettings
- * -------------
- * 앱 전체에서 공통으로 사용하는 설정 저장소 (언어, 목소리 등)
- * SharedPreferences 기반의 전역 싱글톤
- */
 import androidx.core.content.edit
 
 object AppSettings {

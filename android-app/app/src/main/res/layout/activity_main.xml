@@ -7,9 +7,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/white"
-    tools:context=".MainActivity">
+    tools:context=".ui.main.MainActivity">
 
-    <com.example.storybridge_android.ui.TopNavigationBar
+    <com.example.storybridge_android.ui.common.TopNavigationBar
         android:id="@+id/topNavigationBar"
         android:layout_width="0dp"
         android:layout_height="120dp"

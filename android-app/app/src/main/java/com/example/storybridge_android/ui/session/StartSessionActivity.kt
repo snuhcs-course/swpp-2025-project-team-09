@@ -1,11 +1,14 @@
-package com.example.storybridge_android
+package com.example.storybridge_android.ui.session
 
 import android.content.Intent
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.example.storybridge_android.R
+import com.example.storybridge_android.ui.session.VoiceSelectActivity
 import com.example.storybridge_android.network.RetrofitClient
 import com.example.storybridge_android.network.StartSessionRequest
 import com.example.storybridge_android.network.StartSessionResponse
@@ -38,9 +41,9 @@ class StartSessionActivity : AppCompatActivity() {
     private fun startSession() {
         Log.d(TAG, "=== Starting Session ===")
 
-        val deviceInfo = android.provider.Settings.Secure.getString(
+        val deviceInfo = Settings.Secure.getString(
             contentResolver,
-            android.provider.Settings.Secure.ANDROID_ID
+            Settings.Secure.ANDROID_ID
         )
 
         Log.d(TAG, "Device ID: $deviceInfo")

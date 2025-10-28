@@ -1,17 +1,21 @@
-package com.example.storybridge_android
+package com.example.storybridge_android.ui.setting
 
 import android.content.Intent
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.widget.Button
 import android.widget.RadioButton
 import android.widget.RadioGroup
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import com.example.storybridge_android.ui.setting.AppSettings
+import com.example.storybridge_android.R
 import com.example.storybridge_android.network.RetrofitClient
 import com.example.storybridge_android.network.UserLangRequest
 import com.example.storybridge_android.network.UserLangResponse
-import com.example.storybridge_android.ui.TopNavigationBar
+import com.example.storybridge_android.ui.common.TopNavigationBar
+import com.example.storybridge_android.ui.main.MainActivity
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -78,9 +82,9 @@ class SettingActivity : AppCompatActivity() {
         val saveButton = findViewById<Button>(R.id.btnSaveSettings)
 
         saveButton.setOnClickListener {
-            val deviceInfo = android.provider.Settings.Secure.getString(
+            val deviceInfo = Settings.Secure.getString(
                 contentResolver,
-                android.provider.Settings.Secure.ANDROID_ID
+                Settings.Secure.ANDROID_ID
             )
 
             // 선택된 언어 확인

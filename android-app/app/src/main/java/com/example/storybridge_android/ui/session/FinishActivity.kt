@@ -1,4 +1,4 @@
-package com.example.storybridge_android
+package com.example.storybridge_android.ui.session
 
 import android.content.Intent
 import android.os.Bundle
@@ -11,6 +11,7 @@ import com.example.storybridge_android.network.EndSessionRequest
 import com.example.storybridge_android.network.EndSessionResponse
 import com.example.storybridge_android.network.RetrofitClient
 import com.example.storybridge_android.network.SessionStatsResponse
+import com.example.storybridge_android.ui.main.MainActivity
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response

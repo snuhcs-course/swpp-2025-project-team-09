@@ -1,21 +1,26 @@
-package com.example.storybridge_android
+package com.example.storybridge_android.ui.main
 
 import android.content.Intent
-import android.os.Bundle
-import android.widget.Button
 import android.graphics.BitmapFactory
+import android.os.Bundle
+import android.provider.Settings
 import android.util.Base64
 import android.util.Log
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.example.storybridge_android.ui.session.LoadingActivity
+import com.example.storybridge_android.R
+import com.example.storybridge_android.ui.setting.SettingActivity
+import com.example.storybridge_android.ui.session.StartSessionActivity
 import com.example.storybridge_android.network.RetrofitClient
 import com.example.storybridge_android.network.UserInfoResponse
-import com.example.storybridge_android.ui.TopNavigationBar
-import com.example.storybridge_android.ui.SessionCard
+import com.example.storybridge_android.ui.common.SessionCard
+import com.example.storybridge_android.ui.common.TopNavigationBar
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -50,9 +55,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadSessionCard() {
-        val deviceInfo = android.provider.Settings.Secure.getString(
+        val deviceInfo = Settings.Secure.getString(
             contentResolver,
-            android.provider.Settings.Secure.ANDROID_ID
+            Settings.Secure.ANDROID_ID
         )
         val call = RetrofitClient.userApi.userInfo(deviceInfo)
 
