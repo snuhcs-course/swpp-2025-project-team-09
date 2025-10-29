@@ -26,7 +26,8 @@
         android:label="@string/story_bridge"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Storybridgeandroid">
+        android:theme="@style/Theme.Storybridgeandroid"
+        android:networkSecurityConfig="@xml/network_security_config">
 
         <!-- 🔹 CRITICAL: ML Kit document scanner metadata -->
         <!-- This tells Google Play Services to download the ML Kit module -->

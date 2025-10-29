@@ -8,8 +8,8 @@ import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
     //const val BASE_URL = "http://10.0.2.2:8000"
-    private const val BASE_URL = "https://oidioid-ullaged-signe.ngrok-free.dev" // 사용할 때마다 바꿔줘야 하는듯
-
+    //private const val BASE_URL = "https://oidioid-ullaged-signe.ngrok-free.dev" // 사용할 때마다 바꿔줘야 하는듯
+    private const val BASE_URL = "http://ec2-15-164-229-164.ap-northeast-2.compute.amazonaws.com:8000/"
 
     private val logging = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
