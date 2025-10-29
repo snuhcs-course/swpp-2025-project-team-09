@@ -61,3 +61,20 @@ jobs:
         # 🚨 모든 테스트 실행 (user_controller_test.py 포함)
         # 추후 테스트 파일이 늘어나도 이 명령 하나로 모두 커버됩니다.
         pytest tests/
+
+  # 🚨 새로 추가된 린트 Job
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install Flake8
+        # Flake8을 설치하여 코드를 검사합니다.
+        run: pip install flake8
+      - name: Run Flake8 Lint Check
+        working-directory: ./backend
+        run: flake8 . # backend 폴더 전체에 대해 린트 검사 실행
