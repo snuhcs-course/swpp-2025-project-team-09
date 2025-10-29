@@ -30,5 +30,5 @@ jobs:
         
         # 2. EC2에서 실행할 deploy.sh 스크립트 경로 (확정된 경로)
         script: |
-          # /home/ec2-user/swpp-2025-project-team-09/deploy.sh
-          /home/${{ secrets.EC2_USER }}/swpp-2025-project-team-09/deploy.sh
+          # /home/ec2-user/storybridge/swpp-2025-project-team-09/deploy.sh
+          /home/${{ secrets.EC2_USER }}/storybridge/swpp-2025-project-team-09/deploy.sh
