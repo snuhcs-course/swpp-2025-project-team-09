@@ -1,10 +1,29 @@
 package com.example.storybridge_android.network
 
+import com.google.gson.*
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.lang.reflect.Type
 import java.util.concurrent.TimeUnit
+
+class FlexibleUserInfoAdapter : JsonDeserializer<UserInfoResponse> {
+    private val plainGson = Gson()
+
+    override fun deserialize(
+        json: JsonElement,
+        typeOfT: Type?,
+        context: JsonDeserializationContext?
+    ): UserInfoResponse {
+        return if (json.isJsonArray) {
+            val array = json.asJsonArray
+            plainGson.fromJson(array[0], UserInfoResponse::class.java)
+        } else {
+            plainGson.fromJson(json, UserInfoResponse::class.java)
+        }
+    }
+}
 
 object RetrofitClient {
     private var BASE_URL = "https://flavia-mitotic-positively.ngrok-free.dev"
@@ -19,10 +38,14 @@ object RetrofitClient {
         .readTimeout(120, TimeUnit.SECONDS)
         .build()
 
+    private val gson = GsonBuilder()
+        .registerTypeAdapter(UserInfoResponse::class.java, FlexibleUserInfoAdapter())
+        .create()
+
     private fun createRetrofit(url: String): Retrofit {
         return Retrofit.Builder()
             .baseUrl(url)
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .client(client)
             .build()
     }

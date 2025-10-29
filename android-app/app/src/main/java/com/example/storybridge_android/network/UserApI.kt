@@ -10,18 +10,6 @@ import retrofit2.http.Query
 
 // Retrofit API Interface
 interface UserApi {
-
-    /*
-    @POST("/user/register")
-    fun userRegister(
-        @Body request: UserRegisterRequest
-    ): Call<UserRegisterResponse>
-
-    @POST("/user/login")
-    fun userLogin(
-        @Body request: UserLoginRequest
-    ): Call<UserLoginResponse>
-     */
     @POST("/user/register")
     suspend fun userRegister(
         @Body request: UserRegisterRequest
@@ -40,7 +28,7 @@ interface UserApi {
     @GET("/user/info")
     suspend fun userInfo(
         @Query("device_info") deviceInfo: String
-    ): Response<List<UserInfoResponse>>
+    ): Response<UserInfoResponse>
 
 }
 

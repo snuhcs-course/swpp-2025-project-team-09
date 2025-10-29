@@ -1,10 +1,7 @@
 package com.example.storybridge_android.viewmodel
 
 import com.example.storybridge_android.data.UserRepository
-import com.example.storybridge_android.network.UserLoginRequest
-import com.example.storybridge_android.network.UserRegisterRequest
-import com.example.storybridge_android.network.UserLoginResponse
-import com.example.storybridge_android.network.UserRegisterResponse
+import com.example.storybridge_android.network.*
 import com.example.storybridge_android.ui.landing.LandingUiState
 import com.example.storybridge_android.ui.landing.LandingViewModel
 import kotlinx.coroutines.*
@@ -48,7 +45,16 @@ class LandingViewModelTest {
             else
                 Response.error(400, "{}".toResponseBody(null))
         }
+
+        override suspend fun getUserInfo(deviceInfo: String): Response<UserInfoResponse> {
+            return Response.success(UserInfoResponse("uid", "title", "", "2025-01-01T00:00:00"))
+        }
+
+        override suspend fun userLang(req: UserLangRequest): Response<UserLangResponse> {
+            return Response.success(UserLangResponse("uid", req.language_preference, "2025-01-01T00:00:00"))
+        }
     }
+
 
     @Test
     fun loginSuccess_navigatesToMain() = runTest {

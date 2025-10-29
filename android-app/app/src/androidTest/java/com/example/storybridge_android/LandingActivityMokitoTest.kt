@@ -7,10 +7,7 @@ import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import com.example.storybridge_android.data.UserRepository
-import com.example.storybridge_android.network.UserLoginRequest
-import com.example.storybridge_android.network.UserLoginResponse
-import com.example.storybridge_android.network.UserRegisterRequest
-import com.example.storybridge_android.network.UserRegisterResponse
+import com.example.storybridge_android.network.*
 import com.example.storybridge_android.ui.landing.LandingActivity
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
@@ -49,21 +46,17 @@ class LandingActivityMockitoTest {
 
     @Test
     fun whenServerReturns200_NavigatesToMain() = runTest {
-        // Mock 설정
-        val successBody = UserLoginResponse("test_user_mockito", "en")
+        val loginResponse = UserLoginResponse("uid", "en")
+        val info = UserInfoResponse("uid", "title", "", "2025-10-29T00:00:00")
+
         whenever(mockUserRepository.login(any()))
-            .thenReturn(Response.success(successBody))
+            .thenReturn(Response.success(loginResponse))
+        whenever(mockUserRepository.getUserInfo(any()))
+            .thenReturn(Response.success(info))
 
-        // Activity 실행
         scenario = ActivityScenario.launch(LandingActivity::class.java)
-
-        // 대기
         Thread.sleep(3000)
-
-        // Main 화면 확인
         onView(withId(R.id.main)).check(matches(isDisplayed()))
-
-        // 검증
         verify(mockUserRepository, times(1)).login(any())
     }
 
