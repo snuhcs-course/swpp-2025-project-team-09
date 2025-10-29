@@ -1,10 +1,6 @@
 package com.example.storybridge_android.data
 
-import com.example.storybridge_android.network.RetrofitClient
-import com.example.storybridge_android.network.UserLoginRequest
-import com.example.storybridge_android.network.UserLoginResponse
-import com.example.storybridge_android.network.UserRegisterRequest
-import com.example.storybridge_android.network.UserRegisterResponse
+import com.example.storybridge_android.network.*
 import retrofit2.Response
 
 class DefaultUserRepository : UserRepository {
@@ -14,5 +10,13 @@ class DefaultUserRepository : UserRepository {
 
     override suspend fun register(request: UserRegisterRequest): Response<UserRegisterResponse> {
         return RetrofitClient.userApi.userRegister(request)
+    }
+
+    override suspend fun getUserInfo(deviceInfo: String): Response<List<UserInfoResponse>> {
+        return RetrofitClient.userApi.userInfo(deviceInfo)
+    }
+
+    override suspend fun userLang(request: UserLangRequest): Response<UserLangResponse> {
+        return RetrofitClient.userApi.userLang(request)
     }
 }

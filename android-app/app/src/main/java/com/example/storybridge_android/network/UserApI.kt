@@ -32,16 +32,16 @@ interface UserApi {
         @Body request: UserLoginRequest
     ): Response<UserLoginResponse>
 
-
     @PATCH("/user/lang")
-    fun userLang(
+    suspend fun userLang(
         @Body request: UserLangRequest
-    ): Call<UserLangResponse>
+    ): Response<UserLangResponse>
 
     @GET("/user/info")
-    fun userInfo(
-        @Query("device_info") device_info: String
-    ): Call<UserInfoResponse>
+    suspend fun userInfo(
+        @Query("device_info") deviceInfo: String
+    ): Response<List<UserInfoResponse>>
+
 }
 
 // --------------------

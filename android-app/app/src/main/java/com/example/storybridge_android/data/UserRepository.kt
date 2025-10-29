@@ -1,12 +1,11 @@
 package com.example.storybridge_android.data
 
-import com.example.storybridge_android.network.UserLoginRequest
-import com.example.storybridge_android.network.UserLoginResponse
-import com.example.storybridge_android.network.UserRegisterRequest
-import com.example.storybridge_android.network.UserRegisterResponse
+import com.example.storybridge_android.network.*
 import retrofit2.Response
 
 interface UserRepository {
     suspend fun login(request: UserLoginRequest): Response<UserLoginResponse>
     suspend fun register(request: UserRegisterRequest): Response<UserRegisterResponse>
+    suspend fun getUserInfo(deviceInfo: String): Response<List<UserInfoResponse>>
+    suspend fun userLang(request: UserLangRequest): Response<UserLangResponse>
 }
