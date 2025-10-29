@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import List, Dict, Any
 from sklearn.cluster import DBSCAN
 from dotenv import load_dotenv
+
 load_dotenv()
 
 
@@ -17,9 +18,7 @@ class OCRModule:
         self.secret_key = os.getenv("OCR_SECRET", "")
         self.conf_threshold = conf_threshold
 
-    def _filter_low_confidence(
-        self, result_json: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _filter_low_confidence(self, result_json: Dict[str, Any]) -> Dict[str, Any]:
         images = result_json.get("images", [])
         if not images:
             return result_json
@@ -134,15 +133,11 @@ class OCRModule:
                 for tkn in line_tokens:
                     xs.extend(tkn["xs"])
                     ys.extend(tkn["ys"])
-                lines.append({
-                    "text": line_text, "y": y_mean, "xs": xs, "ys": ys
-                })
+                lines.append({"text": line_text, "y": y_mean, "xs": xs, "ys": ys})
 
             # Sort lines vertically and join into paragraph text
             lines_sorted = sorted(lines, key=lambda line: line["y"])
-            paragraph_text = "\n".join(
-                line["text"] for line in lines_sorted
-            )
+            paragraph_text = "\n".join(line["text"] for line in lines_sorted)
 
             # Calculate bbox from all vertices in paragraph
             xs = []
@@ -154,10 +149,14 @@ class OCRModule:
             x_min, x_max = float(min(xs)), float(max(xs))
             y_min, y_max = float(min(ys)), float(max(ys))
             bbox = {
-                "x1": x_min, "y1": y_min,
-                "x2": x_max, "y2": y_min,
-                "x3": x_max, "y3": y_max,
-                "x4": x_min, "y4": y_max,
+                "x1": x_min,
+                "y1": y_min,
+                "x2": x_max,
+                "y2": y_min,
+                "x3": x_max,
+                "y3": y_max,
+                "x4": x_min,
+                "y4": y_max,
             }
             results.append({"text": paragraph_text.strip(), "bbox": bbox})
 

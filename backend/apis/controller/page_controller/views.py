@@ -62,19 +62,21 @@ class PageGetImageView(APIView):
                 encoded = base64.b64encode(img_file.read())
                 img_base64 = encoded.decode("utf-8")
 
-            return Response({
-                "session_id": session_id,
-                "page_index": int(page_index),
-                "image_base64": img_base64,
-                "stored_at": page.created_at
-            }, status=status.HTTP_200_OK)
+            return Response(
+                {
+                    "session_id": session_id,
+                    "page_index": int(page_index),
+                    "image_base64": img_base64,
+                    "stored_at": page.created_at,
+                },
+                status=status.HTTP_200_OK,
+            )
 
         except (Page.DoesNotExist, IndexError):
             return Response(status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response(
-                {"error": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
 
@@ -139,25 +141,29 @@ class PageGetOCRView(APIView):
 
             ocr_results = []
             for bb in bbs:
-                ocr_results.append({
-                    "bbox": bb.coordinates,
-                    "original_txt": bb.original_text,
-                    "translation_txt": bb.translated_text
-                })
+                ocr_results.append(
+                    {
+                        "bbox": bb.coordinates,
+                        "original_txt": bb.original_text,
+                        "translation_txt": bb.translated_text,
+                    }
+                )
 
-            return Response({
-                "session_id": session_id,
-                "page_index": int(page_index),
-                "ocr_results": ocr_results,
-                "processed_at": page.created_at
-            }, status=status.HTTP_200_OK)
+            return Response(
+                {
+                    "session_id": session_id,
+                    "page_index": int(page_index),
+                    "ocr_results": ocr_results,
+                    "processed_at": page.created_at,
+                },
+                status=status.HTTP_200_OK,
+            )
 
         except (Page.DoesNotExist, IndexError):
             return Response(status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response(
-                {"error": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
 
@@ -216,22 +222,23 @@ class PageGetTTSView(APIView):
                 # This prevents returning empty audio arrays for boxes
                 # where TTS hasn't completed
                 if audio_list and len(audio_list) > 0:
-                    audio_results.append({
-                        "bbox_index": i,
-                        "audio_base64_list": audio_list
-                    })
+                    audio_results.append(
+                        {"bbox_index": i, "audio_base64_list": audio_list}
+                    )
 
-            return Response({
-                "session_id": session_id,
-                "page_index": int(page_index),
-                "audio_results": audio_results,
-                "generated_at": page.created_at
-            }, status=status.HTTP_200_OK)
+            return Response(
+                {
+                    "session_id": session_id,
+                    "page_index": int(page_index),
+                    "audio_results": audio_results,
+                    "generated_at": page.created_at,
+                },
+                status=status.HTTP_200_OK,
+            )
 
         except (Page.DoesNotExist, IndexError):
             return Response(status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response(
-                {"error": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

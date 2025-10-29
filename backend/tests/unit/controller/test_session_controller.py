@@ -17,16 +17,13 @@ class TestStartSessionView(APITestCase):
         self.test_user = User.objects.create(
             device_info="test-session-device",
             language_preference="en",
-            created_at=timezone.now()
+            created_at=timezone.now(),
         )
 
     def test_01_start_session_success(self):
         """Test successful session start"""
-        data = {
-            "user_id": "test-session-device",
-            "page_index": 0
-        }
-        response = self.client.post("/session/start", data, format='json')
+        data = {"user_id": "test-session-device", "page_index": 0}
+        response = self.client.post("/session/start", data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("session_id", response.data)
@@ -40,11 +37,8 @@ class TestStartSessionView(APITestCase):
 
     def test_02_start_session_with_custom_page_index(self):
         """Test session start with custom page index"""
-        data = {
-            "user_id": "test-session-device",
-            "page_index": 5
-        }
-        response = self.client.post("/session/start", data, format='json')
+        data = {"user_id": "test-session-device", "page_index": 5}
+        response = self.client.post("/session/start", data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["page_index"], 5)
@@ -52,17 +46,14 @@ class TestStartSessionView(APITestCase):
     def test_03_start_session_missing_user_id(self):
         """Test session start with missing user_id"""
         data = {"page_index": 0}
-        response = self.client.post("/session/start", data, format='json')
+        response = self.client.post("/session/start", data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_04_start_session_user_not_found(self):
         """Test session start with non-existent user"""
-        data = {
-            "user_id": "non-existent-user",
-            "page_index": 0
-        }
-        response = self.client.post("/session/start", data, format='json')
+        data = {"user_id": "non-existent-user", "page_index": 0}
+        response = self.client.post("/session/start", data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data["error_code"], 404)
@@ -80,21 +71,16 @@ class TestSelectVoiceView(APITestCase):
         self.test_user = User.objects.create(
             device_info="test-voice-device",
             language_preference="en",
-            created_at=timezone.now()
+            created_at=timezone.now(),
         )
         self.test_session = Session.objects.create(
-            user=self.test_user,
-            title="Test Session",
-            created_at=timezone.now()
+            user=self.test_user, title="Test Session", created_at=timezone.now()
         )
 
     def test_01_select_voice_success(self):
         """Test successful voice selection"""
-        data = {
-            "session_id": str(self.test_session.id),
-            "voice_style": "male"
-        }
-        response = self.client.post("/session/voice", data, format='json')
+        data = {"session_id": str(self.test_session.id), "voice_style": "male"}
+        response = self.client.post("/session/voice", data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(str(response.data["session_id"]), str(self.test_session.id))
@@ -106,11 +92,8 @@ class TestSelectVoiceView(APITestCase):
 
     def test_02_select_voice_different_style(self):
         """Test voice selection with different style"""
-        data = {
-            "session_id": str(self.test_session.id),
-            "voice_style": "female"
-        }
-        response = self.client.post("/session/voice", data, format='json')
+        data = {"session_id": str(self.test_session.id), "voice_style": "female"}
+        response = self.client.post("/session/voice", data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["voice_style"], "female")
@@ -118,14 +101,14 @@ class TestSelectVoiceView(APITestCase):
     def test_03_select_voice_missing_session_id(self):
         """Test voice selection with missing session_id"""
         data = {"voice_style": "male"}
-        response = self.client.post("/session/voice", data, format='json')
+        response = self.client.post("/session/voice", data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_04_select_voice_missing_voice_style(self):
         """Test voice selection with missing voice_style"""
         data = {"session_id": str(self.test_session.id)}
-        response = self.client.post("/session/voice", data, format='json')
+        response = self.client.post("/session/voice", data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -133,9 +116,9 @@ class TestSelectVoiceView(APITestCase):
         """Test voice selection with non-existent session"""
         data = {
             "session_id": "00000000-0000-0000-0000-000000000000",
-            "voice_style": "male"
+            "voice_style": "male",
         }
-        response = self.client.post("/session/voice", data, format='json')
+        response = self.client.post("/session/voice", data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data["error_code"], 404)
@@ -153,20 +136,20 @@ class TestEndSessionView(APITestCase):
         self.test_user = User.objects.create(
             device_info="test-end-device",
             language_preference="en",
-            created_at=timezone.now()
+            created_at=timezone.now(),
         )
         self.test_session = Session.objects.create(
             user=self.test_user,
             title="Test Session",
             created_at=timezone.now(),
             totalPages=10,
-            isOngoing=True
+            isOngoing=True,
         )
 
     def test_01_end_session_success(self):
         """Test successful session end"""
         data = {"session_id": str(self.test_session.id)}
-        response = self.client.post("/session/end", data, format='json')
+        response = self.client.post("/session/end", data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(str(response.data["session_id"]), str(self.test_session.id))
@@ -181,14 +164,14 @@ class TestEndSessionView(APITestCase):
     def test_02_end_session_missing_session_id(self):
         """Test session end with missing session_id"""
         data = {}
-        response = self.client.post("/session/end", data, format='json')
+        response = self.client.post("/session/end", data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_03_end_session_not_found(self):
         """Test session end with non-existent session"""
         data = {"session_id": "00000000-0000-0000-0000-000000000000"}
-        response = self.client.post("/session/end", data, format='json')
+        response = self.client.post("/session/end", data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data["error_code"], 404)
@@ -206,7 +189,7 @@ class TestGetSessionInfoView(APITestCase):
         self.test_user = User.objects.create(
             device_info="test-info-device",
             language_preference="en",
-            created_at=timezone.now()
+            created_at=timezone.now(),
         )
         self.test_session = Session.objects.create(
             user=self.test_user,
@@ -214,12 +197,14 @@ class TestGetSessionInfoView(APITestCase):
             created_at=timezone.now(),
             totalPages=5,
             voicePreference="male",
-            isOngoing=True
+            isOngoing=True,
         )
 
     def test_01_get_session_info_success(self):
         """Test successful session info retrieval"""
-        response = self.client.get("/session/info", {"session_id": str(self.test_session.id)})
+        response = self.client.get(
+            "/session/info", {"session_id": str(self.test_session.id)}
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(str(response.data["session_id"]), str(self.test_session.id))
@@ -235,7 +220,9 @@ class TestGetSessionInfoView(APITestCase):
         self.test_session.ended_at = timezone.now()
         self.test_session.save()
 
-        response = self.client.get("/session/info", {"session_id": str(self.test_session.id)})
+        response = self.client.get(
+            "/session/info", {"session_id": str(self.test_session.id)}
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertFalse(response.data["isOngoing"])
@@ -249,7 +236,9 @@ class TestGetSessionInfoView(APITestCase):
 
     def test_04_get_session_info_not_found(self):
         """Test getting info for non-existent session"""
-        response = self.client.get("/session/info", {"session_id": "00000000-0000-0000-0000-000000000000"})
+        response = self.client.get(
+            "/session/info", {"session_id": "00000000-0000-0000-0000-000000000000"}
+        )
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data["error_code"], 404)
@@ -267,18 +256,20 @@ class TestGetSessionStatsView(APITestCase):
         self.test_user = User.objects.create(
             device_info="test-stats-device",
             language_preference="en",
-            created_at=timezone.now()
+            created_at=timezone.now(),
         )
         self.test_session = Session.objects.create(
             user=self.test_user,
             title="Test Session",
             created_at=timezone.now(),
-            totalPages=8
+            totalPages=8,
         )
 
     def test_01_get_session_stats_ongoing(self):
         """Test getting stats for ongoing session"""
-        response = self.client.get("/session/stats", {"session_id": str(self.test_session.id)})
+        response = self.client.get(
+            "/session/stats", {"session_id": str(self.test_session.id)}
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(str(response.data["session_id"]), str(self.test_session.id))
@@ -293,7 +284,9 @@ class TestGetSessionStatsView(APITestCase):
         self.test_session.ended_at = timezone.now()
         self.test_session.save()
 
-        response = self.client.get("/session/stats", {"session_id": str(self.test_session.id)})
+        response = self.client.get(
+            "/session/stats", {"session_id": str(self.test_session.id)}
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIsNotNone(response.data["ended_at"])
@@ -308,7 +301,9 @@ class TestGetSessionStatsView(APITestCase):
 
     def test_04_get_session_stats_not_found(self):
         """Test getting stats for non-existent session"""
-        response = self.client.get("/session/stats", {"session_id": "00000000-0000-0000-0000-000000000000"})
+        response = self.client.get(
+            "/session/stats", {"session_id": "00000000-0000-0000-0000-000000000000"}
+        )
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -324,19 +319,21 @@ class TestSessionReviewView(APITestCase):
         self.test_user = User.objects.create(
             device_info="test-review-device",
             language_preference="en",
-            created_at=timezone.now()
+            created_at=timezone.now(),
         )
         self.test_session = Session.objects.create(
             user=self.test_user,
             title="Test Session",
             created_at=timezone.now(),
             ended_at=timezone.now(),
-            totalPages=12
+            totalPages=12,
         )
 
     def test_01_get_session_review_success(self):
         """Test successful session review retrieval"""
-        response = self.client.get("/session/review", {"session_id": str(self.test_session.id)})
+        response = self.client.get(
+            "/session/review", {"session_id": str(self.test_session.id)}
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(str(response.data["session_id"]), str(self.test_session.id))
@@ -353,6 +350,8 @@ class TestSessionReviewView(APITestCase):
 
     def test_03_get_session_review_not_found(self):
         """Test getting review for non-existent session"""
-        response = self.client.get("/session/review", {"session_id": "00000000-0000-0000-0000-000000000000"})
+        response = self.client.get(
+            "/session/review", {"session_id": "00000000-0000-0000-0000-000000000000"}
+        )
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

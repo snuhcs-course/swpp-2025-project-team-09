@@ -11,9 +11,7 @@ class User(models.Model):
     - 세션/책 관계 연결
     """
 
-    uid = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, editable=False
-    )
+    uid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     device_info = models.CharField(max_length=255, unique=True)
     language_preference = models.CharField(max_length=20, default="en")
     created_at = models.DateTimeField(default=timezone.now)

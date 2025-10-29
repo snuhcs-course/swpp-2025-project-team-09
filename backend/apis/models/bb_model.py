@@ -8,9 +8,7 @@ class BB(models.Model):
     - OCR 결과를 세분화하여 문장별/문단별 관리
     """
 
-    page = models.ForeignKey(
-        Page, on_delete=models.CASCADE, related_name="bbs"
-    )
+    page = models.ForeignKey(Page, on_delete=models.CASCADE, related_name="bbs")
     original_text = models.TextField()
     translated_text = models.TextField(null=True, blank=True)
     audio_base64 = models.JSONField(default=list, blank=True)
@@ -22,8 +20,8 @@ class BB(models.Model):
             ("pending", "Pending"),
             ("processing", "Processing"),
             ("ready", "Ready"),
-            ("failed", "Failed")
-        ]
+            ("failed", "Failed"),
+        ],
     )
 
     def __str__(self):

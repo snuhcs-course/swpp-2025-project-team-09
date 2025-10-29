@@ -39,15 +39,17 @@ ENGLISH directions for Tone, Pacing, and Emotion.
 # Pydantic Models
 class Translation(BaseModel):
     """A single, fluent translation of a Korean sentence."""
+
     translated_text: str = Field(
         ...,
         description="The translated sentence in the target language.",
-        alias="translation"
+        alias="translation",
     )
 
 
 class Sentiment(BaseModel):
     """Performance direction for voice actor based on sentiment."""
+
     tone: str = Field(..., description="The tone of voice to use.")
     pacing: str = Field(..., description="The pacing of the speech.")
     emotion: str = Field(..., description="The emotion to convey.")
@@ -55,8 +57,7 @@ class Sentiment(BaseModel):
 
 class TTSModule:
     def __init__(
-        self, out_dir="out_audio", log_dir="log",
-        target_lang: str = "English"
+        self, out_dir="out_audio", log_dir="log", target_lang: str = "English"
     ):
         self.client = AsyncOpenAI()
         self.TTS_MODEL = "gpt-4o-mini-tts"
@@ -78,17 +79,15 @@ class TTSModule:
         self.LOG_DIR.mkdir(parents=True)
 
     def _create_translation_chain(self):
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", TRANSLATION_PROMPT),
-            ("user", "{text_with_context}")
-        ])
+        prompt = ChatPromptTemplate.from_messages(
+            [("system", TRANSLATION_PROMPT), ("user", "{text_with_context}")]
+        )
         return prompt | self.llm.with_structured_output(Translation)
 
     def _create_sentiment_chain(self):
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", SENTIMENT_PROMPT),
-            ("user", "{korean_text}")
-        ])
+        prompt = ChatPromptTemplate.from_messages(
+            [("system", SENTIMENT_PROMPT), ("user", "{korean_text}")]
+        )
         return prompt | self.llm.with_structured_output(Sentiment)
 
     async def translate(self, text_with_context: str) -> Dict[str, Any]:
@@ -96,10 +95,12 @@ class TTSModule:
         for attempt in range(3):
             try:
                 t0 = time.time()
-                response = await self.translation_chain.ainvoke({
-                    "text_with_context": text_with_context,
-                    "target_lang": self.target_lang
-                })
+                response = await self.translation_chain.ainvoke(
+                    {
+                        "text_with_context": text_with_context,
+                        "target_lang": self.target_lang,
+                    }
+                )
                 latency = time.time() - t0
                 return {"result": response, "latency": round(latency, 3)}
             except Exception as e:
@@ -127,8 +128,12 @@ class TTSModule:
         return {"result": None, "latency": -1.0}
 
     async def synthesize_tts(
-        self, voice: str, text: str, instructions: str,
-        out_path: Path, response_format: str
+        self,
+        voice: str,
+        text: str,
+        instructions: str,
+        out_path: Path,
+        response_format: str,
     ) -> tuple[float, bytes]:
         """Synthesize TTS audio."""
         out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -139,7 +144,7 @@ class TTSModule:
                 voice=voice,
                 input=text,
                 instructions=instructions,
-                response_format=response_format
+                response_format=response_format,
             )
             audio_bytes = response.content
 
@@ -152,9 +157,7 @@ class TTSModule:
             print(f"TTS error for {out_path.name}: {e}")
             return -1.0, None
 
-    async def get_translations_only(
-        self, page: Dict[str, str]
-    ) -> Dict[str, Any]:
+    async def get_translations_only(self, page: Dict[str, str]) -> Dict[str, Any]:
         """
         Get translations and sentiment for all sentences
         WITHOUT running TTS.
@@ -193,16 +196,14 @@ class TTSModule:
 
             # Run translation and sentiment in parallel
             trans_response, senti_response = await asyncio.gather(
-                self.translate(context_prompt),
-                self.sentiment(sentence)
+                self.translate(context_prompt), self.sentiment(sentence)
             )
 
             trans_result = trans_response["result"]
             senti_result = senti_response["result"]
 
-            is_error = (
-                isinstance(trans_result, Exception) or
-                isinstance(senti_result, Exception)
+            is_error = isinstance(trans_result, Exception) or isinstance(
+                senti_result, Exception
             )
             if is_error:
                 return None
@@ -216,25 +217,25 @@ class TTSModule:
                 "tone": senti_result.tone,
                 "emotion": senti_result.emotion,
                 "pacing": senti_result.pacing,
-                "korean": sentence
+                "korean": sentence,
             }
 
         # Process all sentences in parallel
-        results = await asyncio.gather(*[
-            process_sentence(i, sent) for i, sent in enumerate(sentences)
-        ])
+        results = await asyncio.gather(
+            *[process_sentence(i, sent) for i, sent in enumerate(sentences)]
+        )
 
         # Filter out None results
         ok_results = [r for r in results if r is not None]
 
-        return {
-            "status": "ok" if ok_results else "failed",
-            "sentences": ok_results
-        }
+        return {"status": "ok" if ok_results else "failed", "sentences": ok_results}
 
     async def run_tts_only(
-        self, translation_data: Dict[str, Any], session_id: str,
-        page_index: int, para_index: int
+        self,
+        translation_data: Dict[str, Any],
+        session_id: str,
+        page_index: int,
+        para_index: int,
     ) -> List[str]:
         """
         Run TTS using pre-computed translations.
@@ -279,7 +280,7 @@ class TTSModule:
                 text=sentence_data["translation"],
                 instructions=tts_instr,
                 out_path=out_file,
-                response_format="mp3"
+                response_format="mp3",
             )
 
             if tts_result:
@@ -287,17 +288,22 @@ class TTSModule:
             return None
 
         # Run TTS for all sentences in parallel
-        audio_results = await asyncio.gather(*[
-            synthesize_sentence(i, sent_data)
-            for i, sent_data in enumerate(sentences_data)
-        ])
+        audio_results = await asyncio.gather(
+            *[
+                synthesize_sentence(i, sent_data)
+                for i, sent_data in enumerate(sentences_data)
+            ]
+        )
 
         # Filter out None results
         return [audio for audio in audio_results if audio is not None]
 
     async def process_paragraph(
-        self, page: Dict[str, str], log_csv: bool,
-        check_latency: bool, response_format: str = "mp3"
+        self,
+        page: Dict[str, str],
+        log_csv: bool,
+        check_latency: bool,
+        response_format: str = "mp3",
     ):
         """
         Complete processing: translation + sentiment + TTS.
@@ -321,16 +327,14 @@ class TTSModule:
 
             # Run translation and sentiment in parallel
             trans_response, senti_response = await asyncio.gather(
-                self.translate(context_prompt),
-                self.sentiment(sentence)
+                self.translate(context_prompt), self.sentiment(sentence)
             )
 
             trans_result = trans_response["result"]
             senti_result = senti_response["result"]
 
-            is_error = (
-                isinstance(trans_result, Exception) or
-                isinstance(senti_result, Exception)
+            is_error = isinstance(trans_result, Exception) or isinstance(
+                senti_result, Exception
             )
             if is_error:
                 return None
@@ -375,14 +379,13 @@ class TTSModule:
                 "senti_latency": senti_response["latency"],
                 "tts_latency": tts_latency,
                 "tts_result": tts_result,
-                "status": "ok"
+                "status": "ok",
             }
 
         # Process all sentences in parallel
-        results = await asyncio.gather(*[
-            process_single_sentence(i, sent)
-            for i, sent in enumerate(sentences)
-        ])
+        results = await asyncio.gather(
+            *[process_single_sentence(i, sent) for i, sent in enumerate(sentences)]
+        )
 
         # Filter out None results
         ok_results = [r for r in results if r is not None]
@@ -393,13 +396,18 @@ class TTSModule:
         status = "ok" if ok_results else "failed"
         return {"status": status, "details": ok_results}
 
-    def _write_to_csv(
-        self, results: List[Dict], file_name: str, check_latency: bool
-    ):
+    def _write_to_csv(self, results: List[Dict], file_name: str, check_latency: bool):
         """Write results to CSV log."""
         header = [
-            "page_file", "index", "ko", "translation",
-            "tone", "emotion", "pacing", "voice", "path"
+            "page_file",
+            "index",
+            "ko",
+            "translation",
+            "tone",
+            "emotion",
+            "pacing",
+            "voice",
+            "path",
         ]
         if check_latency:
             header += ["trans_latency", "senti_latency", "tts_latency"]
@@ -412,14 +420,18 @@ class TTSModule:
             writer = csv.writer(f)
             for i, r in enumerate(results, start=1):
                 row = [
-                    file_name, i, r["ko_sentence"], r["translation"],
-                    r["tone"], r["emotion"], r["pacing"],
-                    r["voice"], r["path"]
+                    file_name,
+                    i,
+                    r["ko_sentence"],
+                    r["translation"],
+                    r["tone"],
+                    r["emotion"],
+                    r["pacing"],
+                    r["voice"],
+                    r["path"],
                 ]
                 if check_latency:
-                    row.extend([
-                        r["trans_latency"],
-                        r["senti_latency"],
-                        r["tts_latency"]
-                    ])
+                    row.extend(
+                        [r["trans_latency"], r["senti_latency"], r["tts_latency"]]
+                    )
                 writer.writerow(row)

@@ -38,29 +38,31 @@ class StartSessionView(APIView):
 
         try:
             user = User.objects.get(device_info=user_id)
-            now_str = timezone.now().strftime('%Y-%m-%d %H:%M')
+            now_str = timezone.now().strftime("%Y-%m-%d %H:%M")
             title = f"Reading Session {now_str}"
             session = Session.objects.create(
                 user=user,
                 title=title,
                 created_at=timezone.now(),
                 totalPages=0,
-                isOngoing=True
+                isOngoing=True,
             )
-            return Response({
-                "session_id": str(session.id),
-                "started_at": session.created_at,
-                "page_index": page_index
-            }, status=status.HTTP_200_OK)
+            return Response(
+                {
+                    "session_id": str(session.id),
+                    "started_at": session.created_at,
+                    "page_index": page_index,
+                },
+                status=status.HTTP_200_OK,
+            )
         except User.DoesNotExist:
-            return Response({
-                "error_code": 404,
-                "message": "USER__NOT_FOUND"
-            }, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error_code": 404, "message": "USER__NOT_FOUND"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
         except Exception as e:
             return Response(
-                {"error": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
 
@@ -98,15 +100,15 @@ class SelectVoiceView(APIView):
             session = Session.objects.get(id=session_id)
             session.voicePreference = voice_style
             session.save()
-            return Response({
-                "session_id": str(session.id),
-                "voice_style": session.voicePreference
-            }, status=status.HTTP_200_OK)
+            return Response(
+                {"session_id": str(session.id), "voice_style": session.voicePreference},
+                status=status.HTTP_200_OK,
+            )
         except Session.DoesNotExist:
-            return Response({
-                "error_code": 404,
-                "message": "SESSION__NOT_FOUND"
-            }, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error_code": 404, "message": "SESSION__NOT_FOUND"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
 
 class EndSessionView(APIView):
@@ -144,16 +146,19 @@ class EndSessionView(APIView):
             session.ended_at = timezone.now()
             session.save()
 
-            return Response({
-                "session_id": str(session.id),
-                "ended_at": session.ended_at,
-                "total_pages": session.totalPages
-            }, status=status.HTTP_200_OK)
+            return Response(
+                {
+                    "session_id": str(session.id),
+                    "ended_at": session.ended_at,
+                    "total_pages": session.totalPages,
+                },
+                status=status.HTTP_200_OK,
+            )
         except Session.DoesNotExist:
-            return Response({
-                "error_code": 404,
-                "message": "SESSION__NOT_FOUND"
-            }, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error_code": 404, "message": "SESSION__NOT_FOUND"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
 
 class GetSessionInfoView(APIView):
@@ -192,20 +197,23 @@ class GetSessionInfoView(APIView):
 
         try:
             session = Session.objects.get(id=session_id)
-            return Response({
-                "session_id": str(session.id),
-                "user_id": str(session.user.uid),
-                "voice_style": session.voicePreference,
-                "isOngoing": session.isOngoing,
-                "started_at": session.created_at,
-                "ended_at": session.ended_at,
-                "total_pages": session.totalPages
-            }, status=status.HTTP_200_OK)
+            return Response(
+                {
+                    "session_id": str(session.id),
+                    "user_id": str(session.user.uid),
+                    "voice_style": session.voicePreference,
+                    "isOngoing": session.isOngoing,
+                    "started_at": session.created_at,
+                    "ended_at": session.ended_at,
+                    "total_pages": session.totalPages,
+                },
+                status=status.HTTP_200_OK,
+            )
         except Session.DoesNotExist:
-            return Response({
-                "error_code": 404,
-                "message": "SESSION__NOT_FOUND"
-            }, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error_code": 404, "message": "SESSION__NOT_FOUND"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
 
 class GetSessionStatsView(APIView):
@@ -246,15 +254,18 @@ class GetSessionStatsView(APIView):
             if session.ended_at:
                 duration = (session.ended_at - session.created_at).seconds
 
-            return Response({
-                "session_id": str(session.id),
-                "user_id": str(session.user.uid),
-                "started_at": session.created_at,
-                "ended_at": session.ended_at,
-                "total_pages": session.totalPages,
-                "total_time_spent": duration,
-                "total_words_read": session.totalPages * 100  # dummy metric
-            }, status=status.HTTP_200_OK)
+            return Response(
+                {
+                    "session_id": str(session.id),
+                    "user_id": str(session.user.uid),
+                    "started_at": session.created_at,
+                    "ended_at": session.ended_at,
+                    "total_pages": session.totalPages,
+                    "total_time_spent": duration,
+                    "total_words_read": session.totalPages * 100,  # dummy metric
+                },
+                status=status.HTTP_200_OK,
+            )
         except Session.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
@@ -291,12 +302,15 @@ class SessionReviewView(APIView):
 
         try:
             session = Session.objects.get(id=session_id)
-            return Response({
-                "session_id": str(session.id),
-                "user_id": str(session.user.uid),
-                "started_at": session.created_at,
-                "ended_at": session.ended_at,
-                "total_pages": session.totalPages
-            }, status=status.HTTP_200_OK)
+            return Response(
+                {
+                    "session_id": str(session.id),
+                    "user_id": str(session.user.uid),
+                    "started_at": session.created_at,
+                    "ended_at": session.ended_at,
+                    "total_pages": session.totalPages,
+                },
+                status=status.HTTP_200_OK,
+            )
         except Session.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)

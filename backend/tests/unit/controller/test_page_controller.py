@@ -21,12 +21,10 @@ class TestPageGetImageView(APITestCase):
         self.test_user = User.objects.create(
             device_info="test-page-device",
             language_preference="en",
-            created_at=timezone.now()
+            created_at=timezone.now(),
         )
         self.test_session = Session.objects.create(
-            user=self.test_user,
-            title="Test Session",
-            created_at=timezone.now()
+            user=self.test_user, title="Test Session", created_at=timezone.now()
         )
 
         # Create a test image file
@@ -50,7 +48,7 @@ class TestPageGetImageView(APITestCase):
             session=self.test_session,
             img_url=self.test_image_path,
             bbox_json=json.dumps([]),
-            created_at=timezone.now()
+            created_at=timezone.now(),
         )
 
     def tearDown(self):
@@ -64,70 +62,46 @@ class TestPageGetImageView(APITestCase):
         """Test successful image retrieval"""
         response = self.client.get(
             "/page/get_image/",
-            {
-                "session_id": str(self.test_session.id),
-                "page_index": 0
-            }
+            {"session_id": str(self.test_session.id), "page_index": 0},
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(
-            str(response.data["session_id"]),
-            str(self.test_session.id)
-        )
+        self.assertEqual(str(response.data["session_id"]), str(self.test_session.id))
         self.assertEqual(response.data["page_index"], 0)
         self.assertIn("image_base64", response.data)
         self.assertIsNotNone(response.data["image_base64"])
 
     def test_02_get_image_missing_session_id(self):
         """Test image retrieval without session_id"""
-        response = self.client.get(
-            "/page/get_image/",
-            {"page_index": 0}
-        )
+        response = self.client.get("/page/get_image/", {"page_index": 0})
 
-        self.assertEqual(
-            response.status_code, status.HTTP_400_BAD_REQUEST
-        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_03_get_image_missing_page_index(self):
         """Test image retrieval without page_index"""
         response = self.client.get(
-            "/page/get_image/",
-            {"session_id": str(self.test_session.id)}
+            "/page/get_image/", {"session_id": str(self.test_session.id)}
         )
 
-        self.assertEqual(
-            response.status_code, status.HTTP_400_BAD_REQUEST
-        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_04_get_image_session_not_found(self):
         """Test image retrieval with non-existent session"""
         response = self.client.get(
             "/page/get_image/",
-            {
-                "session_id": "00000000-0000-0000-0000-000000000000",
-                "page_index": 0
-            }
+            {"session_id": "00000000-0000-0000-0000-000000000000", "page_index": 0},
         )
 
-        self.assertEqual(
-            response.status_code, status.HTTP_404_NOT_FOUND
-        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_05_get_image_page_not_found(self):
         """Test image retrieval with invalid page_index"""
         response = self.client.get(
             "/page/get_image/",
-            {
-                "session_id": str(self.test_session.id),
-                "page_index": 999
-            }
+            {"session_id": str(self.test_session.id), "page_index": 999},
         )
 
-        self.assertEqual(
-            response.status_code, status.HTTP_404_NOT_FOUND
-        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
 class TestPageGetOCRView(APITestCase):
@@ -141,12 +115,10 @@ class TestPageGetOCRView(APITestCase):
         self.test_user = User.objects.create(
             device_info="test-ocr-device",
             language_preference="en",
-            created_at=timezone.now()
+            created_at=timezone.now(),
         )
         self.test_session = Session.objects.create(
-            user=self.test_user,
-            title="Test Session",
-            created_at=timezone.now()
+            user=self.test_user, title="Test Session", created_at=timezone.now()
         )
 
         # Create test page
@@ -154,7 +126,7 @@ class TestPageGetOCRView(APITestCase):
             session=self.test_session,
             img_url="test.jpg",
             bbox_json=json.dumps([]),
-            created_at=timezone.now()
+            created_at=timezone.now(),
         )
 
     def test_01_get_ocr_success_with_bbs(self):
@@ -165,48 +137,35 @@ class TestPageGetOCRView(APITestCase):
             original_text="Original text 1",
             audio_base64=[],
             translated_text="Translated text 1",
-            coordinates={"x": 10, "y": 20, "width": 100, "height": 50}
+            coordinates={"x": 10, "y": 20, "width": 100, "height": 50},
         )
         BB.objects.create(
             page=self.test_page,
             original_text="Original text 2",
             audio_base64=[],
             translated_text="Translated text 2",
-            coordinates={"x": 30, "y": 80, "width": 120, "height": 60}
+            coordinates={"x": 30, "y": 80, "width": 120, "height": 60},
         )
 
         response = self.client.get(
-            "/page/get_ocr/",
-            {
-                "session_id": str(self.test_session.id),
-                "page_index": 0
-            }
+            "/page/get_ocr/", {"session_id": str(self.test_session.id), "page_index": 0}
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(
-            str(response.data["session_id"]),
-            str(self.test_session.id)
-        )
+        self.assertEqual(str(response.data["session_id"]), str(self.test_session.id))
         self.assertEqual(response.data["page_index"], 0)
         self.assertEqual(len(response.data["ocr_results"]), 2)
         self.assertEqual(
-            response.data["ocr_results"][0]["original_txt"],
-            "Original text 1"
+            response.data["ocr_results"][0]["original_txt"], "Original text 1"
         )
         self.assertEqual(
-            response.data["ocr_results"][0]["translation_txt"],
-            "Translated text 1"
+            response.data["ocr_results"][0]["translation_txt"], "Translated text 1"
         )
 
     def test_02_get_ocr_success_no_bbs(self):
         """Test successful OCR retrieval with no bounding boxes"""
         response = self.client.get(
-            "/page/get_ocr/",
-            {
-                "session_id": str(self.test_session.id),
-                "page_index": 0
-            }
+            "/page/get_ocr/", {"session_id": str(self.test_session.id), "page_index": 0}
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -214,53 +173,35 @@ class TestPageGetOCRView(APITestCase):
 
     def test_03_get_ocr_missing_session_id(self):
         """Test OCR retrieval without session_id"""
-        response = self.client.get(
-            "/page/get_ocr/",
-            {"page_index": 0}
-        )
+        response = self.client.get("/page/get_ocr/", {"page_index": 0})
 
-        self.assertEqual(
-            response.status_code, status.HTTP_400_BAD_REQUEST
-        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_04_get_ocr_missing_page_index(self):
         """Test OCR retrieval without page_index"""
         response = self.client.get(
-            "/page/get_ocr/",
-            {"session_id": str(self.test_session.id)}
+            "/page/get_ocr/", {"session_id": str(self.test_session.id)}
         )
 
-        self.assertEqual(
-            response.status_code, status.HTTP_400_BAD_REQUEST
-        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_05_get_ocr_session_not_found(self):
         """Test OCR retrieval with non-existent session"""
         response = self.client.get(
             "/page/get_ocr/",
-            {
-                "session_id": "00000000-0000-0000-0000-000000000000",
-                "page_index": 0
-            }
+            {"session_id": "00000000-0000-0000-0000-000000000000", "page_index": 0},
         )
 
-        self.assertEqual(
-            response.status_code, status.HTTP_404_NOT_FOUND
-        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_06_get_ocr_page_not_found(self):
         """Test OCR retrieval with invalid page_index"""
         response = self.client.get(
             "/page/get_ocr/",
-            {
-                "session_id": str(self.test_session.id),
-                "page_index": 999
-            }
+            {"session_id": str(self.test_session.id), "page_index": 999},
         )
 
-        self.assertEqual(
-            response.status_code, status.HTTP_404_NOT_FOUND
-        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
 class TestPageGetTTSView(APITestCase):
@@ -274,12 +215,10 @@ class TestPageGetTTSView(APITestCase):
         self.test_user = User.objects.create(
             device_info="test-tts-device",
             language_preference="en",
-            created_at=timezone.now()
+            created_at=timezone.now(),
         )
         self.test_session = Session.objects.create(
-            user=self.test_user,
-            title="Test Session",
-            created_at=timezone.now()
+            user=self.test_user, title="Test Session", created_at=timezone.now()
         )
 
         # Create test page
@@ -287,7 +226,7 @@ class TestPageGetTTSView(APITestCase):
             session=self.test_session,
             img_url="test.jpg",
             bbox_json=json.dumps([]),
-            created_at=timezone.now()
+            created_at=timezone.now(),
         )
 
     def test_01_get_tts_success_with_audio(self):
@@ -298,39 +237,26 @@ class TestPageGetTTSView(APITestCase):
             original_text="Text 1",
             audio_base64=["audio_clip_1", "audio_clip_2"],
             translated_text="Translated 1",
-            coordinates={}
+            coordinates={},
         )
         BB.objects.create(
             page=self.test_page,
             original_text="Text 2",
             audio_base64=["audio_clip_3"],
             translated_text="Translated 2",
-            coordinates={}
+            coordinates={},
         )
 
         response = self.client.get(
-            "/page/get_tts/",
-            {
-                "session_id": str(self.test_session.id),
-                "page_index": 0
-            }
+            "/page/get_tts/", {"session_id": str(self.test_session.id), "page_index": 0}
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(
-            str(response.data["session_id"]),
-            str(self.test_session.id)
-        )
+        self.assertEqual(str(response.data["session_id"]), str(self.test_session.id))
         self.assertEqual(response.data["page_index"], 0)
         self.assertEqual(len(response.data["audio_results"]), 2)
-        self.assertEqual(
-            response.data["audio_results"][0]["bbox_index"],
-            0
-        )
-        self.assertEqual(
-            len(response.data["audio_results"][0]["audio_base64_list"]),
-            2
-        )
+        self.assertEqual(response.data["audio_results"][0]["bbox_index"], 0)
+        self.assertEqual(len(response.data["audio_results"][0]["audio_base64_list"]), 2)
 
     def test_02_get_tts_success_no_audio(self):
         """Test successful TTS retrieval with no audio"""
@@ -340,15 +266,11 @@ class TestPageGetTTSView(APITestCase):
             original_text="Text 1",
             audio_base64=[],
             translated_text="Translated 1",
-            coordinates={}
+            coordinates={},
         )
 
         response = self.client.get(
-            "/page/get_tts/",
-            {
-                "session_id": str(self.test_session.id),
-                "page_index": 0
-            }
+            "/page/get_tts/", {"session_id": str(self.test_session.id), "page_index": 0}
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -363,89 +285,61 @@ class TestPageGetTTSView(APITestCase):
             original_text="Text 1",
             audio_base64=["audio_1"],
             translated_text="Translated 1",
-            coordinates={}
+            coordinates={},
         )
         BB.objects.create(
             page=self.test_page,
             original_text="Text 2",
             audio_base64=[],
             translated_text="Translated 2",
-            coordinates={}
+            coordinates={},
         )
         BB.objects.create(
             page=self.test_page,
             original_text="Text 3",
             audio_base64=["audio_3"],
             translated_text="Translated 3",
-            coordinates={}
+            coordinates={},
         )
 
         response = self.client.get(
-            "/page/get_tts/",
-            {
-                "session_id": str(self.test_session.id),
-                "page_index": 0
-            }
+            "/page/get_tts/", {"session_id": str(self.test_session.id), "page_index": 0}
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Only 2 BBs with audio should be returned
         self.assertEqual(len(response.data["audio_results"]), 2)
-        self.assertEqual(
-            response.data["audio_results"][0]["bbox_index"],
-            0
-        )
-        self.assertEqual(
-            response.data["audio_results"][1]["bbox_index"],
-            2
-        )
+        self.assertEqual(response.data["audio_results"][0]["bbox_index"], 0)
+        self.assertEqual(response.data["audio_results"][1]["bbox_index"], 2)
 
     def test_04_get_tts_missing_session_id(self):
         """Test TTS retrieval without session_id"""
-        response = self.client.get(
-            "/page/get_tts/",
-            {"page_index": 0}
-        )
+        response = self.client.get("/page/get_tts/", {"page_index": 0})
 
-        self.assertEqual(
-            response.status_code, status.HTTP_400_BAD_REQUEST
-        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_05_get_tts_missing_page_index(self):
         """Test TTS retrieval without page_index"""
         response = self.client.get(
-            "/page/get_tts/",
-            {"session_id": str(self.test_session.id)}
+            "/page/get_tts/", {"session_id": str(self.test_session.id)}
         )
 
-        self.assertEqual(
-            response.status_code, status.HTTP_400_BAD_REQUEST
-        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_06_get_tts_session_not_found(self):
         """Test TTS retrieval with non-existent session"""
         response = self.client.get(
             "/page/get_tts/",
-            {
-                "session_id": "00000000-0000-0000-0000-000000000000",
-                "page_index": 0
-            }
+            {"session_id": "00000000-0000-0000-0000-000000000000", "page_index": 0},
         )
 
-        self.assertEqual(
-            response.status_code, status.HTTP_404_NOT_FOUND
-        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_07_get_tts_page_not_found(self):
         """Test TTS retrieval with invalid page_index"""
         response = self.client.get(
             "/page/get_tts/",
-            {
-                "session_id": str(self.test_session.id),
-                "page_index": 999
-            }
+            {"session_id": str(self.test_session.id), "page_index": 999},
         )
 
-        self.assertEqual(
-            response.status_code, status.HTTP_404_NOT_FOUND
-        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

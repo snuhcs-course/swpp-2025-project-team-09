@@ -10,9 +10,7 @@ class Page(models.Model):
     """
 
     id = models.AutoField(primary_key=True)
-    session = models.ForeignKey(
-        Session, on_delete=models.CASCADE, related_name="pages"
-    )
+    session = models.ForeignKey(Session, on_delete=models.CASCADE, related_name="pages")
     img_url = models.TextField(null=True, blank=True)
     audio_url = models.TextField(null=True, blank=True)
     translation_text = models.TextField(null=True, blank=True)
@@ -34,11 +32,9 @@ class Page(models.Model):
         audio_list: base64 또는 경로 리스트
         """
         from apis.models.bb_model import BB
+
         for i, bbox in enumerate(bbox_list):
-            trans = (
-                translated_list[i]
-                if i < len(translated_list) else ""
-            )
+            trans = translated_list[i] if i < len(translated_list) else ""
             audio = audio_list[i] if i < len(audio_list) else ""
             BB.objects.create(
                 page=self,
@@ -54,5 +50,5 @@ class Page(models.Model):
                     "y3": bbox.get("y3"),
                     "x4": bbox.get("x4"),
                     "y4": bbox.get("y4"),
-                }
+                },
             )

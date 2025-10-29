@@ -40,17 +40,15 @@ class ProcessUploadView(APIView):
         page_index = session.getPages().count()
 
         # Save image
-        image_path = self._save_image(
-            image_base64, session_id, page_index
-        )
+        image_path = self._save_image(image_base64, session_id, page_index)
 
         # Run OCR
         ocr_result = OCRModule().process_page(image_path)
         if not ocr_result:
-            return Response({
-                "error_code": 422,
-                "message": "PROCESS__UNABLE_TO_PROCESS_IMAGE"
-            }, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+            return Response(
+                {"error_code": 422, "message": "PROCESS__UNABLE_TO_PROCESS_IMAGE"},
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
 
         # Run translation synchronously (fast, ~2-3s per paragraph)
         tts_module = TTSModule()
@@ -65,24 +63,24 @@ class ProcessUploadView(APIView):
 
         # Start background TTS
         self._start_background_tts(
-            tts_module, ocr_result, translation_data,
-            page, session_id, page_index
+            tts_module, ocr_result, translation_data, page, session_id, page_index
         )
 
         # Update session
         session.totalPages += 1
         session.save()
 
-        return Response({
-            "session_id": session_id,
-            "page_index": page_index,
-            "status": "ready",
-            "submitted_at": timezone.now(),
-        }, status=status.HTTP_200_OK)
+        return Response(
+            {
+                "session_id": session_id,
+                "page_index": page_index,
+                "status": "ready",
+                "submitted_at": timezone.now(),
+            },
+            status=status.HTTP_200_OK,
+        )
 
-    def _save_image(
-        self, image_base64: str, session_id: str, page_index: int
-    ) -> str:
+    def _save_image(self, image_base64: str, session_id: str, page_index: int) -> str:
         """Decode and save uploaded image."""
         image_bytes = base64.b64decode(image_base64)
         image_filename = f"{uuid.uuid4().hex}.jpg"
@@ -96,18 +94,18 @@ class ProcessUploadView(APIView):
         return image_path
 
     def _get_all_translations(
-        self, tts_module: TTSModule, ocr_result: list,
-        session_id: str, page_index: int
+        self, tts_module: TTSModule, ocr_result: list, session_id: str, page_index: int
     ) -> list:
         """
         Get translations and sentiment for all paragraphs (no TTS yet).
         Runs ALL paragraphs in parallel.
         Returns list of translation data per paragraph.
         """
+
         async def get_para_translation(i: int, para: dict):
             page_data = {
                 "fileName": f"{session_id}_{page_index}_{i}.jpg",
-                "text": para.get("text", "")
+                "text": para.get("text", ""),
             }
             return await tts_module.get_translations_only(page_data)
 
@@ -115,38 +113,37 @@ class ProcessUploadView(APIView):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         translation_data = loop.run_until_complete(
-            asyncio.gather(*[
-                get_para_translation(i, para)
-                for i, para in enumerate(ocr_result)
-            ])
+            asyncio.gather(
+                *[get_para_translation(i, para) for i, para in enumerate(ocr_result)]
+            )
         )
         loop.close()
 
         return translation_data
 
     def _create_page_and_bbs(
-        self, session: Session, image_path: str,
-        ocr_result: list, translation_data: list
+        self,
+        session: Session,
+        image_path: str,
+        ocr_result: list,
+        translation_data: list,
     ) -> Page:
         """Create Page and BoundingBox objects with translations."""
         page = Page.objects.create(
             session=session,
             img_url=image_path,
             bbox_json=json.dumps(ocr_result),
-            created_at=timezone.now()
+            created_at=timezone.now(),
         )
 
         for i, para in enumerate(ocr_result):
             # Extract translation text
             ok_status = (
-                i < len(translation_data) and
-                translation_data[i]["status"] == "ok"
+                i < len(translation_data) and translation_data[i]["status"] == "ok"
             )
             if ok_status:
                 sentences = translation_data[i]["sentences"]
-                translated_text = " ".join([
-                    s["translation"] for s in sentences
-                ])
+                translated_text = " ".join([s["translation"] for s in sentences])
             else:
                 translated_text = ""
 
@@ -156,15 +153,19 @@ class ProcessUploadView(APIView):
                 original_text=para.get("text", ""),
                 audio_base64=[],
                 translated_text=translated_text,
-                coordinates=para.get("bbox", {})
+                coordinates=para.get("bbox", {}),
             )
 
         return page
 
     def _start_background_tts(
-        self, tts_module: TTSModule, ocr_result: list,
-        translation_data: list, page: Page,
-        session_id: str, page_index: int
+        self,
+        tts_module: TTSModule,
+        ocr_result: list,
+        translation_data: list,
+        page: Page,
+        session_id: str,
+        page_index: int,
     ):
         """
         Start background thread to run TTS using
@@ -177,8 +178,8 @@ class ProcessUploadView(APIView):
             try:
                 for i, para in enumerate(ocr_result):
                     not_ok = (
-                        i >= len(translation_data) or
-                        translation_data[i]["status"] != "ok"
+                        i >= len(translation_data)
+                        or translation_data[i]["status"] != "ok"
                     )
                     if not_ok:
                         continue
@@ -188,8 +189,7 @@ class ProcessUploadView(APIView):
                     asyncio.set_event_loop(loop)
                     audio_results = loop.run_until_complete(
                         tts_module.run_tts_only(
-                            translation_data[i], session_id,
-                            page_index, i
+                            translation_data[i], session_id, page_index, i
                         )
                     )
                     loop.close()
@@ -201,18 +201,15 @@ class ProcessUploadView(APIView):
                         bb.save()
                         num_clips = len(audio_results)
                         print(
-                            f"[TTS Background] BB {bb.id} ready "
-                            f"({num_clips} clips)"
+                            f"[TTS Background] BB {bb.id} ready " f"({num_clips} clips)"
                         )
 
-                print(
-                    f"[TTS Background] Completed TTS "
-                    f"for page {page.id}"
-                )
+                print(f"[TTS Background] Completed TTS " f"for page {page.id}")
 
             except Exception as e:
                 print(f"[TTS Background] Error: {e}")
                 import traceback
+
                 traceback.print_exc()
 
         thread = threading.Thread(target=run_tts, daemon=True)
@@ -234,14 +231,17 @@ class CheckOCRStatusView(APIView):
             pages = Page.objects.filter(session=session)
             page = pages.order_by("id")[int(page_index)]
 
-            return Response({
-                "session_id": session_id,
-                "page_index": int(page_index),
-                "status": "ready",
-                "progress": 100,
-                "submitted_at": page.created_at,
-                "processed_at": page.created_at
-            }, status=status.HTTP_200_OK)
+            return Response(
+                {
+                    "session_id": session_id,
+                    "page_index": int(page_index),
+                    "status": "ready",
+                    "progress": 100,
+                    "submitted_at": page.created_at,
+                    "processed_at": page.created_at,
+                },
+                status=status.HTTP_200_OK,
+            )
 
         except (Session.DoesNotExist, IndexError):
             return Response(status=status.HTTP_404_NOT_FOUND)
@@ -265,14 +265,17 @@ class CheckTTSStatusView(APIView):
 
             total_bbs = bbs.count()
             if total_bbs == 0:
-                return Response({
-                    "session_id": session_id,
-                    "page_index": int(page_index),
-                    "status": "ready",
-                    "progress": 100,
-                    "submitted_at": page.created_at,
-                    "processed_at": page.created_at
-                }, status=status.HTTP_200_OK)
+                return Response(
+                    {
+                        "session_id": session_id,
+                        "page_index": int(page_index),
+                        "status": "ready",
+                        "progress": 100,
+                        "submitted_at": page.created_at,
+                        "processed_at": page.created_at,
+                    },
+                    status=status.HTTP_200_OK,
+                )
 
             # Count BBs with audio
             completed_bbs = sum(1 for bb in bbs if self._has_audio(bb))
@@ -280,16 +283,19 @@ class CheckTTSStatusView(APIView):
             is_ready = completed_bbs == total_bbs
             status_str = "ready" if is_ready else "processing"
 
-            return Response({
-                "session_id": session_id,
-                "page_index": int(page_index),
-                "status": status_str,
-                "progress": progress,
-                "submitted_at": page.created_at,
-                "processed_at": (
-                    page.created_at if status_str == "ready" else None
-                )
-            }, status=status.HTTP_200_OK)
+            return Response(
+                {
+                    "session_id": session_id,
+                    "page_index": int(page_index),
+                    "status": status_str,
+                    "progress": progress,
+                    "submitted_at": page.created_at,
+                    "processed_at": (
+                        page.created_at if status_str == "ready" else None
+                    ),
+                },
+                status=status.HTTP_200_OK,
+            )
 
         except (Session.DoesNotExist, IndexError):
             return Response(status=status.HTTP_404_NOT_FOUND)
