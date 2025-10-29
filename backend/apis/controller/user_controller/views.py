@@ -7,18 +7,19 @@ from apis.models.session_model import Session
 from apis.models.page_model import Page
 import base64
 
+
 class UserRegisterView(APIView):
     """
     [POST] /user/register
     - 앱 최초 실행 시 단말 정보를 기반으로 사용자 등록
-    
+
         - Request (POST)
 
             {
             "device_info": "string",
             "language_preference": "string"
             }
-        
+
         - Response
 
             Status: 200 OK
@@ -109,7 +110,7 @@ class UserChangeLangView(APIView):
     """
     [PATCH] /user/lang
     - 사용자 언어 설정 변경
-    
+
     Endpoint: /user/lang
 
     - Request (PATCH)
@@ -118,7 +119,7 @@ class UserChangeLangView(APIView):
         "device_info": "string",
         "language_preference": "string"
         }
-    
+
     - Response
 
         Status: 200 OK
@@ -161,7 +162,7 @@ class UserInfoView(APIView):
     """
     [GET] /user/info
     - 사용자의 전체 읽기 기록(책, 이미지, 시작시간) 조회
-    
+
     Endpoint: /user/info
 
     - Request Example:
@@ -178,7 +179,7 @@ class UserInfoView(APIView):
         "started_at": "datetime"
         }
     """
-    
+
     def get(self, request):
         device_info = request.query_params.get("device_info")
         if not device_info:
@@ -201,7 +202,8 @@ class UserInfoView(APIView):
                     image_path = first_page.img_url  # 필드명 맞게 변경
                     try:
                         with open(image_path, "rb") as img_file:
-                            image_base64 = base64.b64encode(img_file.read()).decode("utf-8")
+                            encoded = base64.b64encode(img_file.read())
+                            image_base64 = encoded.decode("utf-8")
                     except FileNotFoundError:
                         image_base64 = None
                 else:

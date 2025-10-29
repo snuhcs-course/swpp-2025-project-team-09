@@ -4,12 +4,12 @@ from rest_framework import status
 from django.utils import timezone
 from apis.models.session_model import Session
 from apis.models.user_model import User
-import uuid
+
 
 class StartSessionView(APIView):
     """
     [POST] /session/start
-    
+
     Endpoint: /session/start
 
         - Request (POST)
@@ -38,9 +38,10 @@ class StartSessionView(APIView):
 
         try:
             user = User.objects.get(device_info=user_id)
+            title = f"Reading Session {timezone.now().strftime('%Y-%m-%d %H:%M')}"
             session = Session.objects.create(
                 user=user,
-                title=f"Reading Session {timezone.now().strftime('%Y-%m-%d %H:%M')}",
+                title=title,
                 created_at=timezone.now(),
                 totalPages=0,
                 isOngoing=True
@@ -56,13 +57,16 @@ class StartSessionView(APIView):
                 "message": "USER__NOT_FOUND"
             }, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class SelectVoiceView(APIView):
     """
     [POST] /session/voice
-    
+
     Endpoint: /session/voice
 
     - Request (POST)
@@ -71,7 +75,7 @@ class SelectVoiceView(APIView):
         "session_id": "string",
         "voice_style": "string"
         }
-    
+
     - Response
 
         Status: 200 OK
@@ -107,7 +111,7 @@ class SelectVoiceView(APIView):
 class EndSessionView(APIView):
     """
     [POST] /session/end
-    
+
     Endpoint: /session/end
 
     - Request (POST)
@@ -115,7 +119,7 @@ class EndSessionView(APIView):
         {
         "session_id": "string",
         }
-    
+
     - Response
 
         Status: 200 OK
@@ -154,7 +158,7 @@ class EndSessionView(APIView):
 class GetSessionInfoView(APIView):
     """
     [GET] /session/info
-    
+
     Endpoint: /session/stats
 
     - Request (GET)
@@ -162,7 +166,7 @@ class GetSessionInfoView(APIView):
         {
         "session_id": "string",
         }
-        
+
     - Response
 
         Status: 200 OK
@@ -206,7 +210,7 @@ class GetSessionInfoView(APIView):
 class GetSessionStatsView(APIView):
     """
     [GET] /session/stats
-    
+
     Endpoint: /session/info
 
     - Request (GET)
@@ -214,7 +218,7 @@ class GetSessionStatsView(APIView):
         {
         "session_id": "string",
         }
-    
+
     - Response
 
         Status: 200 OK
@@ -257,7 +261,7 @@ class GetSessionStatsView(APIView):
 class SessionReviewView(APIView):
     """
     [GET] /session/review
-    
+
     Endpoint: /session/review
 
     - Request (GET)
@@ -265,7 +269,7 @@ class SessionReviewView(APIView):
         {
         "session_id": "string",
         }
-        
+
     - Response
 
         Status: 200 OK
