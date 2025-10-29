@@ -1,0 +1,56 @@
+name: Django Backend Test Automation (CI)
+
+on:
+  push:
+    # 'deployment' 브랜치에 코드가 푸시될 때 트리거
+    branches:
+      - '**' 
+    # backend 폴더의 내용이 변경되었을 때만 실행 (효율성)
+    paths:
+      - 'backend/**' 
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up Python Environment
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10' # Conda 환경과 동일한 Python 버전을 권장합니다.
+
+    - name: Cache Python Dependencies
+      uses: actions/cache@v4
+      with:
+        path: ${{ github.workspace }}/.venv-ci
+        key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install Dependencies
+      run: |
+        # CI 전용 가상 환경 생성 (캐시가 없는 경우)
+        python -m venv ${{ github.workspace }}/.venv-ci
+        source ${{ github.workspace }}/.venv-ci/bin/activate
+        
+        # requirements.txt 및 pytest-django 설치
+        pip install -r backend/requirements.txt
+        pip install pytest pytest-django
+
+    - name: Run Pytest and Discover All Tests
+      # 테스트를 실행하기 위해 backend 폴더로 이동합니다.
+      working-directory: ./backend
+      env:
+        # 🚨 중요: Django settings 모듈을 지정하여 ImproperlyConfigured 오류 방지
+        DJANGO_SETTINGS_MODULE: app.settings 
+        # PYTHONPATH 설정: backend 폴더를 모듈 검색 경로에 추가하여 'apis' 모듈 import 오류 방지
+        PYTHONPATH: ${{ github.workspace }}/backend
+      run: |
+        source ${{ github.workspace }}/.venv-ci/bin/activate
+        
+        # 🚨 모든 테스트 실행 (user_controller_test.py 포함)
+        # 추후 테스트 파일이 늘어나도 이 명령 하나로 모두 커버됩니다.
+        pytest tests/
