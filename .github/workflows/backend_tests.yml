@@ -44,11 +44,17 @@ jobs:
       # 테스트를 실행하기 위해 backend 폴더로 이동합니다.
       working-directory: ./backend
       env:
-        # 🚨 중요: Django settings 모듈을 지정하여 ImproperlyConfigured 오류 방지
+        # 🚨 Django settings 모듈을 지정
         DJANGO_SETTINGS_MODULE: app.settings 
-        # PYTHONPATH 설정: backend 폴더를 모듈 검색 경로에 추가하여 'apis' 모듈 import 오류 방지
+        # 🚨 PYTHONPATH 설정 강화: 리포지토리 루트의 backend 폴더를 PYTHONPATH에 추가
+        # 이제 'apis' 모듈을 최상위에서 찾을 수 있게 됩니다.
         PYTHONPATH: ${{ github.workspace }}/backend
       run: |
+        # 🚨🚨🚨 PYTHONPATH와 DJANGO_SETTINGS_MODULE을 셸에서 직접 export 🚨🚨🚨
+        # env: 블록이 아닌 셸에서 강제 설정하여 오류를 방지합니다.
+        export DJANGO_SETTINGS_MODULE=app.settings
+        export PYTHONPATH=${{ github.workspace }}/backend
+        
         source ${{ github.workspace }}/.venv-ci/bin/activate
         
         # 🚨 모든 테스트 실행 (user_controller_test.py 포함)
