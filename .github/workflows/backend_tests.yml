@@ -44,18 +44,19 @@ jobs:
       # 테스트를 실행하기 위해 backend 폴더로 이동합니다.
       working-directory: ./backend
       env:
-        # 🚨 Django settings 모듈을 지정
+        # Django settings 모듈을 지정
         DJANGO_SETTINGS_MODULE: app.settings 
-        # 🚨 PYTHONPATH 설정 강화: 리포지토리 루트의 backend 폴더를 PYTHONPATH에 추가
-        # 이제 'apis' 모듈을 최상위에서 찾을 수 있게 됩니다.
+        # PYTHONPATH 설정 강화: 리포지토리 루트의 backend 폴더를 PYTHONPATH에 추가
         PYTHONPATH: ${{ github.workspace }}/backend
       run: |
-        # 🚨🚨🚨 PYTHONPATH와 DJANGO_SETTINGS_MODULE을 셸에서 직접 export 🚨🚨🚨
-        # env: 블록이 아닌 셸에서 강제 설정하여 오류를 방지합니다.
+        # 1. DJANGO_SETTINGS_MODULE을 먼저 설정 (env: 블록의 변수를 셸로 내보냄)
         export DJANGO_SETTINGS_MODULE=app.settings
-        export PYTHONPATH=${{ github.workspace }}/backend
         
+        # 2. venv 활성화 (이때 PYTHONPATH가 초기화될 수 있음)
         source ${{ github.workspace }}/.venv-ci/bin/activate
+
+        # 🚨🚨🚨 3. PYTHONPATH를 source 명령 이후에 재설정하여 강제 적용 (해결책) 🚨🚨🚨
+        export PYTHONPATH=${{ github.workspace }}/backend
         
         # 🚨 모든 테스트 실행 (user_controller_test.py 포함)
         # 추후 테스트 파일이 늘어나도 이 명령 하나로 모두 커버됩니다.
