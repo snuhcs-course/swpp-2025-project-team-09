@@ -1,6 +1,5 @@
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
-from django.urls import reverse
 from apis.models.user_model import User
 from apis.models.session_model import Session
 from django.utils import timezone
@@ -97,7 +96,10 @@ class TestSelectVoiceView(APITestCase):
         response = self.client.post("/session/voice", data, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(str(response.data["session_id"]), str(self.test_session.id))
+        self.assertEqual(
+            str(response.data["session_id"]),
+            str(self.test_session.id)
+        )
         self.assertEqual(response.data["voice_style"], "male")
 
         # Verify voice preference was updated in database
@@ -169,7 +171,10 @@ class TestEndSessionView(APITestCase):
         response = self.client.post("/session/end", data, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(str(response.data["session_id"]), str(self.test_session.id))
+        self.assertEqual(
+            str(response.data["session_id"]),
+            str(self.test_session.id)
+        )
         self.assertIn("ended_at", response.data)
         self.assertEqual(response.data["total_pages"], 10)
 
@@ -219,11 +224,19 @@ class TestGetSessionInfoView(APITestCase):
 
     def test_01_get_session_info_success(self):
         """Test successful session info retrieval"""
-        response = self.client.get("/session/info", {"session_id": str(self.test_session.id)})
+        response = self.client.get(
+            "/session/info",
+            {"session_id": str(self.test_session.id)}
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(str(response.data["session_id"]), str(self.test_session.id))
-        self.assertEqual(str(response.data["user_id"]), str(self.test_user.uid))
+        self.assertEqual(
+            str(response.data["session_id"]),
+            str(self.test_session.id)
+        )
+        self.assertEqual(
+            str(response.data["user_id"]), str(self.test_user.uid)
+        )
         self.assertEqual(response.data["voice_style"], "male")
         self.assertTrue(response.data["isOngoing"])
         self.assertEqual(response.data["total_pages"], 5)
@@ -235,7 +248,10 @@ class TestGetSessionInfoView(APITestCase):
         self.test_session.ended_at = timezone.now()
         self.test_session.save()
 
-        response = self.client.get("/session/info", {"session_id": str(self.test_session.id)})
+        response = self.client.get(
+            "/session/info",
+            {"session_id": str(self.test_session.id)}
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertFalse(response.data["isOngoing"])
@@ -249,7 +265,10 @@ class TestGetSessionInfoView(APITestCase):
 
     def test_04_get_session_info_not_found(self):
         """Test getting info for non-existent session"""
-        response = self.client.get("/session/info", {"session_id": "00000000-0000-0000-0000-000000000000"})
+        response = self.client.get(
+            "/session/info",
+            {"session_id": "00000000-0000-0000-0000-000000000000"}
+        )
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data["error_code"], 404)
@@ -278,11 +297,19 @@ class TestGetSessionStatsView(APITestCase):
 
     def test_01_get_session_stats_ongoing(self):
         """Test getting stats for ongoing session"""
-        response = self.client.get("/session/stats", {"session_id": str(self.test_session.id)})
+        response = self.client.get(
+            "/session/stats",
+            {"session_id": str(self.test_session.id)}
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(str(response.data["session_id"]), str(self.test_session.id))
-        self.assertEqual(str(response.data["user_id"]), str(self.test_user.uid))
+        self.assertEqual(
+            str(response.data["session_id"]),
+            str(self.test_session.id)
+        )
+        self.assertEqual(
+            str(response.data["user_id"]), str(self.test_user.uid)
+        )
         self.assertEqual(response.data["total_pages"], 8)
         self.assertIsNone(response.data["ended_at"])
         self.assertIsNone(response.data["total_time_spent"])
@@ -293,12 +320,16 @@ class TestGetSessionStatsView(APITestCase):
         self.test_session.ended_at = timezone.now()
         self.test_session.save()
 
-        response = self.client.get("/session/stats", {"session_id": str(self.test_session.id)})
+        response = self.client.get(
+            "/session/stats",
+            {"session_id": str(self.test_session.id)}
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIsNotNone(response.data["ended_at"])
         self.assertIsNotNone(response.data["total_time_spent"])
-        self.assertEqual(response.data["total_words_read"], 800)  # 8 pages * 100
+        # 8 pages * 100 words per page
+        self.assertEqual(response.data["total_words_read"], 800)
 
     def test_03_get_session_stats_missing_session_id(self):
         """Test getting stats without session_id"""
@@ -308,7 +339,10 @@ class TestGetSessionStatsView(APITestCase):
 
     def test_04_get_session_stats_not_found(self):
         """Test getting stats for non-existent session"""
-        response = self.client.get("/session/stats", {"session_id": "00000000-0000-0000-0000-000000000000"})
+        response = self.client.get(
+            "/session/stats",
+            {"session_id": "00000000-0000-0000-0000-000000000000"}
+        )
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -336,11 +370,19 @@ class TestSessionReviewView(APITestCase):
 
     def test_01_get_session_review_success(self):
         """Test successful session review retrieval"""
-        response = self.client.get("/session/review", {"session_id": str(self.test_session.id)})
+        response = self.client.get(
+            "/session/review",
+            {"session_id": str(self.test_session.id)}
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(str(response.data["session_id"]), str(self.test_session.id))
-        self.assertEqual(str(response.data["user_id"]), str(self.test_user.uid))
+        self.assertEqual(
+            str(response.data["session_id"]),
+            str(self.test_session.id)
+        )
+        self.assertEqual(
+            str(response.data["user_id"]), str(self.test_user.uid)
+        )
         self.assertIn("started_at", response.data)
         self.assertIn("ended_at", response.data)
         self.assertEqual(response.data["total_pages"], 12)
@@ -353,6 +395,9 @@ class TestSessionReviewView(APITestCase):
 
     def test_03_get_session_review_not_found(self):
         """Test getting review for non-existent session"""
-        response = self.client.get("/session/review", {"session_id": "00000000-0000-0000-0000-000000000000"})
+        response = self.client.get(
+            "/session/review",
+            {"session_id": "00000000-0000-0000-0000-000000000000"}
+        )
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

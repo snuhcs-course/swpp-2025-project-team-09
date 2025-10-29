@@ -186,4 +186,3 @@ class OCRModule:
         paragraphs = self._parse_infer_text(result)
 
         return paragraphs
-
