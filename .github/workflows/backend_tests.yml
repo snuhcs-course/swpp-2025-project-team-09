@@ -72,9 +72,9 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      - name: Install Flake8
+      - name: Install Black
         # Flake8을 설치하여 코드를 검사합니다.
-        run: pip install flake8
-      - name: Run Flake8 Lint Check
+        run: pip install black
+      - name: Run Black Lint Check
         working-directory: ./backend
-        run: flake8 . # backend 폴더 전체에 대해 린트 검사 실행
+        run: black --check . # backend 폴더 전체에 대해 린트 검사 실행
