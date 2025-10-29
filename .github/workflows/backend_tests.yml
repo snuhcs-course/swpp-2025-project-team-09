@@ -20,7 +20,7 @@ jobs:
     - name: Set up Python Environment
       uses: actions/setup-python@v4
       with:
-        python-version: '3.10' # Conda 환경과 동일한 Python 버전을 권장합니다.
+        python-version: '3.11' # Conda 환경과 동일한 Python 버전을 권장합니다.
 
     - name: Cache Python Dependencies
       uses: actions/cache@v4
