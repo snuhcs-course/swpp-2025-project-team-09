@@ -9,7 +9,10 @@ Usage:
     python run_tests.py --all    # Run all tests
 """
 
-import sys, subprocess, re
+import sys
+import subprocess
+import re
+
 
 # --- Colors ---
 class C:
@@ -20,6 +23,7 @@ class C:
     C = '\033[96m'
     EN = '\033[0m'
     BOLD = '\033[1m'
+
 
 # --- Test Paths ---
 USER = 'tests.unit.controller.test_user_controller'
@@ -33,20 +37,21 @@ TESTS = {
     '2': ('Unit tests', 'tests.unit'),
     '3': ('User controller', USER),
     '4': ('Session controller', SESSION),
-    '5':('Process controller', PROCESS),
-    '6':('Page controller', PAGE),
-    '7':('User model', USER_MODEL)
+    '5': ('Process controller', PROCESS),
+    '6': ('Page controller', PAGE),
+    '7': ('User model', USER_MODEL)
 }
 
 CLI_ARGS = {
-    '--all':'tests','--unit':'tests.unit','--user':USER,
-    '--session':SESSION,'--process':PROCESS,'--page':PAGE,
-    '--user-model':USER_MODEL
+    '--all': 'tests', '--unit': 'tests.unit', '--user': USER,
+    '--session': SESSION, '--process': PROCESS, '--page': PAGE,
+    '--user-model': USER_MODEL
 }
+
 
 # --- Run a Django test command and parse results ---
 def run_test(path):
-    cmd = ['python','manage.py','test',path,'--verbosity=2']
+    cmd = ['python', 'manage.py', 'test', path, '--verbosity=2']
     result = subprocess.run(cmd, capture_output=True, text=True)
     output = result.stdout + result.stderr
     lines = output.splitlines()
@@ -78,11 +83,11 @@ def run_test(path):
             desc = parts[0].strip() or current
             rest = parts[1].strip()
             if '[Kss]:' in rest:
-                kss = rest.split('[Kss]:',1)[1].strip()
-            if rest in ('ok','FAIL','ERROR'):
+                kss = rest.split('[Kss]:', 1)[1].strip()
+            if rest in ('ok', 'FAIL', 'ERROR'):
                 results.append((current,rest,kss,desc))
-                mark = {'ok':'✓','FAIL':'✗','ERROR':'⚠'}[rest]
-                color = {'ok':C.G,'FAIL':C.R,'ERROR':C.R}[rest]
+                mark = {'ok': '✓', 'FAIL': '✗', 'ERROR': '⚠'}[rest]
+                color = {'ok': C.G, 'FAIL': C.R, 'ERROR': C.R}[rest]
                 print(f"  {color}{mark}{C.EN} {desc}")
                 expected = kss if kss else '200 OK'
                 actual   = kss if kss else '200 OK'
@@ -93,15 +98,15 @@ def run_test(path):
 
         # separate KSS line
         if current and '[Kss]:' in line:
-            kss = line.split('[Kss]:',1)[1].strip()
+            kss = line.split('[Kss]:', 1)[1].strip()
             continue
 
         # separate result line
-        if current and line in ('ok','FAIL','ERROR'):
+        if current and line in ('ok', 'FAIL', 'ERROR'):
             status = line
             results.append((current,status,kss,desc))
-            mark = {'ok':'✓','FAIL':'✗','ERROR':'⚠'}[status]
-            color = {'ok':C.G,'FAIL':C.R,'ERROR':C.R}[status]
+            mark = {'ok': '✓', 'FAIL': '✗', 'ERROR': '⚠'}[status]
+            color = {'ok': C.G, 'FAIL': C.R, 'ERROR': C.R}[status]
             desc_text = desc if desc else current
             print(f"  {color}{mark}{C.EN} {desc_text}")
             expected = kss if kss else '200 OK'
@@ -116,10 +121,10 @@ def run_test(path):
             for char in line:
                 tname = f'test_{auto_count:02d}'
                 auto_count += 1
-                status = {'F':'FAIL','E':'ERROR','.':'ok'}[char]
+                status = {'F': 'FAIL', 'E': 'ERROR', '.': 'ok'}[char]
                 results.append((tname,status,None,tname))
-                mark = {'ok':'✓','FAIL':'✗','ERROR':'⚠'}[status]
-                color = {'ok':C.G,'FAIL':C.R,'ERROR':C.R}[status]
+                mark = {'ok': '✓', 'FAIL': '✗', 'ERROR': '⚠'}[status]
+                color = {'ok': C.G, 'FAIL': C.R, 'ERROR': C.R}[status]
                 print(f"  {color}{mark}{C.EN} {tname}")
                 print(f"     Expected: {C.G}200 OK{C.EN}")
                 print(f"     Actual:   {C.G}200 OK{C.EN}\n")
