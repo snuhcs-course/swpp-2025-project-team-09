@@ -59,17 +59,21 @@ def run_command(command, verbose=True):
 
     for line in lines:
         # Skip initial setup lines
-        if any(x in line for x in ['Creating test database', 'Operations to perform',
-                                    'Synchronize unmigrated', 'Apply all migrations',
-                                    'Creating tables', 'Running deferred SQL',
-                                    'Running migrations', 'Applying']):
+        skip_patterns = [
+            'Creating test database', 'Operations to perform',
+            'Synchronize unmigrated', 'Apply all migrations',
+            'Creating tables', 'Running deferred SQL',
+            'Running migrations', 'Applying'
+        ]
+        if any(x in line for x in skip_patterns):
             continue
 
         # Found test count
         if line.startswith('Found '):
             found_match = re.search(r'Found (\d+) test', line)
             if found_match:
-                print(f"{Colors.CYAN}Found {found_match.group(1)} test(s)...{Colors.ENDC}\n")
+                count = found_match.group(1)
+                print(f"{Colors.CYAN}Found {count} test(s)...{Colors.ENDC}\n")
             continue
 
         # System check
@@ -104,8 +108,12 @@ def run_command(command, verbose=True):
                 test_results.append((current_test, 'PASS'))
                 print(f"  {Colors.GREEN}✓{Colors.ENDC} {description}")
                 if last_kss_response:
-                    print(f"     Expected: {Colors.GREEN}{last_kss_response}{Colors.ENDC}")
-                    print(f"     Actual:   {Colors.GREEN}{last_kss_response}{Colors.ENDC}")
+                    exp_msg = f"     Expected: {Colors.GREEN}"
+                    exp_msg += f"{last_kss_response}{Colors.ENDC}"
+                    print(exp_msg)
+                    act_msg = f"     Actual:   {Colors.GREEN}"
+                    act_msg += f"{last_kss_response}{Colors.ENDC}"
+                    print(act_msg)
                     last_kss_response = None
                 else:
                     print(f"     Expected: {Colors.GREEN}200 OK{Colors.ENDC}")
@@ -118,7 +126,9 @@ def run_command(command, verbose=True):
                 test_results.append((current_test, 'FAIL'))
                 print(f"  {Colors.RED}✗{Colors.ENDC} {description}")
                 if last_kss_response:
-                    print(f"     Actual: {Colors.RED}{last_kss_response}{Colors.ENDC}")
+                    act_msg = f"     Actual: {Colors.RED}"
+                    act_msg += f"{last_kss_response}{Colors.ENDC}"
+                    print(act_msg)
                     last_kss_response = None
                 print()
                 current_test = None
@@ -128,7 +138,9 @@ def run_command(command, verbose=True):
                 test_results.append((current_test, 'ERROR'))
                 print(f"  {Colors.RED}⚠{Colors.ENDC} {description}")
                 if last_kss_response:
-                    print(f"     Error: {Colors.RED}{last_kss_response}{Colors.ENDC}")
+                    err_msg = f"     Error: {Colors.RED}"
+                    err_msg += f"{last_kss_response}{Colors.ENDC}"
+                    print(err_msg)
                     last_kss_response = None
                 print()
                 current_test = None
@@ -140,7 +152,9 @@ def run_command(command, verbose=True):
             continue
 
         # Handle [Kss] log on separate line
-        if printing_tests and '[Kss]:' in line and current_test and not ' ... ' in line:
+        has_kss = '[Kss]:' in line
+        no_dots = ' ... ' not in line
+        if printing_tests and has_kss and current_test and no_dots:
             kss_match = re.search(r'\[Kss\]: (.+)', line)
             if kss_match:
                 last_kss_response = kss_match.group(1).strip()
@@ -151,11 +165,16 @@ def run_command(command, verbose=True):
             line_stripped = line.strip()
             if line_stripped == 'ok':
                 test_results.append((current_test, 'PASS'))
-                print(f"  {Colors.GREEN}✓{Colors.ENDC} {test_description if test_description else current_test}")
+                desc = test_description if test_description else current_test
+                print(f"  {Colors.GREEN}✓{Colors.ENDC} {desc}")
                 if last_kss_response:
                     # Extract expected status from last_kss_response
-                    print(f"     Expected: {Colors.GREEN}{last_kss_response}{Colors.ENDC}")
-                    print(f"     Actual:   {Colors.GREEN}{last_kss_response}{Colors.ENDC}")
+                    exp_msg = f"     Expected: {Colors.GREEN}"
+                    exp_msg += f"{last_kss_response}{Colors.ENDC}"
+                    print(exp_msg)
+                    act_msg = f"     Actual:   {Colors.GREEN}"
+                    act_msg += f"{last_kss_response}{Colors.ENDC}"
+                    print(act_msg)
                     last_kss_response = None
                 else:
                     print(f"     Expected: {Colors.GREEN}200 OK{Colors.ENDC}")
@@ -166,9 +185,12 @@ def run_command(command, verbose=True):
                 continue
             elif line_stripped == 'FAIL':
                 test_results.append((current_test, 'FAIL'))
-                print(f"  {Colors.RED}✗{Colors.ENDC} {test_description if test_description else current_test}")
+                desc = test_description if test_description else current_test
+                print(f"  {Colors.RED}✗{Colors.ENDC} {desc}")
                 if last_kss_response:
-                    print(f"     Actual: {Colors.RED}{last_kss_response}{Colors.ENDC}")
+                    act_msg = f"     Actual: {Colors.RED}"
+                    act_msg += f"{last_kss_response}{Colors.ENDC}"
+                    print(act_msg)
                     last_kss_response = None
                 print()
                 current_test = None
@@ -176,9 +198,12 @@ def run_command(command, verbose=True):
                 continue
             elif line_stripped == 'ERROR':
                 test_results.append((current_test, 'ERROR'))
-                print(f"  {Colors.RED}⚠{Colors.ENDC} {test_description if test_description else current_test}")
+                desc = test_description if test_description else current_test
+                print(f"  {Colors.RED}⚠{Colors.ENDC} {desc}")
                 if last_kss_response:
-                    print(f"     Error: {Colors.RED}{last_kss_response}{Colors.ENDC}")
+                    err_msg = f"     Error: {Colors.RED}"
+                    err_msg += f"{last_kss_response}{Colors.ENDC}"
+                    print(err_msg)
                     last_kss_response = None
                 print()
                 current_test = None
@@ -189,14 +214,26 @@ def run_command(command, verbose=True):
         if re.match(r'^[\.FE]+$', line.strip()):
             for char in line.strip():
                 if char == '.':
-                    test_results.append((f'test_{len(test_results)+1}', 'PASS'))
-                    print(f"{Colors.GREEN}●{Colors.ENDC}", end='', flush=True)
+                    test_name = f'test_{len(test_results)+1}'
+                    test_results.append((test_name, 'PASS'))
+                    print(
+                        f"{Colors.GREEN}●{Colors.ENDC}",
+                        end='', flush=True
+                    )
                 elif char == 'F':
-                    test_results.append((f'test_{len(test_results)+1}', 'FAIL'))
-                    print(f"{Colors.RED}●{Colors.ENDC}", end='', flush=True)
+                    test_name = f'test_{len(test_results)+1}'
+                    test_results.append((test_name, 'FAIL'))
+                    print(
+                        f"{Colors.RED}●{Colors.ENDC}",
+                        end='', flush=True
+                    )
                 elif char == 'E':
-                    test_results.append((f'test_{len(test_results)+1}', 'ERROR'))
-                    print(f"{Colors.YELLOW}●{Colors.ENDC}", end='', flush=True)
+                    test_name = f'test_{len(test_results)+1}'
+                    test_results.append((test_name, 'ERROR'))
+                    print(
+                        f"{Colors.YELLOW}●{Colors.ENDC}",
+                        end='', flush=True
+                    )
             print()
             continue
 
@@ -243,7 +280,10 @@ def run_command(command, verbose=True):
         # Calculate success rate
         success_rate = (passed / total) * 100 if total > 0 else 0
         if success_rate == 100:
-            print(f"\n  {Colors.GREEN}{Colors.BOLD}🎉 All tests passed! (100%){Colors.ENDC}")
+            msg = f"\n  {Colors.GREEN}{Colors.BOLD}"
+            msg += "🎉 All tests passed! (100%)"
+            msg += f"{Colors.ENDC}"
+            print(msg)
         else:
             color = Colors.YELLOW if success_rate >= 50 else Colors.RED
             print(f"\n  {color}Success Rate: {success_rate:.1f}%{Colors.ENDC}")
@@ -277,19 +317,55 @@ TEST_MENU = {
     ],
     'User Controller Tests': [
         ('3', 'Run all user controller tests', USER_CONTROLLER),
-        ('4', 'Run user register tests', f'{USER_CONTROLLER}.test_views.TestUserRegisterView'),
-        ('5', 'Run user login tests', f'{USER_CONTROLLER}.test_views.TestUserLoginView'),
-        ('6', 'Run user change language tests', f'{USER_CONTROLLER}.test_views.TestUserChangeLangView'),
-        ('7', 'Run user info tests', f'{USER_CONTROLLER}.test_views.TestUserInfoView'),
+        (
+            '4', 'Run user register tests',
+            f'{USER_CONTROLLER}.test_views.TestUserRegisterView'
+        ),
+        (
+            '5', 'Run user login tests',
+            f'{USER_CONTROLLER}.test_views.TestUserLoginView'
+        ),
+        (
+            '6', 'Run user change language tests',
+            f'{USER_CONTROLLER}.test_views.TestUserChangeLangView'
+        ),
+        (
+            '7', 'Run user info tests',
+            f'{USER_CONTROLLER}.test_views.TestUserInfoView'
+        ),
     ],
     'Session Controller Tests': [
         ('8', 'Run all session controller tests', SESSION_CONTROLLER),
-        ('9', 'test_start_session_success', f'{SESSION_CONTROLLER}.test_views.TestSessionController.test_01_start_session_success'),
-        ('10', 'test_select_voice_success', f'{SESSION_CONTROLLER}.test_views.TestSessionController.test_04_select_voice_success'),
-        ('11', 'test_end_session_success', f'{SESSION_CONTROLLER}.test_views.TestSessionController.test_07_end_session_success'),
-        ('12', 'test_get_session_info_success', f'{SESSION_CONTROLLER}.test_views.TestSessionController.test_10_get_session_info_success'),
-        ('13', 'test_get_session_stats_success', f'{SESSION_CONTROLLER}.test_views.TestSessionController.test_13_get_session_stats_success'),
-        ('14', 'test_get_session_review_success', f'{SESSION_CONTROLLER}.test_views.TestSessionController.test_16_get_session_review_success'),
+        (
+            '9', 'test_start_session_success',
+            f'{SESSION_CONTROLLER}.test_views.TestSessionController.'
+            'test_01_start_session_success'
+        ),
+        (
+            '10', 'test_select_voice_success',
+            f'{SESSION_CONTROLLER}.test_views.TestSessionController.'
+            'test_04_select_voice_success'
+        ),
+        (
+            '11', 'test_end_session_success',
+            f'{SESSION_CONTROLLER}.test_views.TestSessionController.'
+            'test_07_end_session_success'
+        ),
+        (
+            '12', 'test_get_session_info_success',
+            f'{SESSION_CONTROLLER}.test_views.TestSessionController.'
+            'test_10_get_session_info_success'
+        ),
+        (
+            '13', 'test_get_session_stats_success',
+            f'{SESSION_CONTROLLER}.test_views.TestSessionController.'
+            'test_13_get_session_stats_success'
+        ),
+        (
+            '14', 'test_get_session_review_success',
+            f'{SESSION_CONTROLLER}.test_views.TestSessionController.'
+            'test_16_get_session_review_success'
+        ),
     ],
 }
 
