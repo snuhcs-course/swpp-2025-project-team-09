@@ -4,10 +4,9 @@
 BACKEND_DIR="backend" 
 BRANCH_NAME="deployment" 
 DJANGO_PORT=8000 
-# Python 실행 파일 경로 (backend/venv 내부)
-PYTHON_EXECUTABLE="$BACKEND_DIR/venv/bin/python" 
-# PIP 실행 파일 경로
-PIP_EXECUTABLE="$BACKEND_DIR/venv/bin/pip" 
+# Python, pip 실행 파일 경로 (backend/venv 내부)
+PYTHON_EXECUTABLE="./$BACKEND_DIR/venv/bin/python" 
+PIP_EXECUTABLE="./$BACKEND_DIR/venv/bin/pip"
 
 echo "--- 배포 시작: $(date) ---"
 
