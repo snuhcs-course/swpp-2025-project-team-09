@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from apis.models.session_model import Session
-import json
+
 
 class Page(models.Model):
     """
@@ -10,7 +10,9 @@ class Page(models.Model):
     """
 
     id = models.AutoField(primary_key=True)
-    session = models.ForeignKey(Session, on_delete=models.CASCADE, related_name="pages")
+    session = models.ForeignKey(
+        Session, on_delete=models.CASCADE, related_name="pages"
+    )
     img_url = models.TextField(null=True, blank=True)
     audio_url = models.TextField(null=True, blank=True)
     translation_text = models.TextField(null=True, blank=True)
@@ -33,11 +35,16 @@ class Page(models.Model):
         """
         from apis.models.bb_model import BB
         for i, bbox in enumerate(bbox_list):
+            trans = (
+                translated_list[i]
+                if i < len(translated_list) else ""
+            )
+            audio = audio_list[i] if i < len(audio_list) else ""
             BB.objects.create(
                 page=self,
                 original_text=bbox.get("text", ""),
-                translated_text=translated_list[i] if i < len(translated_list) else "",
-                audio_base64=audio_list[i] if i < len(audio_list) else "",
+                translated_text=trans,
+                audio_base64=audio,
                 coordinates={
                     "x1": bbox.get("x1"),
                     "y1": bbox.get("y1"),

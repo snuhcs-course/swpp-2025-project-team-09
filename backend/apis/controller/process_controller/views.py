@@ -135,7 +135,7 @@ class ProcessUploadView(APIView):
             bbox_json=json.dumps(ocr_result),
             created_at=timezone.now()
         )
-        
+
         for i, para in enumerate(ocr_result):
             # Extract translation text
             ok_status = (

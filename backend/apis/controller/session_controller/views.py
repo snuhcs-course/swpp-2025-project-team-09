@@ -38,7 +38,8 @@ class StartSessionView(APIView):
 
         try:
             user = User.objects.get(device_info=user_id)
-            title = f"Reading Session {timezone.now().strftime('%Y-%m-%d %H:%M')}"
+            now_str = timezone.now().strftime('%Y-%m-%d %H:%M')
+            title = f"Reading Session {now_str}"
             session = Session.objects.create(
                 user=user,
                 title=title,

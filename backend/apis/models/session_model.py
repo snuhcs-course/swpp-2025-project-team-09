@@ -3,14 +3,19 @@ from django.utils import timezone
 from apis.models.user_model import User
 import uuid
 
+
 class Session(models.Model):
     """
     Session entity
     - 사용자의 읽기 세션(책 단위)
     """
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sessions")
+    id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False
+    )
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="sessions"
+    )
     title = models.CharField(max_length=255)
     cover_img_url = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
