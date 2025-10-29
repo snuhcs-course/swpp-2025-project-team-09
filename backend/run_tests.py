@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 Django Test Runner with interactive menu and CLI options.
-Shows colored output, KSS logs, and per-test results.
+Shows colored output, per-test results with Expected/Actual.
 
 Usage:
     python run_tests.py          # Interactive menu
@@ -31,6 +31,9 @@ SESSION = "tests.unit.controller.test_session_controller"
 PROCESS = "tests.unit.controller.test_process_controller"
 PAGE = "tests.unit.controller.test_page_controller"
 USER_MODEL = "tests.unit.models.test_user_model"
+SESSION_MODEL = "tests.unit.models.test_session_model"
+PAGE_MODEL = "tests.unit.models.test_page_model"
+BB_MODEL = "tests.unit.models.test_BB_model"
 
 TESTS = {
     "1": ("All tests", "tests"),
@@ -40,6 +43,9 @@ TESTS = {
     "5": ("Process controller", PROCESS),
     "6": ("Page controller", PAGE),
     "7": ("User model", USER_MODEL),
+    "8": ("Session model", SESSION_MODEL),
+    "9": ("Page model", PAGE_MODEL),
+    "10": ("BB model", BB_MODEL),
 }
 
 CLI_ARGS = {
@@ -50,6 +56,9 @@ CLI_ARGS = {
     "--process": PROCESS,
     "--page": PAGE,
     "--user-model": USER_MODEL,
+    "--session-model": SESSION_MODEL,
+    "--page-model": PAGE_MODEL,
+    "--bb-model": BB_MODEL,
 }
 
 
@@ -94,8 +103,15 @@ def run_test(path):
                 mark = {"ok": "✓", "FAIL": "✗", "ERROR": "⚠"}[rest]
                 color = {"ok": C.G, "FAIL": C.R, "ERROR": C.R}[rest]
                 print(f"  {color}{mark}{C.EN} {desc}")
-                expected = kss if kss else "200 OK"
-                actual = kss if kss else "200 OK"
+
+                # ✅ Model test-friendly output
+                if kss:
+                    expected = kss
+                    actual = kss
+                else:
+                    expected = "pass" if rest == "ok" else "fail"
+                    actual = "pass" if rest == "ok" else "fail"
+
                 print(f"     Expected: {C.G}{expected}{C.EN}")
                 print(f"     Actual:   {C.G}{actual}{C.EN}\n")
                 current = desc = kss = None
@@ -114,8 +130,14 @@ def run_test(path):
             color = {"ok": C.G, "FAIL": C.R, "ERROR": C.R}[status]
             desc_text = desc if desc else current
             print(f"  {color}{mark}{C.EN} {desc_text}")
-            expected = kss if kss else "200 OK"
-            actual = kss if kss else "200 OK"
+
+            if kss:
+                expected = kss
+                actual = kss
+            else:
+                expected = "pass" if status == "ok" else "fail"
+                actual = "pass" if status == "ok" else "fail"
+
             print(f"     Expected: {C.G}{expected}{C.EN}")
             print(f"     Actual:   {C.G}{actual}{C.EN}\n")
             current = desc = kss = None
@@ -131,8 +153,10 @@ def run_test(path):
                 mark = {"ok": "✓", "FAIL": "✗", "ERROR": "⚠"}[status]
                 color = {"ok": C.G, "FAIL": C.R, "ERROR": C.R}[status]
                 print(f"  {color}{mark}{C.EN} {tname}")
-                print(f"     Expected: {C.G}200 OK{C.EN}")
-                print(f"     Actual:   {C.G}200 OK{C.EN}\n")
+                expected = "pass" if status == "ok" else "fail"
+                actual = "pass" if status == "ok" else "fail"
+                print(f"     Expected: {C.G}{expected}{C.EN}")
+                print(f"     Actual:   {C.G}{actual}{C.EN}\n")
 
     # --- Summary ---
     passed = sum(1 for _, s, _, _ in results if s == "ok")

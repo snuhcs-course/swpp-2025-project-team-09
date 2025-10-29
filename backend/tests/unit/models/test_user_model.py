@@ -84,8 +84,8 @@ class TestUserModel(TestCase):
         """Test getSessions with no sessions"""
         user = User.objects.create(device_info="test-device-no-sessions")
 
-        sessions = user.getSessions()
-        self.assertEqual(sessions.count(), 0)
+        session_set = user.getSessions()
+        self.assertEqual(session_set.count(), 0)
 
     def test_09_get_sessions_with_sessions(self):
         """Test getSessions with multiple sessions"""
@@ -99,10 +99,10 @@ class TestUserModel(TestCase):
             user=user, title="Book 2", created_at=timezone.now()
         )
 
-        sessions = user.getSessions()
-        self.assertEqual(sessions.count(), 2)
-        self.assertIn(session1, sessions)
-        self.assertIn(session2, sessions)
+        session_set = user.getSessions()
+        self.assertEqual(session_set.count(), 2)
+        self.assertIn(session1, session_set)
+        self.assertIn(session2, session_set)
 
     def test_10_delete_session_success(self):
         """Test deleteSession method"""
