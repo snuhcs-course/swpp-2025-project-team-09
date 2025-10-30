@@ -1,5 +1,6 @@
 package com.example.storybridge_android
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
@@ -49,12 +50,13 @@ class MainActivity : AppCompatActivity() {
         startActivity(Intent(this, LoadingActivity::class.java))
     }
 
+    @SuppressLint("HardwareIds")
     private fun loadSessionCard() {
         val deviceInfo = android.provider.Settings.Secure.getString(
             contentResolver,
-            android.provider.Settings.Secure.ANDROID_ID
+            android.provider.Settings.Secure.ANDROID_ID)
+        val call = RetrofitClient.userApi.userInfo(deviceInfo
         )
-        val call = RetrofitClient.userApi.userInfo(deviceInfo)
 
         val container = findViewById<LinearLayout>(R.id.cardContainer)
         val emptyContainer = findViewById<LinearLayout>(R.id.emptyContainer)

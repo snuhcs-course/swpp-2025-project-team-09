@@ -30,14 +30,14 @@ class StartSessionView(APIView):
     """
 
     def post(self, request):
-        user_id = request.data.get("user_id")
+        device_info = request.data.get("user_id")
         page_index = request.data.get("page_index", 0)
 
-        if not user_id:
+        if not device_info:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            user = User.objects.get(uid=user_id)
+            user = User.objects.get(device_info=device_info)
             session = Session.objects.create(
                 user=user,
                 title=f"Reading Session {timezone.now().strftime('%Y-%m-%d %H:%M')}",

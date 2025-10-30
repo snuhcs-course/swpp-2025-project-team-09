@@ -97,19 +97,9 @@ class ProcessUploadFrontPageView(APIView):
 
         tts_audio_male = []
         tts_audio_female = []
-        paras_translations = []
 
         male_result, female_result = tasks_results
         
-        if male_result.get("status") == "ok":
-            para_translated = " ".join(
-                sentence_data["translation"]
-                for sentence_data in male_result.get("details", [])
-                if "translation" in sentence_data
-            )
-            paras_translations.append(para_translated)
-        else:
-            paras_translations.append("")
 
         # 남성 오디오
         if male_result.get("status") == "ok":

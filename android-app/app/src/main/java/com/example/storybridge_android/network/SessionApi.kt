@@ -9,32 +9,32 @@ import retrofit2.http.Query
 // Retrofit API Interface
 interface SessionApi {
 
-    @POST("/session/start")
+    @POST("/session/start/")
     fun startSession(
         @Body request: StartSessionRequest
     ): Call<StartSessionResponse>
 
-    @POST("/session/voice")
+    @POST("/session/voice/")
     fun selectVoice(
         @Body request: SelectVoiceRequest
     ): Call<SelectVoiceResponse>
 
-    @POST("/session/end")
+    @POST("/session/end/")
     fun endSession(
         @Body request: EndSessionRequest
     ): Call<EndSessionResponse>
 
-    @GET("/session/stats")
+    @GET("/session/stats/")
     fun getSessionStats(
         @Query("session_id") session_id: String
     ): Call<SessionStatsResponse>
 
-    @GET("/session/info")
+    @GET("/session/info/")
     fun getSessionInfo(
         @Query("session_id") session_id: String
     ): Call<SessionInfoResponse>
 
-    @GET("/session/review")
+    @GET("/session/review/")
     fun getSessionReview(
         @Query("session_id") session_id: String
     ): Call<SessionReviewResponse>

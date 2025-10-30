@@ -99,8 +99,8 @@ class LandingActivity : AppCompatActivity() {
             setLangPreference("en")
             navigateToMain()
         }
-        btnEnglish.setOnClickListener {
-            AppSettings.setLanguage(this, "en")
+        btnChinese.setOnClickListener {
+            setLangPreference("chn")
             navigateToMain()
         }
     }

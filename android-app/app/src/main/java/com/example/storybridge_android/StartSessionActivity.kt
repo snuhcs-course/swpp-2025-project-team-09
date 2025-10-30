@@ -1,5 +1,6 @@
 package com.example.storybridge_android
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -35,6 +36,7 @@ class StartSessionActivity : AppCompatActivity() {
         startSession()
     }
 
+    @SuppressLint("HardwareIds")
     private fun startSession() {
         Log.d(TAG, "=== Starting Session ===")
 
