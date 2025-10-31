@@ -1,7 +1,9 @@
 package com.example.storybridge_android.ui.session
 
 import android.content.Intent
+import android.media.MediaPlayer
 import android.os.Bundle
+import android.util.Base64
 import android.util.Log
 import android.widget.Button
 import androidx.activity.enableEdgeToEdge
@@ -17,11 +19,17 @@ import com.example.storybridge_android.ui.camera.CameraSessionActivity
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.io.File
+import java.io.FileOutputStream
+
+const val MALE_VOICE = "onyx"
+const val FEMALE_VOICE = "shimmer"
 
 class VoiceSelectActivity : AppCompatActivity() {
 
     private var sessionId: String? = null
-
+    private var maleTts: String? = null
+    private var femaleTts: String? = null
     companion object {
         private const val TAG = "VoiceSelectActivity"
     }
@@ -42,7 +50,11 @@ class VoiceSelectActivity : AppCompatActivity() {
 
         sessionId = intent.getStringExtra("session_id")
         Log.d(TAG, "Received session_id: $sessionId")
+        maleTts = intent.getStringExtra("male_tts")
+        femaleTts = intent.getStringExtra("female_tts")
 
+        Log.d(TAG, "Received male_tts length: ${maleTts?.length}")
+        Log.d(TAG, "Received female_tts length: ${femaleTts?.length}")
         if (sessionId == null) {
             Log.e(TAG, "✗ No session_id received! Cannot proceed.")
             finish()
@@ -51,24 +63,62 @@ class VoiceSelectActivity : AppCompatActivity() {
 
         val manButton = findViewById<Button>(R.id.manButton)
         val womanButton = findViewById<Button>(R.id.womanButton)
+        val nextButton = findViewById<Button>(R.id.nextButton)
+
+        // Initial state : disabled
+        nextButton.isEnabled = false
 
         Log.d(TAG, "Setting up button listeners...")
 
         manButton.setOnClickListener {
             Log.d(TAG, "Man button clicked")
-            AppSettings.setVoice(this, "male")
-            sendVoiceSelection("male")
+            AppSettings.setVoice(this, MALE_VOICE)
+            sendVoiceSelection(MALE_VOICE)
+            playTts(maleTts, MALE_VOICE)
+            nextButton.isEnabled = true
         }
 
         womanButton.setOnClickListener {
             Log.d(TAG, "Woman button clicked")
-            AppSettings.setVoice(this, "female")
-            sendVoiceSelection("female")
+            AppSettings.setVoice(this, FEMALE_VOICE)
+            sendVoiceSelection(FEMALE_VOICE)
+            playTts(femaleTts, FEMALE_VOICE)
+            nextButton.isEnabled = true
         }
-
+        nextButton.setOnClickListener {
+            Log.d(TAG, "Next button clicked")
+            goToCamera()
+        }
         Log.d(TAG, "Activity setup complete, waiting for user selection...")
     }
+    private fun playTts(ttsBase64: String?, voice: String) {
+        if (ttsBase64.isNullOrEmpty()) {
+            Log.e(TAG, "✗ No TTS data available for $voice")
+            return
+        }
 
+        try {
+            // Base64 → ByteArray 변환
+            val audioBytes = Base64.decode(ttsBase64, Base64.DEFAULT)
+            val tempFile = File.createTempFile("tts_preview", ".mp3", cacheDir)
+            FileOutputStream(tempFile).use { it.write(audioBytes) }
+
+            val mediaPlayer = MediaPlayer()
+            mediaPlayer.setDataSource(tempFile.absolutePath)
+            mediaPlayer.prepare()
+            mediaPlayer.start()
+
+            Log.d(TAG, "▶ Playing $voice voice preview...")
+
+            mediaPlayer.setOnCompletionListener {
+                Log.d(TAG, "✓ $voice voice playback finished")
+                mediaPlayer.release()
+            }
+
+        } catch (e: Exception) {
+            Log.e(TAG, "✗ Error playing TTS audio: ${e.message}", e)
+        }
+    }
     private fun sendVoiceSelection(voice: String) {
         Log.d(TAG, "=== Sending Voice Selection ===")
         Log.d(TAG, "Voice: $voice")
@@ -103,7 +153,7 @@ class VoiceSelectActivity : AppCompatActivity() {
                         Log.w(TAG, "Response code: ${response.code()}")
                     }
 
-                    goToCamera()
+                    //goToCamera()
                 }
 
                 override fun onFailure(call: Call<SelectVoiceResponse>, t: Throwable) {

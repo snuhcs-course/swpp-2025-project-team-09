@@ -27,3 +27,5 @@ class User(models.Model):
     def deleteSession(self, session_id: int):
         """특정 세션 삭제"""
         return self.session_set.filter(id=session_id).delete()
+    class Meta:
+        db_table = "user" 

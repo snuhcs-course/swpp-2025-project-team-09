@@ -38,7 +38,7 @@ import kotlin.math.min
 class ReadingActivity : AppCompatActivity() {
 
     private lateinit var sessionId: String
-    private var pageIndex: Int = 0
+    private var pageIndex: Int = 1 // The 0th page is always the cover, so numbering starts from 1
     private val pageApi = RetrofitClient.pageApi
     private lateinit var mainLayout: ConstraintLayout
     private lateinit var topUi: View

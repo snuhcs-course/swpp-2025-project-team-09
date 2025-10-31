@@ -178,3 +178,117 @@ class OCRModule:
         paragraphs = self._parse_infer_text(result)
 
         return paragraphs
+
+    def process_cover_page(self, image_path: str) -> List[Dict[str, Any]]:
+        request_json = {
+            "images": [{"format": "png", "name": Path(image_path).stem}],
+            "requestId": str(uuid.uuid4()),
+            "version": "V2",
+            "timestamp": int(round(time.time() * 1000)),
+        }
+        headers = {"X-OCR-SECRET": self.secret_key}
+        files = {
+            "file": open(image_path, "rb"),
+            "message": (None, json.dumps(request_json), "application/json"),
+        }
+        print(f"[DEBUG] Sending OCR request for {image_path} (cover mode)")
+        start = time.time()
+        response = requests.post(self.api_url, headers=headers, files=files)
+        print(f"[DEBUG] OCR API call took {time.time() - start:.2f}s")
+        result = response.json()
+
+        filtered_json = self._filter_low_confidence(result)
+        fs = self._font_size(filtered_json)
+        images_f = filtered_json.get("images", [])
+        if not images_f:
+            return []
+        fields = images_f[0].get("fields", [])
+        tokens = []
+        for field in fields:
+            text = field.get("inferText", "")
+            vertices = field.get("boundingPoly", {}).get("vertices", [])
+            xs = [v.get("x", 0.0) for v in vertices]
+            ys = [v.get("y", 0.0) for v in vertices]
+            if xs and ys:
+                tokens.append(
+                    {
+                        "text": text,
+                        "x": float(np.mean(xs)),
+                        "y": float(np.mean(ys)),
+                        "xs": xs,
+                        "ys": ys,
+                    }
+                )
+        if not tokens:
+            return []
+
+        heights = [max(t["ys"]) - min(t["ys"]) for t in tokens if t["ys"]]
+        max_height = max(heights) if heights else 0
+        tokens = [t for t in tokens if (max(t["ys"]) - min(t["ys"])) >= 0.33 * max_height]
+
+        if not tokens:
+            return []
+
+        # Paragraph clustering (2D DBSCAN on x, y)
+        X = np.array([[t["x"], t["y"]] for t in tokens])
+        para_eps = max(fs * 6.0, 15.0)
+        para_db = DBSCAN(eps=para_eps, min_samples=1)
+        para_labels = para_db.fit_predict(X)
+
+        for t, lbl in zip(tokens, para_labels):
+            t["para_label"] = int(lbl)
+
+        paragraphs: List[List[Dict[str, Any]]] = []
+        for lbl in sorted(set(para_labels)):
+            if lbl == -1:
+                continue  # skip noise cluster
+            paragraph_tokens = [t for t in tokens if t["para_label"] == lbl]
+            paragraphs.append(paragraph_tokens)
+
+        results: List[Dict[str, Any]] = []
+
+        # For each paragraph, cluster lines by Y and sort words by X, build paragraph text and bbox
+        for para in paragraphs:
+            if not para:
+                continue
+            Y = np.array([[t["y"]] for t in para])
+            line_eps = max(fs * 0.5, 2.0)
+            line_db = DBSCAN(eps=line_eps, min_samples=1)
+            line_labels = line_db.fit_predict(Y)
+            for t, lbl in zip(para, line_labels):
+                t["line_label"] = int(lbl)
+
+            lines = []
+            for lbl in sorted(set(line_labels)):
+                line_tokens = [t for t in para if t["line_label"] == lbl]
+                line_tokens.sort(key=lambda t: t["x"])
+                line_text = " ".join(t["text"] for t in line_tokens)
+                y_mean = np.mean([t["y"] for t in line_tokens])
+                xs = []
+                ys = []
+                for tkn in line_tokens:
+                    xs.extend(tkn["xs"])
+                    ys.extend(tkn["ys"])
+                lines.append({"text": line_text, "y": y_mean, "xs": xs, "ys": ys})
+
+            lines_sorted = sorted(lines, key=lambda l: l["y"])
+            paragraph_text = "\n".join(l["text"] for l in lines_sorted)
+
+            xs = []
+            ys = []
+            for l in lines_sorted:
+                xs.extend(l["xs"])
+                ys.extend(l["ys"])
+
+            x_min, x_max = float(min(xs)), float(max(xs))
+            y_min, y_max = float(min(ys)), float(max(ys))
+            bbox = {
+                "x1": x_min, "y1": y_min,
+                "x2": x_max, "y2": y_min,
+                "x3": x_max, "y3": y_max,
+                "x4": x_min, "y4": y_max,
+            }
+
+            results.append({"text": paragraph_text.strip(), "bbox": bbox})
+
+        return results

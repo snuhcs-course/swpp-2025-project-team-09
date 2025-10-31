@@ -11,7 +11,7 @@ class CameraSessionActivity : AppCompatActivity() {
 
     private var sessionId: String? = null
     private var pageIndex: Int = 0
-
+    private var isCover: Boolean = false
     companion object {
         private const val TAG = "CameraSessionActivity"
     }
@@ -45,10 +45,11 @@ class CameraSessionActivity : AppCompatActivity() {
 
         sessionId = intent.getStringExtra("session_id")
         pageIndex = intent.getIntExtra("page_index", 0)
+        isCover = intent.getBooleanExtra("is_cover", false)
 
         Log.d(TAG, "Received session_id: $sessionId")
         Log.d(TAG, "Received page_index: $pageIndex")
-
+        Log.d(TAG, "Received isCover: $isCover")
         if (sessionId == null) {
             Log.e(TAG, "✗ No session_id received! Cannot proceed.")
             finish()
@@ -76,7 +77,7 @@ class CameraSessionActivity : AppCompatActivity() {
         intent.putExtra("session_id", sessionId)
         intent.putExtra("page_index", pageIndex)
         intent.putExtra("image_path", imagePath)
-
+        intent.putExtra("is_cover", isCover)
         Log.d(TAG, "Starting LoadingActivity...")
         startActivity(intent)
 
