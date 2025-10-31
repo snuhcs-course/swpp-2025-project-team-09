@@ -1,15 +1,32 @@
 package com.example.storybridge_android.network
 
+import com.google.gson.*
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.lang.reflect.Type
 import java.util.concurrent.TimeUnit
 
-object RetrofitClient {
-    //const val BASE_URL = "http://10.0.2.2:8000"
-    private const val BASE_URL = "https://oidioid-ullaged-signe.ngrok-free.dev" // 사용할 때마다 바꿔줘야 하는듯
+class FlexibleUserInfoAdapter : JsonDeserializer<UserInfoResponse> {
+    private val plainGson = Gson()
 
+    override fun deserialize(
+        json: JsonElement,
+        typeOfT: Type?,
+        context: JsonDeserializationContext?
+    ): UserInfoResponse {
+        return if (json.isJsonArray) {
+            val array = json.asJsonArray
+            plainGson.fromJson(array[0], UserInfoResponse::class.java)
+        } else {
+            plainGson.fromJson(json, UserInfoResponse::class.java)
+        }
+    }
+}
+
+object RetrofitClient {
+    private var BASE_URL = "https://flavia-mitotic-positively.ngrok-free.dev"
 
     private val logging = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
@@ -21,16 +38,31 @@ object RetrofitClient {
         .readTimeout(120, TimeUnit.SECONDS)
         .build()
 
-    private val retrofit: Retrofit by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
+    private val gson = GsonBuilder()
+        .registerTypeAdapter(UserInfoResponse::class.java, FlexibleUserInfoAdapter())
+        .create()
+
+    private fun createRetrofit(url: String): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl(url)
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .client(client)
             .build()
     }
 
-    val userApi: UserApi by lazy { retrofit.create(UserApi::class.java) }
-    val sessionApi: SessionApi by lazy { retrofit.create(SessionApi::class.java) }
-    val processApi: ProcessApi by lazy { retrofit.create(ProcessApi::class.java) }
-    val pageApi: PageApi by lazy { retrofit.create(PageApi::class.java) }
+    @Volatile private var retrofit: Retrofit = createRetrofit(BASE_URL)
+    @Volatile var userApi: UserApi = retrofit.create(UserApi::class.java)
+    @Volatile var sessionApi: SessionApi = retrofit.create(SessionApi::class.java)
+    @Volatile var processApi: ProcessApi = retrofit.create(ProcessApi::class.java)
+    @Volatile var pageApi: PageApi = retrofit.create(PageApi::class.java)
+
+    @Synchronized
+    fun overrideBaseUrl(url: String) {
+        BASE_URL = url
+        retrofit = createRetrofit(BASE_URL)
+        userApi = retrofit.create(UserApi::class.java)
+        sessionApi = retrofit.create(SessionApi::class.java)
+        processApi = retrofit.create(ProcessApi::class.java)
+        pageApi = retrofit.create(PageApi::class.java)
+    }
 }

@@ -1,10 +1,11 @@
-package com.example.storybridge_android
+package com.example.storybridge_android.ui.camera
 
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import com.example.storybridge_android.ui.session.LoadingActivity
 
 class CameraSessionActivity : AppCompatActivity() {
 

@@ -1,4 +1,4 @@
-package com.example.storybridge_android
+package com.example.storybridge_android.ui.session
 
 import android.content.Intent
 import android.os.Bundle
@@ -8,9 +8,12 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.example.storybridge_android.ui.setting.AppSettings
+import com.example.storybridge_android.R
 import com.example.storybridge_android.network.RetrofitClient
 import com.example.storybridge_android.network.SelectVoiceRequest
 import com.example.storybridge_android.network.SelectVoiceResponse
+import com.example.storybridge_android.ui.camera.CameraSessionActivity
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response

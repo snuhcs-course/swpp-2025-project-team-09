@@ -1,4 +1,4 @@
-package com.example.storybridge_android
+package com.example.storybridge_android.ui.reading
 
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -21,10 +21,13 @@ import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
+import com.example.storybridge_android.R
 import com.example.storybridge_android.network.GetImageResponse
 import com.example.storybridge_android.network.GetOcrTranslationResponse
 import com.example.storybridge_android.network.GetTtsResponse
 import com.example.storybridge_android.network.RetrofitClient
+import com.example.storybridge_android.ui.camera.CameraSessionActivity
+import com.example.storybridge_android.ui.session.FinishActivity
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -293,7 +296,12 @@ class ReadingActivity : AppCompatActivity() {
             // Create play button if audio exists for this box
             if (audioResultsMap.containsKey(box.index)) {
                 Log.d(TAG, "Box ${box.index} has audio, creating play button")
-                val textRect = RectF(rect.left, rect.top, rect.left + finalTextWidth, rect.top + finalTextHeight)
+                val textRect = RectF(
+                    rect.left,
+                    rect.top,
+                    rect.left + finalTextWidth,
+                    rect.top + finalTextHeight
+                )
                 createPlayButton(box.index, textRect, pageImage.id)
             } else {
                 Log.d(TAG, "Box ${box.index} has NO audio")
@@ -516,7 +524,8 @@ class ReadingActivity : AppCompatActivity() {
 
     private fun fetchOcrResults() {
         Log.d(TAG, "Fetching OCR results...")
-        pageApi.getOcrResults(sessionId, pageIndex).enqueue(object : Callback<GetOcrTranslationResponse> {
+        pageApi.getOcrResults(sessionId, pageIndex).enqueue(object :
+            Callback<GetOcrTranslationResponse> {
             override fun onResponse(call: Call<GetOcrTranslationResponse>, response: Response<GetOcrTranslationResponse>) {
                 if (response.isSuccessful) {
                     Log.d(TAG, "✓ OCR results fetched successfully")
