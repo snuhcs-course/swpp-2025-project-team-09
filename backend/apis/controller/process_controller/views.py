@@ -323,7 +323,7 @@ class ProcessUploadCoverView(APIView):
         # Create page and bounding boxes
         page = self._create_page_and_bbs(session, image_path, ocr_result, translation_data)
 
-        # Start TTS for both male ("alloy") and female ("shimmer") voices concurrently
+        # Start TTS for both male ("echo") and female ("shimmer") voices concurrently
         tts_male = None
         tts_female = None
         def run_tts_voice(voice):
@@ -353,7 +353,7 @@ class ProcessUploadCoverView(APIView):
             results[key] = run_tts_voice(voice)
 
         threads = []
-        threads.append(threading.Thread(target=tts_thread, args=("onyx", "tts_male")))
+        threads.append(threading.Thread(target=tts_thread, args=("echo", "tts_male")))
         threads.append(threading.Thread(target=tts_thread, args=("shimmer", "tts_female")))
         for t in threads:
             t.start()
