@@ -12,7 +12,9 @@ Usage:
 import sys
 import subprocess
 import re
+import os
 
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 # --- Colors ---
 class C:
@@ -64,8 +66,11 @@ CLI_ARGS = {
 
 # --- Run a Django test command and parse results ---
 def run_test(path):
-    cmd = ["python", "manage.py", "test", path, "--verbosity=2"]
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    python_bin = sys.executable
+    cmd = [python_bin, "manage.py", "test", path, "--verbosity=2"]
+    result = subprocess.run(
+        cmd, cwd=PROJECT_ROOT, capture_output=True, text=True
+    )
     output = result.stdout + result.stderr
     lines = output.splitlines()
 
