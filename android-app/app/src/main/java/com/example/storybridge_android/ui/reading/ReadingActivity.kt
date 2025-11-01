@@ -21,6 +21,8 @@ import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.storybridge_android.R
 import com.example.storybridge_android.network.GetImageResponse
 import com.example.storybridge_android.network.GetOcrTranslationResponse
@@ -76,6 +78,11 @@ class ReadingActivity : AppCompatActivity() {
     // Touch and drag constant
     private val TOUCH_SLOP = 10f
 
+    // Thumbnail RecyclerView
+    private lateinit var thumbnailRecyclerView: RecyclerView
+    private lateinit var thumbnailAdapter: ThumbnailAdapter
+    private val thumbnailList = mutableListOf<PageThumbnail>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -97,6 +104,7 @@ class ReadingActivity : AppCompatActivity() {
         Log.d(TAG, "Page index: $pageIndex")
         Log.d(TAG, "Total pages (calculated): $totalPages")
 
+        fetchAllThumbnails()
         fetchPageData()
     }
 
@@ -107,9 +115,19 @@ class ReadingActivity : AppCompatActivity() {
         overlay = findViewById(R.id.sideOverlay)
         dimBackground = findViewById(R.id.dimBackground)
         pageImage = findViewById(R.id.pageImage)
+        thumbnailRecyclerView = findViewById(R.id.thumbnailRecyclerView)
 
         // Hide global play button
         findViewById<ImageButton>(R.id.playButton).visibility = View.GONE
+
+        // Setup RecyclerView
+        thumbnailAdapter = ThumbnailAdapter { selectedPageIndex ->
+            onThumbnailClick(selectedPageIndex)
+        }
+        thumbnailRecyclerView.apply {
+            layoutManager = LinearLayoutManager(this@ReadingActivity)
+            adapter = thumbnailAdapter
+        }
     }
 
     private fun initUiState() {
@@ -730,6 +748,61 @@ class ReadingActivity : AppCompatActivity() {
                 handler.postDelayed({ pollTtsStatus() }, TTS_POLL_INTERVAL)
             }
         })
+    }
+
+    private fun fetchAllThumbnails() {
+        Log.d(TAG, "=== Fetching All Thumbnails (totalPages=$totalPages) ===")
+        thumbnailList.clear()
+
+        for (i in 0 until totalPages) {
+            pageApi.getImage(sessionId, i).enqueue(object : Callback<GetImageResponse> {
+                override fun onResponse(call: Call<GetImageResponse>, response: Response<GetImageResponse>) {
+                    if (response.isSuccessful) {
+                        val imageBase64 = response.body()?.image_base64
+                        thumbnailList.add(PageThumbnail(i, imageBase64))
+                        Log.d(TAG, "✓ Thumbnail loaded for page $i (${thumbnailList.size}/$totalPages)")
+
+                        // When all thumbnails are loaded, update RecyclerView
+                        if (thumbnailList.size == totalPages) {
+                            val sortedThumbnails = thumbnailList.sortedBy { it.pageIndex }
+                            thumbnailAdapter.submitList(sortedThumbnails)
+                            Log.d(TAG, "✓ All thumbnails loaded and submitted to adapter")
+                        }
+                    } else {
+                        Log.e(TAG, "✗ Thumbnail fetch failed for page $i: ${response.code()}")
+                        // Add placeholder
+                        thumbnailList.add(PageThumbnail(i, null))
+                        if (thumbnailList.size == totalPages) {
+                            val sortedThumbnails = thumbnailList.sortedBy { it.pageIndex }
+                            thumbnailAdapter.submitList(sortedThumbnails)
+                        }
+                    }
+                }
+
+                override fun onFailure(call: Call<GetImageResponse>, t: Throwable) {
+                    Log.e(TAG, "✗ Thumbnail fetch error for page $i", t)
+                    thumbnailList.add(PageThumbnail(i, null))
+                    if (thumbnailList.size == totalPages) {
+                        val sortedThumbnails = thumbnailList.sortedBy { it.pageIndex }
+                        thumbnailAdapter.submitList(sortedThumbnails)
+                    }
+                }
+            })
+        }
+    }
+
+    private fun onThumbnailClick(selectedPageIndex: Int) {
+        Log.d(TAG, "=== Thumbnail clicked: page $selectedPageIndex ===")
+
+        // Close overlay
+        toggleOverlay(false)
+
+        // Load selected page
+        if (selectedPageIndex != pageIndex) {
+            loadPage(selectedPageIndex)
+        } else {
+            Log.d(TAG, "Already on page $selectedPageIndex")
+        }
     }
 
     override fun onDestroy() {
