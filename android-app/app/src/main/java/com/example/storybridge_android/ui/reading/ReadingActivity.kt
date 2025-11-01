@@ -21,6 +21,8 @@ import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.storybridge_android.R
 import com.example.storybridge_android.network.GetImageResponse
 import com.example.storybridge_android.network.GetOcrTranslationResponse
@@ -38,7 +40,8 @@ import kotlin.math.min
 class ReadingActivity : AppCompatActivity() {
 
     private lateinit var sessionId: String
-    private var pageIndex: Int = 0
+    private var pageIndex: Int = 0 // 0-indexed to match backend
+    private var totalPages: Int = 0 // Total pages in session (pageIndex + 1)
     private val pageApi = RetrofitClient.pageApi
     private lateinit var mainLayout: ConstraintLayout
     private lateinit var topUi: View
@@ -75,6 +78,11 @@ class ReadingActivity : AppCompatActivity() {
     // Touch and drag constant
     private val TOUCH_SLOP = 10f
 
+    // Thumbnail RecyclerView
+    private lateinit var thumbnailRecyclerView: RecyclerView
+    private lateinit var thumbnailAdapter: ThumbnailAdapter
+    private val thumbnailList = mutableListOf<PageThumbnail>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -88,10 +96,15 @@ class ReadingActivity : AppCompatActivity() {
 
         sessionId = intent.getStringExtra("session_id") ?: ""
         pageIndex = intent.getIntExtra("page_index", 0)
+        // If coming from LoadingActivity, we know this is the latest page
+        // So totalPages = pageIndex + 1
+        totalPages = pageIndex + 1
 
         Log.d(TAG, "Session ID: $sessionId")
         Log.d(TAG, "Page index: $pageIndex")
+        Log.d(TAG, "Total pages (calculated): $totalPages")
 
+        fetchAllThumbnails()
         fetchPageData()
     }
 
@@ -102,9 +115,19 @@ class ReadingActivity : AppCompatActivity() {
         overlay = findViewById(R.id.sideOverlay)
         dimBackground = findViewById(R.id.dimBackground)
         pageImage = findViewById(R.id.pageImage)
+        thumbnailRecyclerView = findViewById(R.id.thumbnailRecyclerView)
 
         // Hide global play button
         findViewById<ImageButton>(R.id.playButton).visibility = View.GONE
+
+        // Setup RecyclerView
+        thumbnailAdapter = ThumbnailAdapter { selectedPageIndex ->
+            onThumbnailClick(selectedPageIndex)
+        }
+        thumbnailRecyclerView.apply {
+            layoutManager = LinearLayoutManager(this@ReadingActivity)
+            adapter = thumbnailAdapter
+        }
     }
 
     private fun initUiState() {
@@ -117,6 +140,8 @@ class ReadingActivity : AppCompatActivity() {
         val menuButton = findViewById<ImageButton>(R.id.menuButton)
         val closeButton = findViewById<Button>(R.id.closeOverlayButton)
         val finishButton = findViewById<Button>(R.id.finishButton)
+        val prevButton = findViewById<Button>(R.id.prevButton)
+        val nextButton = findViewById<Button>(R.id.nextButton)
 
         mainLayout.setOnClickListener { toggleUI() }
 
@@ -125,6 +150,24 @@ class ReadingActivity : AppCompatActivity() {
         closeButton.setOnClickListener { toggleOverlay(false) }
         dimBackground.setOnClickListener { toggleOverlay(false) }
         finishButton.setOnClickListener { navigateToFinish() }
+
+        prevButton.setOnClickListener {
+            if (pageIndex > 0) {
+                loadPage(pageIndex - 1)
+            } else {
+                Log.d(TAG, "Already at the first page.")
+                android.widget.Toast.makeText(this, "첫 페이지입니다", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        nextButton.setOnClickListener {
+            if (pageIndex + 1 >= totalPages) {
+                Log.d(TAG, "Already at the last page. (pageIndex=$pageIndex, totalPages=$totalPages)")
+                android.widget.Toast.makeText(this, "마지막 페이지입니다", android.widget.Toast.LENGTH_SHORT).show()
+            } else {
+                loadPage(pageIndex + 1)
+            }
+        }
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -185,7 +228,8 @@ class ReadingActivity : AppCompatActivity() {
     private fun navigateToCamera() {
         val intent = Intent(this, CameraSessionActivity::class.java)
         intent.putExtra("session_id", sessionId)
-        intent.putExtra("page_index", pageIndex + 1)
+        // Next page will have index = totalPages (0-indexed)
+        // Backend will calculate it as session.getPages().count()
         startActivity(intent)
         finish()
     }
@@ -504,31 +548,74 @@ class ReadingActivity : AppCompatActivity() {
         startTtsPolling()
     }
 
+    private fun loadPage(newPageIndex: Int) {
+        if (newPageIndex < 0) {
+            Log.d(TAG, "Page index cannot be less than 0.")
+            return
+        }
+
+        pageIndex = newPageIndex
+        Log.d(TAG, "--- Loading page: $pageIndex ---")
+
+        // 1. Stop ongoing processes
+        isTtsPolling = false
+        handler.removeCallbacksAndMessages(null)
+        mediaPlayer?.release()
+        mediaPlayer = null
+        currentPlayingIndex = -1
+        currentAudioIndex = 0
+
+        // 2. Clear data
+        audioResultsMap = emptyMap()
+        cachedBoundingBoxes = emptyList()
+
+        // 3. Clear UI
+        pageImage.setImageDrawable(null) // Show a blank while loading
+        // Remove all bounding boxes and play buttons
+        val viewsToRemove = mutableListOf<View>()
+        for (i in 0 until mainLayout.childCount) {
+            val child = mainLayout.getChildAt(i)
+            if (child.tag == "bbox" || child.tag == "play_button") {
+                viewsToRemove.add(child)
+            }
+        }
+        viewsToRemove.forEach { mainLayout.removeView(it) }
+        playButtonsMap.clear()
+        boundingBoxViewsMap.clear()
+
+        // 4. Fetch new data
+        fetchPageData()
+    }
+
     private fun fetchImage() {
-        Log.d(TAG, "Fetching image...")
+        Log.d(TAG, "Fetching image for session=$sessionId, page=$pageIndex")
         pageApi.getImage(sessionId, pageIndex).enqueue(object : Callback<GetImageResponse> {
             override fun onResponse(call: Call<GetImageResponse>, response: Response<GetImageResponse>) {
                 if (response.isSuccessful) {
-                    Log.d(TAG, "✓ Image fetched successfully")
+                    Log.d(TAG, "✓ Image fetched successfully for page $pageIndex")
                     displayPage(response.body()?.image_base64)
                 } else {
-                    Log.e(TAG, "✗ Image fetch failed: ${response.code()}")
+                    Log.e(TAG, "✗ Image fetch failed for page $pageIndex: ${response.code()} - ${response.message()}")
+                    if (response.code() == 404) {
+                        // Page doesn't exist - revert pageIndex
+                        android.widget.Toast.makeText(this@ReadingActivity, "페이지가 존재하지 않습니다", android.widget.Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
             override fun onFailure(call: Call<GetImageResponse>, t: Throwable) {
-                Log.e(TAG, "✗ Image fetch error", t)
+                Log.e(TAG, "✗ Image fetch error for page $pageIndex", t)
                 t.printStackTrace()
             }
         })
     }
 
     private fun fetchOcrResults() {
-        Log.d(TAG, "Fetching OCR results...")
+        Log.d(TAG, "Fetching OCR results for session=$sessionId, page=$pageIndex")
         pageApi.getOcrResults(sessionId, pageIndex).enqueue(object :
             Callback<GetOcrTranslationResponse> {
             override fun onResponse(call: Call<GetOcrTranslationResponse>, response: Response<GetOcrTranslationResponse>) {
                 if (response.isSuccessful) {
-                    Log.d(TAG, "✓ OCR results fetched successfully")
+                    Log.d(TAG, "✓ OCR results fetched successfully for page $pageIndex")
                     val ocrList = response.body()?.ocr_results
                     Log.d(TAG, "OCR results count: ${ocrList?.size ?: 0}")
 
@@ -548,21 +635,21 @@ class ReadingActivity : AppCompatActivity() {
                         Log.w(TAG, "No bounding boxes to display")
                     }
                 } else {
-                    Log.e(TAG, "✗ OCR fetch failed: ${response.code()}")
+                    Log.e(TAG, "✗ OCR fetch failed for page $pageIndex: ${response.code()} - ${response.message()}")
                 }
             }
             override fun onFailure(call: Call<GetOcrTranslationResponse>, t: Throwable) {
-                Log.e(TAG, "✗ OCR fetch error", t)
+                Log.e(TAG, "✗ OCR fetch error for page $pageIndex", t)
             }
         })
     }
 
     private fun fetchTtsResults() {
-        Log.d(TAG, "Fetching TTS results...")
+        Log.d(TAG, "Fetching TTS results for session=$sessionId, page=$pageIndex")
         pageApi.getTtsResults(sessionId, pageIndex).enqueue(object : Callback<GetTtsResponse> {
             override fun onResponse(call: Call<GetTtsResponse>, response: Response<GetTtsResponse>) {
                 if (response.isSuccessful) {
-                    Log.d(TAG, "✓ TTS results fetched successfully")
+                    Log.d(TAG, "✓ TTS results fetched successfully for page $pageIndex")
                     val audioList = response.body()?.audio_results
                     Log.d(TAG, "TTS results count: ${audioList?.size ?: 0}")
 
@@ -584,11 +671,11 @@ class ReadingActivity : AppCompatActivity() {
                         Log.w(TAG, "No TTS results available")
                     }
                 } else {
-                    Log.e(TAG, "✗ TTS fetch failed: ${response.code()}")
+                    Log.e(TAG, "✗ TTS fetch failed for page $pageIndex: ${response.code()} - ${response.message()}")
                 }
             }
             override fun onFailure(call: Call<GetTtsResponse>, t: Throwable) {
-                Log.e(TAG, "✗ TTS fetch error", t)
+                Log.e(TAG, "✗ TTS fetch error for page $pageIndex", t)
             }
         })
     }
@@ -661,6 +748,61 @@ class ReadingActivity : AppCompatActivity() {
                 handler.postDelayed({ pollTtsStatus() }, TTS_POLL_INTERVAL)
             }
         })
+    }
+
+    private fun fetchAllThumbnails() {
+        Log.d(TAG, "=== Fetching All Thumbnails (totalPages=$totalPages) ===")
+        thumbnailList.clear()
+
+        for (i in 0 until totalPages) {
+            pageApi.getImage(sessionId, i).enqueue(object : Callback<GetImageResponse> {
+                override fun onResponse(call: Call<GetImageResponse>, response: Response<GetImageResponse>) {
+                    if (response.isSuccessful) {
+                        val imageBase64 = response.body()?.image_base64
+                        thumbnailList.add(PageThumbnail(i, imageBase64))
+                        Log.d(TAG, "✓ Thumbnail loaded for page $i (${thumbnailList.size}/$totalPages)")
+
+                        // When all thumbnails are loaded, update RecyclerView
+                        if (thumbnailList.size == totalPages) {
+                            val sortedThumbnails = thumbnailList.sortedBy { it.pageIndex }
+                            thumbnailAdapter.submitList(sortedThumbnails)
+                            Log.d(TAG, "✓ All thumbnails loaded and submitted to adapter")
+                        }
+                    } else {
+                        Log.e(TAG, "✗ Thumbnail fetch failed for page $i: ${response.code()}")
+                        // Add placeholder
+                        thumbnailList.add(PageThumbnail(i, null))
+                        if (thumbnailList.size == totalPages) {
+                            val sortedThumbnails = thumbnailList.sortedBy { it.pageIndex }
+                            thumbnailAdapter.submitList(sortedThumbnails)
+                        }
+                    }
+                }
+
+                override fun onFailure(call: Call<GetImageResponse>, t: Throwable) {
+                    Log.e(TAG, "✗ Thumbnail fetch error for page $i", t)
+                    thumbnailList.add(PageThumbnail(i, null))
+                    if (thumbnailList.size == totalPages) {
+                        val sortedThumbnails = thumbnailList.sortedBy { it.pageIndex }
+                        thumbnailAdapter.submitList(sortedThumbnails)
+                    }
+                }
+            })
+        }
+    }
+
+    private fun onThumbnailClick(selectedPageIndex: Int) {
+        Log.d(TAG, "=== Thumbnail clicked: page $selectedPageIndex ===")
+
+        // Close overlay
+        toggleOverlay(false)
+
+        // Load selected page
+        if (selectedPageIndex != pageIndex) {
+            loadPage(selectedPageIndex)
+        } else {
+            Log.d(TAG, "Already on page $selectedPageIndex")
+        }
     }
 
     override fun onDestroy() {
