@@ -50,7 +50,7 @@ jobs:
         PYTHONPATH: ${{ github.workspace }}/backend
       run: |
         # 1. DJANGO_SETTINGS_MODULE을 먼저 설정 (env: 블록의 변수를 셸로 내보냄)
-        export DJANGO_SETTINGS_MODULE=app.settings
+        export DJANGO_SETTINGS_MODULE=settings
         
         # 2. venv 활성화 (이때 PYTHONPATH가 초기화될 수 있음)
         source ${{ github.workspace }}/.venv-ci/bin/activate
