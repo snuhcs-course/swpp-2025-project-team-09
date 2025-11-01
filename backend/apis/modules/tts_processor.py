@@ -49,6 +49,7 @@ class TTSModule:
     def __init__(self, out_dir="out_audio", log_dir="log", target_lang: str = "English"):
         self.client = AsyncOpenAI()
         self.TTS_MODEL = "gpt-4o-mini-tts"
+        self.TTS_MODEL_LITE = "tts-1"
         self.OUT_DIR = Path(out_dir)
         self.LOG_DIR = Path(log_dir)
         self.CSV_LOG = self.LOG_DIR / "sentence_log.csv"
@@ -134,6 +135,29 @@ class TTSModule:
         
         except Exception as e:
             print(f"TTS error for {out_path.name}: {e}")
+            return -1.0, None
+
+    async def synthesize_tts_lite(self, voice: str, text: str, out_path: Path = None, response_format: str = "mp3") -> tuple[float, bytes]:
+        """light model for Cover TTS - no sentiments"""
+        t0 = time.time()
+        try:
+            response = await self.client.audio.speech.create(
+                model=self.TTS_MODEL_LITE,  # tts-1
+                voice=voice,
+                input=text,
+                response_format=response_format
+            )
+            audio_bytes = response.content
+            
+            if out_path:
+                out_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(out_path, "wb") as f:
+                    f.write(audio_bytes)
+            
+            return round(time.time() - t0, 3), audio_bytes
+        
+        except Exception as e:
+            print(f"TTS Lite error: {e}")
             return -1.0, None
 
     async def get_translations_only(self, page: Dict[str, str]) -> Dict[str, Any]:
@@ -251,7 +275,7 @@ class TTSModule:
         # Filter out None results
         return [audio for audio in audio_results if audio is not None]
     
-    async def translate_and_tts_cover(self, title: str, session_id: str, page_index: int) -> tuple[str, str]:
+    # async def translate_and_tts_cover(self, title: str, session_id: str, page_index: int) -> tuple[str, str]:
         """
         Translate title and generate TTS for both male and female voices.
         
@@ -292,7 +316,47 @@ class TTSModule:
         
         return tts_male, tts_female
 
-    async def run_tts_cover_only(self, translation_data: Dict[str, Any], session_id: str, page_index: int, para_index: int) -> tuple[str, str]:
+    async def translate_and_tts_cover(self, title: str, session_id: str, page_index: int) -> tuple[str, str]:
+        """
+        Translate title and generate TTS for both male and female voices.
+        
+        Args:
+            title: Korean title text
+            session_id: Session UUID
+            page_index: Page index (0 for cover)
+            
+        Returns:
+            (tts_male_base64, tts_female_base64)
+        """
+        # Translate the title
+        trans_response = await self.translate(f"[CURRENT]: {title}")
+        
+        if isinstance(trans_response["result"], Exception):
+            return "", ""
+        
+        translated_text = trans_response["result"].translated_text.strip()
+        if not translated_text:
+            return "", ""
+        
+        # Generate TTS for male voice (echo)
+        male_latency, male_audio = await self.synthesize_tts_lite(
+            voice="echo",
+            text=translated_text
+        )
+        
+        # Generate TTS for female voice (shimmer)
+        female_latency, female_audio = await self.synthesize_tts_lite(
+            voice="shimmer",
+            text=translated_text
+        )
+        
+        # Convert to base64
+        male_b64 = base64.b64encode(male_audio).decode("utf-8") if male_audio else ""
+        female_b64 = base64.b64encode(female_audio).decode("utf-8") if female_audio else ""
+        
+        return male_b64, female_b64
+
+    # async def run_tts_cover_only(self, translation_data: Dict[str, Any], session_id: str, page_index: int, para_index: int) -> tuple[str, str]:
         """
         Run TTS for book cover titles without sentiment analysis.
         Generates both male (echo) and female (shimmer) voices.
