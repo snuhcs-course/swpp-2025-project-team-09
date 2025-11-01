@@ -2,17 +2,15 @@ name: Django Backend Test Automation (CI)
 
 on:
   push:
-    # 'deployment' 브랜치에 코드가 푸시될 때 트리거
     branches:
-      - '**' 
-    # backend 폴더의 내용이 변경되었을 때만 실행 (효율성)
+      - '**'
     paths:
-      - 'backend/**' 
+      - 'backend/**'
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
@@ -20,7 +18,7 @@ jobs:
     - name: Set up Python Environment
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11' # Conda 환경과 동일한 Python 버전을 권장합니다.
+        python-version: '3.11'
 
     - name: Cache Python Dependencies
       uses: actions/cache@v4
@@ -32,37 +30,26 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        # CI 전용 가상 환경 생성 (캐시가 없는 경우)
+        # CI 전용 가상 환경 초기화
+        rm -rf ${{ github.workspace }}/.venv-ci
         python -m venv ${{ github.workspace }}/.venv-ci
         source ${{ github.workspace }}/.venv-ci/bin/activate
-        
-        # requirements.txt 및 pytest-django 설치
+
+        # 의존성 설치
         pip install -r backend/requirements.txt
         pip install pytest pytest-django
 
-    - name: Run Pytest and Discover All Tests
-      # 테스트를 실행하기 위해 backend 폴더로 이동합니다.
-      working-directory: ./backend
+    - name: Run Pytest
+      working-directory: ./backend  # backend를 루트처럼 사용
       env:
-        # Django settings 모듈을 지정
-        DJANGO_SETTINGS_MODULE: settings 
-        # PYTHONPATH 설정 강화: 리포지토리 루트의 backend 폴더를 PYTHONPATH에 추가
+        DJANGO_SETTINGS_MODULE: settings
         PYTHONPATH: ${{ github.workspace }}/backend
       run: |
-        # 1. DJANGO_SETTINGS_MODULE을 먼저 설정 (env: 블록의 변수를 셸로 내보냄)
-        export DJANGO_SETTINGS_MODULE=settings
-        
-        # 2. venv 활성화 (이때 PYTHONPATH가 초기화될 수 있음)
         source ${{ github.workspace }}/.venv-ci/bin/activate
-
-        # 🚨🚨🚨 3. PYTHONPATH를 source 명령 이후에 재설정하여 강제 적용 (해결책) 🚨🚨🚨
+        export DJANGO_SETTINGS_MODULE=settings
         export PYTHONPATH=${{ github.workspace }}/backend
-        
-        # 🚨 모든 테스트 실행 (user_controller_test.py 포함)
-        # 추후 테스트 파일이 늘어나도 이 명령 하나로 모두 커버됩니다.
-        pytest tests/
+        pytest tests/ --cov --color=yes
 
-  # 🚨 새로 추가된 린트 Job
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -73,8 +60,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install Black
-        # Flake8을 설치하여 코드를 검사합니다.
         run: pip install black
       - name: Run Black Lint Check
         working-directory: ./backend
-        run: black --check . # backend 폴더 전체에 대해 린트 검사 실행
+        run: black --check .
