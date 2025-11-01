@@ -485,7 +485,10 @@ class LoadingActivity : AppCompatActivity() {
                 .setMessage(message)
                 .setPositiveButton("Try Again") { _, _ ->
                     // Just go back - user can retake photo
-                    val intent = Intent(this, CameraActivity::class.java)
+                    val intent = Intent(this, CameraSessionActivity::class.java).apply {
+                        putExtra("session_id", sessionId)
+                        putExtra("is_cover", true) // 커버를 다시 찍는 것이므로 is_cover를 true로 설정
+                    }
                     startActivity(intent)
                     finish()
                 }
