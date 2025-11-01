@@ -1,5 +1,6 @@
 package com.example.storybridge_android.ui.session
 
+import androidx.appcompat.app.AlertDialog
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -18,6 +19,9 @@ import com.example.storybridge_android.network.RetrofitClient
 import com.example.storybridge_android.network.UploadCoverResponse
 import com.example.storybridge_android.network.UploadImageRequest
 import com.example.storybridge_android.network.UploadImageResponse
+import com.example.storybridge_android.ui.camera.CameraActivity
+import com.example.storybridge_android.ui.camera.CameraSessionActivity
+import com.example.storybridge_android.ui.main.MainActivity
 import com.example.storybridge_android.ui.reading.ReadingActivity
 import retrofit2.Call
 import retrofit2.Callback
@@ -350,22 +354,23 @@ class LoadingActivity : AppCompatActivity() {
         Log.d(TAG, "Finishing LoadingActivity")
         finish()
     }
+
     private fun uploadCoverAndFetchVoices() {
         Log.d(TAG, "=== Uploading Cover Image for OCR + TTS ===")
 
         val file = File(imagePath!!)
         if (!file.exists()) {
             Log.e(TAG, "✗ Cover image file not found")
-            finish()
+            showErrorAndFinish("Image file not found")
             return
         }
 
-        animateProgressTo(UPLOAD_PROGRESS_END, 4000)
+        animateProgressTo(UPLOAD_PROGRESS_END, 8000)  // Increased to 8 seconds
 
-        // 이미지 인코딩
+        // Encode image
         val bitmap = decodeAndScaleImage(file.absolutePath) ?: run {
             Log.e(TAG, "✗ Failed to decode cover image")
-            finish()
+            showErrorAndFinish("Failed to process image")
             return
         }
 
@@ -376,7 +381,6 @@ class LoadingActivity : AppCompatActivity() {
 
         Log.d(TAG, "Base64 encoded (cover), length: ${base64.length}")
 
-        // Retrofit 요청 (올바른 방식)
         val request = UploadImageRequest(
             session_id = sessionId,
             page_index = 0,
@@ -395,15 +399,47 @@ class LoadingActivity : AppCompatActivity() {
 
                     if (!response.isSuccessful) {
                         Log.e(TAG, "✗ Upload cover failed: ${response.code()}")
-                        finish()
+
+                        // Handle specific error codes
+                        val errorMessage = when (response.code()) {
+                            422 -> {
+                                try {
+                                    val errorBody = response.errorBody()?.string()
+                                    Log.e(TAG, "Error body: $errorBody")
+
+                                    if (errorBody?.contains("UNABLE_TO_PROCESS_IMAGE") == true) {
+                                        "Could not read text from the cover. Please try again."
+                                    } else {
+                                        "Failed to process cover image"
+                                    }
+                                } catch (e: Exception) {
+                                    "Failed to process cover image"
+                                }
+                            }
+                            404 -> "Session not found. Please restart."
+                            500 -> "Server error. Please try again."
+                            else -> "Upload failed (${response.code()}). Please try again."
+                        }
+
+                        showErrorAndRetry(errorMessage)
                         return
                     }
 
                     val body = response.body()
                     if (body == null) {
                         Log.e(TAG, "✗ Response body is null")
-                        finish()
+                        showErrorAndRetry("Invalid server response. Please try again.")
                         return
+                    }
+
+                    // Check if TTS data is available
+                    if (body.tts_male.isEmpty() && body.tts_female.isEmpty()) {
+                        Log.w(TAG, "⚠ Both TTS data are empty")
+                        Toast.makeText(
+                            this@LoadingActivity,
+                            "Voice preview not available, but continuing...",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
 
                     Log.d(TAG, "✓ Cover upload success")
@@ -424,14 +460,54 @@ class LoadingActivity : AppCompatActivity() {
 
                 override fun onFailure(call: Call<UploadCoverResponse>, t: Throwable) {
                     Log.e(TAG, "✗ Upload cover error: ${t.message}", t)
-                    Toast.makeText(
-                        this@LoadingActivity,
-                        "Failed to upload cover: ${t.message}",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    finish()
+
+                    val errorMessage = when {
+                        t.message?.contains("Unable to resolve host") == true ->
+                            "Network error. Please check your connection."
+                        t.message?.contains("timeout") == true ->
+                            "Request timed out. Please try again."
+                        else ->
+                            "Connection failed: ${t.message}"
+                    }
+
+                    showErrorAndRetry(errorMessage)
                 }
             })
+    }
+
+    /**
+     * Show error dialog and allow retry
+     */
+    private fun showErrorAndRetry(message: String) {
+        handler.post {
+            AlertDialog.Builder(this)
+                .setTitle("\uD83D\uDCDA Oops!")
+                .setMessage(message)
+                .setPositiveButton("Try Again") { _, _ ->
+                    // Just go back - user can retake photo
+                    val intent = Intent(this, CameraActivity::class.java)
+                    startActivity(intent)
+                    finish()
+                }
+                .setNegativeButton("Cancel") { _, _ ->
+                    // Go back to main or previous screen
+                    finish()
+                }
+                .setCancelable(false)
+                .show()
+        }
+    }
+
+    /**
+     * Show error and finish activity
+     */
+    private fun showErrorAndFinish(message: String) {
+        handler.post {
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+            handler.postDelayed({
+                finish()
+            }, 2000)
+        }
     }
 
     /**
