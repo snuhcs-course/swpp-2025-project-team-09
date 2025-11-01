@@ -45,7 +45,7 @@ jobs:
       working-directory: ./backend
       env:
         # Django settings 모듈을 지정
-        DJANGO_SETTINGS_MODULE: app.settings 
+        DJANGO_SETTINGS_MODULE: settings 
         # PYTHONPATH 설정 강화: 리포지토리 루트의 backend 폴더를 PYTHONPATH에 추가
         PYTHONPATH: ${{ github.workspace }}/backend
       run: |

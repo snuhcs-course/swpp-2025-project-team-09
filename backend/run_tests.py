@@ -16,6 +16,7 @@ import os
 
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 
+
 # --- Colors ---
 class C:
     G = "\033[92m"
@@ -68,9 +69,7 @@ CLI_ARGS = {
 def run_test(path):
     python_bin = sys.executable
     cmd = [python_bin, "manage.py", "test", path, "--verbosity=2"]
-    result = subprocess.run(
-        cmd, cwd=PROJECT_ROOT, capture_output=True, text=True
-    )
+    result = subprocess.run(cmd, cwd=PROJECT_ROOT, capture_output=True, text=True)
     output = result.stdout + result.stderr
     lines = output.splitlines()
 
