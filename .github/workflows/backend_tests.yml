@@ -48,7 +48,7 @@ jobs:
         source ${{ github.workspace }}/.venv-ci/bin/activate
         export DJANGO_SETTINGS_MODULE=settings
         export PYTHONPATH=${{ github.workspace }}/backend
-        pytest tests/ --cov --color=yes
+        pytest tests/
 
   lint:
     runs-on: ubuntu-latest
