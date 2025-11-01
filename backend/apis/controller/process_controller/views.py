@@ -273,7 +273,7 @@ class ProcessUploadCoverView(APIView):
         - status (string): "ready"
         - submitted_at (string, ISO8601): submission timestamp
         - title (string): extracted book title
-        - tts_male (string): base64 audio of male voice (Onyx)
+        - tts_male (string): base64 audio of male voice (Echo)
         - tts_female (string): base64 audio of female voice (Shimmer)
     """
 
@@ -296,71 +296,21 @@ class ProcessUploadCoverView(APIView):
         # Save cover image (to a different path)
         image_path = self._save_image(image_base64, session_id, page_index)
 
-        # Run OCR
-        ocr_result = OCRModule().process_cover_page(image_path)
-        print(f"[DEBUG] OCR Result for cover: {ocr_result}")
-        if not ocr_result:
+        # Run OCR to get title
+        title = OCRModule().process_cover_page(image_path)
+        print(f"[DEBUG] OCR Result for cover: {title}")
+        if not title:
             return Response({
                 "error_code": 422,
                 "message": "PROCESS__UNABLE_TO_PROCESS_IMAGE"
             }, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
-
-        # Extract title from OCR result and save to session
-        if ocr_result:
-            title = ocr_result[0]["text"]  # largest text assumed to be title
-        else:
-            return Response({
-                "error_code": 422,
-                "message": "PROCESS__TITLE_NOT_FOUND"
-            }, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
         session.title = title
         session.save()
 
-        # Run translation synchronously (fast, ~2-3s per paragraph)
-        tts_module = TTSModule()
-        translation_data = self._get_all_translations(tts_module, ocr_result, session_id, page_index)
-
-        # Create page and bounding boxes
-        page = self._create_page_and_bbs(session, image_path, ocr_result, translation_data)
-
-        # Start TTS for both male ("echo") and female ("shimmer") voices concurrently
-        tts_male = None
-        tts_female = None
-        def run_tts_voice(voice):
-            try:
-                # Only process first paragraph for cover (title)
-                if not translation_data or translation_data[0]["status"] != "ok":
-                    return ""
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                audio_results = loop.run_until_complete(
-                    tts_module.run_tts_cover_only(translation_data[0], session_id, page_index, 0, voice)
-                )
-                loop.close()
-                # audio_results is a list of base64 strings; join if needed
-                if audio_results and len(audio_results) > 0:
-                    # If list, return first element (cover title is single para)
-                    return audio_results[0]
-                else:
-                    return ""
-            except Exception as e:
-                import traceback
-                traceback.print_exc()
-                return ""
-
-        results = {}
-        def tts_thread(voice, key):
-            results[key] = run_tts_voice(voice)
-
-        threads = []
-        threads.append(threading.Thread(target=tts_thread, args=("echo", "tts_male")))
-        threads.append(threading.Thread(target=tts_thread, args=("shimmer", "tts_female")))
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
-        tts_male = results.get("tts_male", "")
-        tts_female = results.get("tts_female", "")
+        # Run translation for title synchronously
+        tts_male, tts_female = self._run_async(
+            TTSModule().translate_and_tts_cover(title, session_id, page_index)
+        )
 
         # Update session
         session.totalPages += 1
@@ -440,3 +390,16 @@ class ProcessUploadCoverView(APIView):
             f.write(image_bytes)
         
         return image_path
+    
+    def _run_async(self, coroutine):
+        """Helper to run async code in sync context."""
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            result = loop.run_until_complete(coroutine)
+            loop.close()
+            return result
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return "", ""
