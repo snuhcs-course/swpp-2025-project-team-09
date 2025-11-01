@@ -43,3 +43,5 @@ venv/
 
 # 오디오 파일
 out_audio/
+
+.coverage

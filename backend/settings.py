@@ -3,7 +3,8 @@ from dotenv import load_dotenv
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+# settings.py의 위치를 backend 폴더 바로 아래로 바꾸면서 아래 BASE_DRI 설정도 수정함.
+BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 # Quick-start development settings - unsuitable for production
