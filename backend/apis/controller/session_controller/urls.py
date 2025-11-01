@@ -5,7 +5,7 @@ from .views import (
     EndSessionView,
     GetSessionInfoView,
     GetSessionStatsView,
-    SessionReviewView
+    SessionReviewView,
 )
 
 urlpatterns = [

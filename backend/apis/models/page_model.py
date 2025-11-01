@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from apis.models.session_model import Session
-import json
+
 
 class Page(models.Model):
     """
@@ -32,12 +32,15 @@ class Page(models.Model):
         audio_list: base64 또는 경로 리스트
         """
         from apis.models.bb_model import BB
+
         for i, bbox in enumerate(bbox_list):
+            trans = translated_list[i] if i < len(translated_list) else ""
+            audio = audio_list[i] if i < len(audio_list) else ""
             BB.objects.create(
                 page=self,
                 original_text=bbox.get("text", ""),
-                translated_text=translated_list[i] if i < len(translated_list) else "",
-                audio_base64=audio_list[i] if i < len(audio_list) else "",
+                translated_text=trans,
+                audio_base64=audio,
                 coordinates={
                     "x1": bbox.get("x1"),
                     "y1": bbox.get("y1"),
@@ -47,5 +50,5 @@ class Page(models.Model):
                     "y3": bbox.get("y3"),
                     "x4": bbox.get("x4"),
                     "y4": bbox.get("y4"),
-                }
+                },
             )

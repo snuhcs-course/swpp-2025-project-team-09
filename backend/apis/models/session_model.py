@@ -3,6 +3,7 @@ from django.utils import timezone
 from apis.models.user_model import User
 import uuid
 
+
 class Session(models.Model):
     """
     Session entity
@@ -29,4 +30,5 @@ class Session(models.Model):
     def addPage(self, image_url, index):
         """페이지 추가용 헬퍼 메서드"""
         from apis.models.page_model import Page
-        Page.objects.create(session=self, img_url=image_url, page_index=index)
+
+        Page.objects.create(session=self, img_url=image_url)
