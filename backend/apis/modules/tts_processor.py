@@ -292,45 +292,6 @@ class TTSModule:
         
         return tts_male, tts_female
 
-    # async def run_tts_cover_only(self, translation_data: Dict[str, Any], session_id: str, page_index: int, para_index: int, para_voice: str) -> List[str]:
-        """
-        Run TTS for book cover titles without sentiment analysis.
-        Uses a fixed instruction suited for title reading.
-        """
-        sentences_data = translation_data["sentences"]
-        if not sentences_data:
-            return []
-
-        stem = f"{session_id}_{page_index}_{para_index}"
-
-        async def synthesize_sentence(i: int, sentence_data: dict):
-            voice = para_voice
-            out_file = self.OUT_DIR / f"{stem}_cover_sent{i+1}.mp3"
-
-            # Fixed instruction for cover title reading
-            tts_instr = (
-                "[Affect: Speak clearly and confidently, as if announcing the title of a children's storybook.] "
-                "[Tone: Warm, friendly, and engaging, inviting the listener into a magical world.] "
-                "[Pacing: Steady and clear, with emphasis on key words in the title.]"
-            )
-
-            tts_latency, tts_result = await self.synthesize_tts(
-                voice=voice,
-                text=sentence_data.get('translation', ''),
-                instructions=tts_instr,
-                out_path=out_file,
-                response_format='mp3'
-            )
-
-            if tts_result:
-                return base64.b64encode(tts_result).decode('utf-8')
-            return None
-
-        audio_results = await asyncio.gather(*[
-            synthesize_sentence(i, sent_data) for i, sent_data in enumerate(sentences_data)
-        ])
-
-        return [audio for audio in audio_results if audio is not None]
     async def run_tts_cover_only(self, translation_data: Dict[str, Any], session_id: str, page_index: int, para_index: int) -> tuple[str, str]:
         """
         Run TTS for book cover titles without sentiment analysis.
