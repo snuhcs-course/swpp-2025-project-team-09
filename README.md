@@ -1,4 +1,7 @@
 # SWPP 2025 Project Team 09
+## Demo Video
+
+You can watch the demo video here: [Google Drive Link](https://drive.google.com/file/d/1_FHjbslY4FF7F8Q17Pg3wdYywMyz_UAb/view?usp=drive_link)
 
 ## Project Overview
 The backend is deployed on an AWS EC2 server, and the app communicates with that server.
@@ -80,5 +83,14 @@ cd backend
 # Run tests
 python run_tests.py
 ```
-![BE Coverage](https://i.imgur.com/Um7yEyo.png)
-Most of the backend files have achieved 100% test coverage.
+
+
+## Testing Results
+
+Here are the backend and frontend coverage results:
+
+**Backend Coverage**
+![Backend Coverage](https://i.imgur.com/Um7yEyo.png)
+
+**Frontend Coverage**
+![Frontend Coverage](https://i.imgur.com/bZy7PVY.png)
