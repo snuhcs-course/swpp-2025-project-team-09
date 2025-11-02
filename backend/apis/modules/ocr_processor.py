@@ -136,7 +136,7 @@ class OCRModule:
             lines_sorted = sorted(lines, key=lambda l: l["y"])
             paragraph_text = "\n".join(l["text"] for l in lines_sorted)
 
-            # Calculate bbox from all vertices in paragraph.
+            # Calculate bbox from all vertices in paragraph
             xs = []
             ys = []
             for l in lines_sorted:

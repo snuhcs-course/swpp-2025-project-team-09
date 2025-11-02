@@ -12,13 +12,21 @@ echo "--- 배포 시작: $(date) ---"
 
 # --- [1] Git Pull (코드 업데이트) ---
 echo "--- Git Pull 시작 ---"
+
+# 항상 지정된 브랜치로 이동
+git fetch origin
 git checkout $BRANCH_NAME
-git pull origin $BRANCH_NAME
+
+# 로컬 변경사항 무시하고, 원격(deployment 브랜치)의 최신 상태로 강제 덮어쓰기
+git reset --hard origin/$BRANCH_NAME
+
 if [ $? -ne 0 ]; then
     echo "::error::Git Pull 실패. 배포 중단."
     exit 1
 fi
+
 echo "--- Git Pull 완료 ---"
+
 
 
 # --- [2] 의존성 설치 ---
