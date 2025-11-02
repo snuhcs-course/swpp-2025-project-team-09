@@ -30,5 +30,26 @@ jobs:
         
         # 2. EC2에서 실행할 deploy.sh 스크립트 경로 (확정된 경로)
         script: |
+          echo "--- ✅ SSH 접속 성공 ---"
+          echo "현재 경로 확인 중..."
+          pwd
+          echo "--- 현재 디렉토리 내 파일 목록 ---"
+          ls -al
+          
+          echo "--- 프로젝트 디렉토리로 이동 ---"
           cd /home/${{ secrets.EC2_USER }}/storybridge/swpp-2025-project-team-09
+          
+          echo "--- 이동 후 경로 확인 ---"
+          pwd
+          echo "--- 이동 후 디렉토리 내 파일 목록 ---"
+          ls -al
+          
+          echo "--- deploy.sh 실행권한 확인 ---"
+          ls -l deploy.sh || echo "⚠️ deploy.sh 없음"
+          
+          echo "--- 실행권한 부여 ---"
+          chmod +x deploy.sh
+          
+          echo "--- deploy.sh 실행 시작 ---"
           ./deploy.sh
+          echo "--- deploy.sh 실행 종료 ---"
