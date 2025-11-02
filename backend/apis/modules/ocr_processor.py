@@ -282,5 +282,5 @@ class OCRModule:
         # Sort paragraphs by height (largest first)
         results.sort(key=lambda r: r["height"], reverse=True)
         
-        # Return just the largest text as a string, or None if no results
+        # Return just the largest text as a string, or None if no results .
         return results[0]["text"] if results else None
