@@ -1,5 +1,6 @@
-package com.example.storybridge_android
+package com.example.storybridge_android.ui.session
 
+import androidx.appcompat.app.AlertDialog
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -9,15 +10,25 @@ import android.os.Looper
 import android.util.Base64
 import android.util.Log
 import android.widget.ProgressBar
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.storybridge_android.network.*
+import androidx.core.graphics.scale
+import com.example.storybridge_android.R
+import com.example.storybridge_android.network.CheckOcrResponse
+import com.example.storybridge_android.network.RetrofitClient
+import com.example.storybridge_android.network.UploadCoverResponse
+import com.example.storybridge_android.network.UploadImageRequest
+import com.example.storybridge_android.network.UploadImageResponse
+import com.example.storybridge_android.ui.camera.CameraActivity
+import com.example.storybridge_android.ui.camera.CameraSessionActivity
+import com.example.storybridge_android.ui.main.MainActivity
+import com.example.storybridge_android.ui.reading.ReadingActivity
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.io.ByteArrayOutputStream
 import java.io.File
 import kotlin.math.max
-import androidx.core.graphics.scale
 
 class LoadingActivity : AppCompatActivity() {
 
@@ -28,6 +39,7 @@ class LoadingActivity : AppCompatActivity() {
     private var pageIndex: Int = 0
     private var lang: String = "en"
     private var imagePath: String? = null
+    private var isCover: Boolean = false
 
     companion object {
         private const val TAG = "LoadingActivity"
@@ -56,11 +68,13 @@ class LoadingActivity : AppCompatActivity() {
         pageIndex = intent.getIntExtra("page_index", 0)
         lang = intent.getStringExtra("lang") ?: "en"
         imagePath = intent.getStringExtra("image_path")
+        isCover = intent.getBooleanExtra("is_cover", false)
 
         Log.d(TAG, "Session ID: $sessionId")
         Log.d(TAG, "Page index: $pageIndex")
         Log.d(TAG, "Language: $lang")
         Log.d(TAG, "Image path: $imagePath")
+        Log.d(TAG, "isCover: $isCover")
 
         if (imagePath == null) {
             Log.e(TAG, "✗ No image path provided")
@@ -70,8 +84,11 @@ class LoadingActivity : AppCompatActivity() {
 
         // Initialize progress bar
         loadingBar.progress = UPLOAD_PROGRESS_START
-
-        uploadImage()
+        if(isCover){
+            uploadCoverAndFetchVoices()
+        } else {
+            uploadImage()
+        }
     }
 
     /**
@@ -144,7 +161,10 @@ class LoadingActivity : AppCompatActivity() {
 
         // Final scaling if inSampleSize was not enough or to hit the target exactly
         if (scaledBitmap != null && max(scaledBitmap.width, scaledBitmap.height) > MAX_IMAGE_DIMENSION) {
-            val scaleRatio = MAX_IMAGE_DIMENSION.toFloat() / max(scaledBitmap.width, scaledBitmap.height)
+            val scaleRatio = MAX_IMAGE_DIMENSION.toFloat() / max(
+                scaledBitmap.width,
+                scaledBitmap.height
+            )
             val newWidth = (scaledBitmap.width * scaleRatio).toInt()
             val newHeight = (scaledBitmap.height * scaleRatio).toInt()
 
@@ -335,6 +355,180 @@ class LoadingActivity : AppCompatActivity() {
         finish()
     }
 
+    private fun uploadCoverAndFetchVoices() {
+        Log.d(TAG, "=== Uploading Cover Image for OCR + TTS ===")
+
+        val file = File(imagePath!!)
+        if (!file.exists()) {
+            Log.e(TAG, "✗ Cover image file not found")
+            showErrorAndFinish("Image file not found")
+            return
+        }
+
+        animateProgressTo(UPLOAD_PROGRESS_END, 8000)  // Increased to 8 seconds
+
+        // Encode image
+        val bitmap = decodeAndScaleImage(file.absolutePath) ?: run {
+            Log.e(TAG, "✗ Failed to decode cover image")
+            showErrorAndFinish("Failed to process image")
+            return
+        }
+
+        val outputStream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.JPEG, COMPRESSION_QUALITY, outputStream)
+        val base64 = Base64.encodeToString(outputStream.toByteArray(), Base64.DEFAULT)
+        bitmap.recycle()
+
+        Log.d(TAG, "Base64 encoded (cover), length: ${base64.length}")
+
+        val request = UploadImageRequest(
+            session_id = sessionId,
+            page_index = 0,
+            lang = lang,
+            image_base64 = base64
+        )
+
+        RetrofitClient.processApi.uploadCoverImage(request)
+            .enqueue(object : Callback<UploadCoverResponse> {
+                override fun onResponse(
+                    call: Call<UploadCoverResponse>,
+                    response: Response<UploadCoverResponse>
+                ) {
+                    Log.d(TAG, "=== Cover Upload Response ===")
+                    Log.d(TAG, "Code: ${response.code()}")
+
+                    if (!response.isSuccessful) {
+                        Log.e(TAG, "✗ Upload cover failed: ${response.code()}")
+
+                        // Handle specific error codes
+                        val errorMessage = when (response.code()) {
+                            422 -> {
+                                try {
+                                    val errorBody = response.errorBody()?.string()
+                                    Log.e(TAG, "Error body: $errorBody")
+
+                                    if (errorBody?.contains("UNABLE_TO_PROCESS_IMAGE") == true) {
+                                        "Could not read text from the cover. Please try again."
+                                    } else {
+                                        "Failed to process cover image"
+                                    }
+                                } catch (e: Exception) {
+                                    "Failed to process cover image"
+                                }
+                            }
+                            404 -> "Session not found. Please restart."
+                            500 -> "Server error. Please try again."
+                            else -> "Upload failed (${response.code()}). Please try again."
+                        }
+
+                        showErrorAndRetry(errorMessage)
+                        return
+                    }
+
+                    val body = response.body()
+                    if (body == null) {
+                        Log.e(TAG, "✗ Response body is null")
+                        showErrorAndRetry("Invalid server response. Please try again.")
+                        return
+                    }
+
+                    // Check if TTS data is available
+                    if (body.tts_male.isEmpty() && body.tts_female.isEmpty()) {
+                        Log.w(TAG, "⚠ Both TTS data are empty")
+                        Toast.makeText(
+                            this@LoadingActivity,
+                            "Voice preview not available, but continuing...",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+
+                    Log.d(TAG, "✓ Cover upload success")
+                    Log.d(TAG, "Book title: ${body.title}")
+                    Log.d(TAG, "TTS male length: ${body.tts_male.length}")
+                    Log.d(TAG, "TTS female length: ${body.tts_female.length}")
+
+                    animateProgressTo(OCR_PROGRESS_END, 800)
+
+                    handler.postDelayed({
+                        navigateToVoiceSelect(
+                            title = body.title,
+                            maleTts = body.tts_male,
+                            femaleTts = body.tts_female
+                        )
+                    }, 500)
+                }
+
+                override fun onFailure(call: Call<UploadCoverResponse>, t: Throwable) {
+                    Log.e(TAG, "✗ Upload cover error: ${t.message}", t)
+
+                    val errorMessage = when {
+                        t.message?.contains("Unable to resolve host") == true ->
+                            "Network error. Please check your connection."
+                        t.message?.contains("timeout") == true ->
+                            "Request timed out. Please try again."
+                        else ->
+                            "Connection failed: ${t.message}"
+                    }
+
+                    showErrorAndRetry(errorMessage)
+                }
+            })
+    }
+
+    /**
+     * Show error dialog and allow retry
+     */
+    private fun showErrorAndRetry(message: String) {
+        handler.post {
+            AlertDialog.Builder(this)
+                .setTitle("\uD83D\uDCDA Oops!")
+                .setMessage(message)
+                .setPositiveButton("Try Again") { _, _ ->
+                    // Just go back - user can retake photo
+                    val intent = Intent(this, CameraSessionActivity::class.java).apply {
+                        putExtra("session_id", sessionId)
+                        putExtra("is_cover", true) // 커버를 다시 찍는 것이므로 is_cover를 true로 설정
+                    }
+                    startActivity(intent)
+                    finish()
+                }
+                .setNegativeButton("Cancel") { _, _ ->
+                    // Go back to main or previous screen
+                    finish()
+                }
+                .setCancelable(false)
+                .show()
+        }
+    }
+
+    /**
+     * Show error and finish activity
+     */
+    private fun showErrorAndFinish(message: String) {
+        handler.post {
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+            handler.postDelayed({
+                finish()
+            }, 2000)
+        }
+    }
+
+    /**
+     * VoiceSelectActivity로 이동
+     */
+    private fun navigateToVoiceSelect(title: String, maleTts: String?, femaleTts: String?) {
+        Log.d(TAG, "=== Navigating to VoiceSelectActivity ===")
+
+        val intent = Intent(this, VoiceSelectActivity::class.java).apply {
+            putExtra("session_id", sessionId)
+            putExtra("book_title", title)
+            putExtra("male_tts", maleTts)
+            putExtra("female_tts", femaleTts)
+        }
+
+        startActivity(intent)
+        finish()
+    }
     override fun onDestroy() {
         super.onDestroy()
         isPolling = false

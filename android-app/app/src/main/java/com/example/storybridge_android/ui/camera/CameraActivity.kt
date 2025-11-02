@@ -1,10 +1,12 @@
-package com.example.storybridge_android
+package com.example.storybridge_android.ui.camera
 
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
@@ -12,6 +14,7 @@ import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import com.example.storybridge_android.R
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.gms.common.moduleinstall.ModuleInstall
@@ -41,8 +44,8 @@ class CameraActivity : AppCompatActivity() {
         setContentView(R.layout.activity_camera)
 
         Log.d(TAG, "=== CameraActivity onCreate ===")
-        Log.d(TAG, "Android Version: ${android.os.Build.VERSION.SDK_INT}")
-        Log.d(TAG, "Device: ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}")
+        Log.d(TAG, "Android Version: ${Build.VERSION.SDK_INT}")
+        Log.d(TAG, "Device: ${Build.MANUFACTURER} ${Build.MODEL}")
 
         // 🔹 권한 요청 launcher 먼저 등록
         initPermissionLauncher()
@@ -194,7 +197,7 @@ class CameraActivity : AppCompatActivity() {
                 Toast.makeText(this, "Scanner ready", Toast.LENGTH_SHORT).show()
 
                 // 설치 후 약간의 지연을 두고 스캐너 초기화
-                android.os.Handler(mainLooper).postDelayed({
+                Handler(mainLooper).postDelayed({
                     if (!isFinishing && !isDestroyed) {
                         initScannerAndLaunch()
                     }
@@ -237,7 +240,7 @@ class CameraActivity : AppCompatActivity() {
             Log.d(TAG, "✓ Scanner client created")
 
             // 짧은 지연 후 실행 (ML Kit 초기화 시간 확보)
-            android.os.Handler(mainLooper).postDelayed({
+            Handler(mainLooper).postDelayed({
                 if (!isFinishing && !isDestroyed) {
                     launchScanner()
                 }
@@ -367,7 +370,7 @@ class CameraActivity : AppCompatActivity() {
             Toast.makeText(this, "Initializing scanner, please wait...", Toast.LENGTH_SHORT).show()
 
             // 재시도 전에 더 긴 대기 시간
-            android.os.Handler(mainLooper).postDelayed({
+            Handler(mainLooper).postDelayed({
                 if (!isFinishing && !isDestroyed) {
                     initScannerAndLaunch()
                 }

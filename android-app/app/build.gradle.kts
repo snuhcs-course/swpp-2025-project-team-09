@@ -69,9 +69,37 @@ dependencies {
     implementation("com.google.android.gms:play-services-mlkit-document-scanner:16.0.0")
     implementation("com.google.android.gms:play-services-base:18.5.0")
 
+    // ViewModel + Coroutine 지원
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.6")
+    // LiveData 사용 시
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.6")
+    // lifecycleScope 같은 coroutine 사용 시
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
+
     // Test
     testImplementation(libs.junit)
+    testImplementation("com.squareup.retrofit2:retrofit:2.9.0")
+    testImplementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
+    testImplementation("org.jetbrains.kotlin:kotlin-test:1.9.23")
+
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+
+    // Android Test
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    implementation("com.squareup.retrofit2:retrofit-mock:2.11.0")
+
+    androidTestImplementation("androidx.test:runner:1.5.2")
+    androidTestImplementation("androidx.test.ext:junit-ktx:1.1.5")
+    androidTestImplementation("androidx.test.espresso:espresso-intents:3.5.1")
+    androidTestImplementation("androidx.test:rules:1.5.0")
+
+    androidTestImplementation("org.mockito:mockito-core:5.3.1")
+    androidTestImplementation("org.mockito:mockito-android:5.3.1")
+    androidTestImplementation("org.mockito.kotlin:mockito-kotlin:5.1.0")
+
+    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+
+    androidTestImplementation("com.squareup.okhttp3:mockwebserver:4.11.0")
 }

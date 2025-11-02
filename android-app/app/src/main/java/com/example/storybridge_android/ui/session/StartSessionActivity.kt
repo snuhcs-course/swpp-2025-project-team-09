@@ -1,14 +1,18 @@
-package com.example.storybridge_android
+package com.example.storybridge_android.ui.session
 
 import android.content.Intent
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.example.storybridge_android.R
+import com.example.storybridge_android.ui.session.VoiceSelectActivity
 import com.example.storybridge_android.network.RetrofitClient
 import com.example.storybridge_android.network.StartSessionRequest
 import com.example.storybridge_android.network.StartSessionResponse
+import com.example.storybridge_android.ui.camera.CameraSessionActivity
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -38,9 +42,9 @@ class StartSessionActivity : AppCompatActivity() {
     private fun startSession() {
         Log.d(TAG, "=== Starting Session ===")
 
-        val deviceInfo = android.provider.Settings.Secure.getString(
+        val deviceInfo = Settings.Secure.getString(
             contentResolver,
-            android.provider.Settings.Secure.ANDROID_ID
+            Settings.Secure.ANDROID_ID
         )
 
         Log.d(TAG, "Device ID: $deviceInfo")
@@ -67,8 +71,10 @@ class StartSessionActivity : AppCompatActivity() {
 
                     if (sessionId != null) {
                         Log.d(TAG, "✓ Session created successfully: $sessionId")
-                        Log.d(TAG, "Navigating to VoiceSelectActivity...")
-                        navigateToVoiceSelect(sessionId)
+                        Log.d(TAG, "Navigating to CameraSessionActivity for cover...")
+                        navigateToCameraForCover(sessionId)
+//                        Log.d(TAG, "Navigating to VoiceSelectActivity...")
+//                        navigateToVoiceSelect(sessionId)
                     } else {
                         Log.e(TAG, "✗ Session ID is null in response body")
                         Log.e(TAG, "Full response body: $session")
@@ -119,5 +125,17 @@ class StartSessionActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         Log.d(TAG, "=== Activity destroyed ===")
+    }
+
+    private fun navigateToCameraForCover(sessionId: String) {
+        Log.d(TAG, "=== Navigating to CameraSessionActivity (Cover Capture) ===")
+
+        val intent = Intent(this, CameraSessionActivity::class.java)
+        intent.putExtra("session_id", sessionId)
+        intent.putExtra("page_index", 0) // fix index of the book cover to page 0
+        intent.putExtra("is_cover", true) // add flag for cover
+
+        startActivity(intent)
+        finish()
     }
 }

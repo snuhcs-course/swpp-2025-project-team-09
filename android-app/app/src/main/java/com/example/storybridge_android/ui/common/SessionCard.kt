@@ -1,4 +1,4 @@
-package com.example.storybridge_android.ui
+package com.example.storybridge_android.ui.common
 
 import android.content.Context
 import android.util.AttributeSet
