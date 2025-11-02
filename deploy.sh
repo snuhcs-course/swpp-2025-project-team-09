@@ -10,22 +10,15 @@ SERVER_LOG="$BACKEND_DIR/server.log"
 
 echo "--- 배포 시작: $(date) ---"
 
-# --- [1] Git Pull (코드 업데이트) ---
-echo "--- Git Pull 시작 ---"
+# --- [1] Git Pull (무조건 최신 상태로 덮어쓰기) ---
+echo "--- Git Pull (Force Sync) ---"
 
-# 항상 지정된 브랜치로 이동
-git fetch origin
-git checkout $BRANCH_NAME
+git fetch origin $BRANCH_NAME
+git checkout $BRANCH_NAME 
+git reset --hard origin/$BRANCH_NAME
+git clean -fd
 
-# 로컬 변경사항 무시하고, 원격(deployment 브랜치)의 최신 상태로 강제 덮어쓰기
-git reset --hard $BRANCH_NAME
-
-if [ $? -ne 0 ]; then
-    echo "::error::Git Pull 실패. 배포 중단."
-    exit 1
-fi
-
-echo "--- Git Pull 완료 ---"
+echo "--- ✅ Git Repository 완전 동기화 완료 ---"
 
 
 
