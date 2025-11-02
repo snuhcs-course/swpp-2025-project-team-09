@@ -32,4 +32,5 @@ jobs:
         script: |
           export PYTHONUNBUFFERED=1
           cd /home/${{ secrets.EC2_USER }}/storybridge/swpp-2025-project-team-09
+          chmod +x deploy.sh
           ./deploy.sh
