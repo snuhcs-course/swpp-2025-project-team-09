@@ -80,5 +80,5 @@ cd backend
 # Run tests
 python run_tests.py
 ```
-![BE Coverage](https://imgur.com/a/bva5km3)
+![BE Coverage](https://i.imgur.com/Um7yEyo.png)
 Most of the backend files have achieved 100% test coverage.
