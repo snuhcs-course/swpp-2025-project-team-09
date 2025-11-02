@@ -31,10 +31,4 @@ jobs:
         # 2. EC2에서 실행할 deploy.sh 스크립트 경로 (확정된 경로)
         script: |
           cd /home/${{ secrets.EC2_USER }}/storybridge/swpp-2025-project-team-09
-          echo "---  강제 리셋으로 최신 코드 맞춤 ---"
-          git fetch origin deployment
-          git reset --hard origin/deployment
-          git clean -fd
-          echo "---  최신 코드 동기화 완료 ---"
-          chmod +x deploy.sh
           ./deploy.sh
