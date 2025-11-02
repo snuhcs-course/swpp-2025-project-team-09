@@ -39,8 +39,8 @@ if [ -f "$BACKEND_DIR/db.sqlite3" ]; then
 fi
 
 # 새로운 스키마로 DB 재생성
-"$PYTHON_EXECUTABLE" "$BACKEND_DIR/manage.py" makemigrations 
-"$PYTHON_EXECUTABLE" "$BACKEND_DIR/manage.py" migrate
+"$PYTHON_EXECUTABLE" "$BACKEND_DIR/manage.py" makemigrations --noinput
+"$PYTHON_EXECUTABLE" "$BACKEND_DIR/manage.py" migrate --noinput
 
 echo "--- 새 DB 스키마 생성 완료 ---"
 
