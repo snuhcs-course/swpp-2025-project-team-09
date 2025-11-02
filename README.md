@@ -38,6 +38,47 @@ This URL points to the backend API server.
 - Added cover page and voice selection features.
 - Added text box movement functionality.
 - Added page navigation functionality.
+- Refactored the frontend using the MVVM architecture pattern.
 
 ### Testing
-- Backend testing is available in the `testing/backend` branch.
+- Backend and frontend testing is available in the `testing/backend` branch.
+
+## Backend Testing Setup
+
+Follow these steps to set up a virtual environment and run backend tests.
+
+### 1. Create and Activate Virtual Environment
+
+```bash
+# Move to backend/
+cd ./backend
+
+# Create a virtual environment
+python -m venv venv
+
+# Activate the virtual environment
+source venv/bin/activate
+```
+
+After activating the virtual environment, install all dependencies listed in the `requirements.txt` file:
+
+```bash
+pip install -r requirements.txt
+```
+
+### 2. Run Backend Tests
+
+Switch to the testing branch and execute the test script:
+
+```bash
+# Move to testing/backend branch
+git checkout testing/backend
+
+# Enter the backend directory
+cd backend
+
+# Run tests
+python run_tests.py
+```
+![BE Coverage](https://imgur.com/a/bva5km3)
+Most of the backend files have achieved 100% test coverage.
