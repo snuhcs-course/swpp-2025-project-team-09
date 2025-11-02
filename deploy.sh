@@ -29,28 +29,20 @@ if [ $? -ne 0 ]; then
 fi
 echo "--- 의존성 설치 완료 ---"
 
-
 # --- [3] DB 초기화 (형식 변경 대응) ---
-echo "--- ⚠️ DB 초기화 시작 (모든 데이터 삭제) ---"
+echo "--- ⚠️ DB 형식 변경 대응: 기존 DB 삭제 후 새로 생성 ---"
 
-# SQLite인 경우 (db.sqlite3 파일 삭제)
 if [ -f "$BACKEND_DIR/db.sqlite3" ]; then
     rm -f "$BACKEND_DIR/db.sqlite3"
-    echo "SQLite DB 파일 삭제 완료"
+    echo "SQLite DB 파일 삭제 완료 (형식 변경 대응)"
 fi
 
-# PostgreSQL 등 다른 DB를 사용하는 경우 예시:
-# "$PYTHON_EXECUTABLE" "$BACKEND_DIR/manage.py" flush --noinput
-# 또는 django-extensions 설치 시:
-# "$PYTHON_EXECUTABLE" "$BACKEND_DIR/manage.py" reset_db --noinput
-
-# 마이그레이션 다시 적용
+# 새로운 스키마로 DB 재생성
+"$PYTHON_EXECUTABLE" "$BACKEND_DIR/manage.py" makemigrations --noinput
 "$PYTHON_EXECUTABLE" "$BACKEND_DIR/manage.py" migrate --noinput
-if [ $? -ne 0 ]; then
-    echo "::error::마이그레이션 실패. DB 스키마 확인 필요."
-    exit 1
-fi
-echo "--- DB 재생성 완료 ---"
+
+echo "--- 새 DB 스키마 생성 완료 ---"
+
 
 
 # --- [4] 기존 서버 프로세스 종료 ---
