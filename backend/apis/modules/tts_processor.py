@@ -32,7 +32,7 @@ Analyze the sentiment of this Korean sentence and provide expressive ENGLISH dir
 """
 
 
-# Pydantic Models
+# Pydantic Models.
 class Translation(BaseModel):
     """A single, fluent translation of a Korean sentence."""
     translated_text: str = Field(..., description="The translated sentence in the target language.", alias="translation")
