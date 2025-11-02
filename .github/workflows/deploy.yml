@@ -35,5 +35,8 @@ jobs:
           export OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
           export PYTHONUNBUFFERED=1
           cd /home/${{ secrets.EC2_USER }}/storybridge/swpp-2025-project-team-09
+          sudo pkill -9 -f "manage.py" || true
+          sudo pkill -9 -f "venv/bin/python" || true
+          sleep 2
           chmod +x deploy.sh
           ./deploy.sh
