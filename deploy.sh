@@ -18,7 +18,7 @@ git fetch origin
 git checkout $BRANCH_NAME
 
 # 로컬 변경사항 무시하고, 원격(deployment 브랜치)의 최신 상태로 강제 덮어쓰기
-git reset --hard origin/$BRANCH_NAME
+git reset --hard $BRANCH_NAME
 
 if [ $? -ne 0 ]; then
     echo "::error::Git Pull 실패. 배포 중단."

@@ -35,7 +35,7 @@ class OCRModule:
         new_first["fields"] = filtered_fields
         new_images[0] = new_first
         new_json["images"] = new_images
-        return new_json # return shallow copied result
+        return new_json # return shallow copied result.
 
     def _font_size(self, result_json: Dict[str, Any]) -> float:
         images = result_json.get("images", [])
