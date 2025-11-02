@@ -37,7 +37,7 @@ jobs:
           ls -al
           
           echo "--- 프로젝트 디렉토리로 이동 ---"
-          cd /home/${{ secrets.EC2_USER }}/storybridge/swpp-2025-project-team-09
+          cd /home/${{ secrets.EC2_USER }}/swpp-2025-project-team-09
           
           echo "--- 이동 후 경로 확인 ---"
           pwd
