@@ -31,6 +31,7 @@ This URL points to the backend API server.
 
 ### Backend
 - Optimized for lower user-perceived latency: the server sends partial translation results as soon as they are ready while waiting for TTS (text-to-speech) results to complete.
+- Backend is automatically deployed to the EC2 server through GitHub Actions.
 
 ### Frontend
 - Added audio playback button.
