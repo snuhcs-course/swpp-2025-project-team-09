@@ -109,7 +109,7 @@ class OCRModule:
 
         results: List[str] = []
 
-        # 5) For each paragraph, cluster lines by Y and sort words by X
+        # 5) For each paragraph, cluster lines by Y and sort words by X.
         for para in paragraphs:
             if not para:
                 continue
