@@ -253,6 +253,11 @@ class TTSModule:
 
         # Filter out None results
         ok_results = [r for r in results if r is not None]
+        
+        return {
+            "status": "ok" if ok_results else "failed",
+            "sentences": ok_results
+        }
 
     async def run_tts_only(
         self,
