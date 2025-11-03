@@ -2,6 +2,7 @@ from django.db import models
 import uuid
 from django.utils import timezone
 
+
 class User(models.Model):
     """
     User entity
@@ -22,11 +23,11 @@ class User(models.Model):
     # 관계 기반 메서드
     def getSessions(self):
         """현재 유저가 생성한 모든 세션 반환"""
-        return self.session_set.all()
+        return self.sessions.all()
 
     def deleteSession(self, session_id: int):
         """특정 세션 삭제"""
-        return self.session_set.filter(id=session_id).delete()
+        return self.sessions.filter(id=session_id).delete()
     class Meta:
         # Use the table name that exists in the current sqlite database.
         # Migration files show the DB contains `apis_user`, so align the model

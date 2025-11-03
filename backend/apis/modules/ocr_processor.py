@@ -6,9 +6,11 @@ import json
 import numpy as np
 from pathlib import Path
 from typing import List, Dict, Any
-from sklearn.cluster import DBSCAN 
+from sklearn.cluster import DBSCAN
 from dotenv import load_dotenv
+
 load_dotenv()
+
 
 class OCRModule:
     def __init__(self, conf_threshold: float = 0.8):
@@ -35,7 +37,7 @@ class OCRModule:
         new_first["fields"] = filtered_fields
         new_images[0] = new_first
         new_json["images"] = new_images
-        return new_json # return shallow copied result
+        return new_json  # return shallow copied result
 
     def _font_size(self, result_json: Dict[str, Any]) -> float:
         images = result_json.get("images", [])
@@ -56,7 +58,8 @@ class OCRModule:
 
     def _parse_infer_text(self, result_json: Dict[str, Any]) -> List[str]:
 
-        # 1) Filter out low-confidence fields before computing font size or tokens
+        # 1) Filter out low-confidence fields before computing
+        # font size or tokens
         filtered_json = self._filter_low_confidence(result_json)
 
         # 2) Compute font size from filtered fields
@@ -106,7 +109,7 @@ class OCRModule:
 
         results: List[str] = []
 
-        # 5) For each paragraph, cluster lines by Y and sort words by X
+        # 5) For each paragraph, cluster lines by Y and sort words by X.
         for para in paragraphs:
             if not para:
                 continue
@@ -133,23 +136,27 @@ class OCRModule:
                 lines.append({"text": line_text, "y": y_mean, "xs": xs, "ys": ys})
 
             # Sort lines vertically and join into paragraph text
-            lines_sorted = sorted(lines, key=lambda l: l["y"])
-            paragraph_text = "\n".join(l["text"] for l in lines_sorted)
+            lines_sorted = sorted(lines, key=lambda line: line["y"])
+            paragraph_text = "\n".join(line["text"] for line in lines_sorted)
 
             # Calculate bbox from all vertices in paragraph
             xs = []
             ys = []
-            for l in lines_sorted:
-                xs.extend(l["xs"])
-                ys.extend(l["ys"])
+            for line in lines_sorted:
+                xs.extend(line["xs"])
+                ys.extend(line["ys"])
 
             x_min, x_max = float(min(xs)), float(max(xs))
             y_min, y_max = float(min(ys)), float(max(ys))
             bbox = {
-                "x1": x_min, "y1": y_min,
-                "x2": x_max, "y2": y_min,
-                "x3": x_max, "y3": y_max,
-                "x4": x_min, "y4": y_max,
+                "x1": x_min,
+                "y1": y_min,
+                "x2": x_max,
+                "y2": y_min,
+                "x3": x_max,
+                "y3": y_max,
+                "x4": x_min,
+                "y4": y_max,
             }
             results.append({"text": paragraph_text.strip(), "bbox": bbox})
         return results
@@ -167,7 +174,7 @@ class OCRModule:
             "file": open(image_path, "rb"),
             "message": (None, json.dumps(request_json), "application/json"),
         }
-        #디버깅용
+        # 디버깅용
         print(f"[DEBUG] Sending OCR request for {image_path}")
         start = time.time()
         response = requests.post(self.api_url, headers=headers, files=files)

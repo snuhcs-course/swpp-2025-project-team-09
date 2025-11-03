@@ -3,6 +3,7 @@ from django.utils import timezone
 from apis.models.user_model import User
 import uuid
 
+
 class Session(models.Model):
     """
     Session entity
@@ -17,7 +18,7 @@ class Session(models.Model):
     ended_at = models.DateTimeField(null=True, blank=True)
     isOngoing = models.BooleanField(default=True)
     totalPages = models.IntegerField(default=0)
-    voicePreference = models.CharField(max_length=50, default = "Shimmer",null=True, blank=True)
+    voicePreference = models.CharField(max_length=50, default = None ,null=True, blank=True)
 
     def __str__(self):
         return f"{self.user.device_info} - {self.title}"
@@ -29,4 +30,5 @@ class Session(models.Model):
     def addPage(self, image_url, index):
         """페이지 추가용 헬퍼 메서드"""
         from apis.models.page_model import Page
-        Page.objects.create(session=self, img_url=image_url, page_index=index)
+
+        Page.objects.create(session=self, img_url=image_url)

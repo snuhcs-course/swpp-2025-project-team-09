@@ -10,23 +10,22 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Page',
+            name="Page",
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False)),
-                ('img_url', models.TextField(blank=True, null=True)),
-                ('audio_url', models.TextField(blank=True, null=True)),
-                ('translation_text', models.TextField(blank=True, null=True)),
-                ('bbox_json', models.JSONField(blank=True, default=dict)),
-                ('created_at', models.DateTimeField(default=django.utils.timezone.now)),
+                ("id", models.AutoField(primary_key=True, serialize=False)),
+                ("img_url", models.TextField(blank=True, null=True)),
+                ("audio_url", models.TextField(blank=True, null=True)),
+                ("translation_text", models.TextField(blank=True, null=True)),
+                ("bbox_json", models.JSONField(blank=True, default=dict)),
+                ("created_at", models.DateTimeField(default=django.utils.timezone.now)),
             ],
         ),
         migrations.CreateModel(
-            name='Session',
+            name="Session",
             fields=[
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('title', models.CharField(max_length=255)),
@@ -39,20 +38,28 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name='User',
+            name="User",
             fields=[
-                ('uid', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('device_info', models.CharField(max_length=255, unique=True)),
-                ('language_preference', models.CharField(default='en', max_length=20)),
-                ('created_at', models.DateTimeField(default=django.utils.timezone.now)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
+                (
+                    "uid",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("device_info", models.CharField(max_length=255, unique=True)),
+                ("language_preference", models.CharField(default="en", max_length=20)),
+                ("created_at", models.DateTimeField(default=django.utils.timezone.now)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
             ],
             options={
                 'db_table': 'user',
             },
         ),
         migrations.CreateModel(
-            name='BB',
+            name="BB",
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('original_text', models.TextField()),
@@ -64,13 +71,21 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.AddField(
-            model_name='page',
-            name='session',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='pages', to='apis.session'),
+            model_name="page",
+            name="session",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="pages",
+                to="apis.session",
+            ),
         ),
         migrations.AddField(
-            model_name='session',
-            name='user',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='sessions', to='apis.user'),
+            model_name="session",
+            name="user",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="sessions",
+                to="apis.user",
+            ),
         ),
     ]
