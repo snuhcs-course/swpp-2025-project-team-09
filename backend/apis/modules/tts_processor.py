@@ -61,6 +61,7 @@ class TTSModule:
     ):
         self.client = AsyncOpenAI()
         self.TTS_MODEL = "gpt-4o-mini-tts"
+        self.TTS_MODEL_LITE = "tts-1"
         self.OUT_DIR = Path(out_dir)
         self.LOG_DIR = Path(log_dir)
         self.CSV_LOG = self.LOG_DIR / "sentence_log.csv"
@@ -157,6 +158,29 @@ class TTSModule:
             print(f"TTS error for {out_path.name}: {e}")
             return -1.0, None
 
+    async def synthesize_tts_lite(self, voice: str, text: str, out_path: Path = None, response_format: str = "mp3") -> tuple[float, bytes]:
+        """light model for Cover TTS - no sentiments"""
+        t0 = time.time()
+        try:
+            response = await self.client.audio.speech.create(
+                model=self.TTS_MODEL_LITE,  # tts-1
+                voice=voice,
+                input=text,
+                response_format=response_format
+            )
+            audio_bytes = response.content
+            
+            if out_path:
+                out_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(out_path, "wb") as f:
+                    f.write(audio_bytes)
+            
+            return round(time.time() - t0, 3), audio_bytes
+        
+        except Exception as e:
+            print(f"TTS Lite error: {e}")
+            return -1.0, None
+
     async def get_translations_only(self, page: Dict[str, str]) -> Dict[str, Any]:
         """
         Get translations and sentiment for all sentences
@@ -228,15 +252,7 @@ class TTSModule:
         # Filter out None results
         ok_results = [r for r in results if r is not None]
 
-        return {"status": "ok" if ok_results else "failed", "sentences": ok_results}
-
-    async def run_tts_only(
-        self,
-        translation_data: Dict[str, Any],
-        session_id: str,
-        page_index: int,
-        para_index: int,
-    ) -> List[str]:
+    async def run_tts_only(self, translation_data: Dict[str, Any], session_id: str, page_index: int, para_index: int, para_voice: str ) -> List[str]:
         """
         Run TTS using pre-computed translations.
         Used by backend background thread.
@@ -255,7 +271,7 @@ class TTSModule:
         stem = f"{session_id}_{page_index}_{para_index}"
 
         async def synthesize_sentence(i: int, sentence_data: dict):
-            voice = "shimmer"
+            voice = para_voice
             out_file = self.OUT_DIR / f"{stem}_sent{i+1}.mp3"
 
             affect = (
@@ -297,6 +313,144 @@ class TTSModule:
 
         # Filter out None results
         return [audio for audio in audio_results if audio is not None]
+    
+    # async def translate_and_tts_cover(self, title: str, session_id: str, page_index: int) -> tuple[str, str]:
+        """
+        Translate title and generate TTS for both male and female voices.
+        
+        Args:
+            title: Korean title text
+            session_id: Session UUID
+            page_index: Page index (0 for cover)
+            
+        Returns:
+            (tts_male_base64, tts_female_base64)
+        """
+        # Translate the title
+        trans_response = await self.translate(f"[CURRENT]: {title}")
+        
+        if isinstance(trans_response["result"], Exception):
+            return "", ""
+        
+        translated_text = trans_response["result"].translated_text.strip()
+        if not translated_text:
+            return "", ""
+        
+        # Build translation data structure for TTS
+        translation_data = {
+            "status": "ok",
+            "sentences": [{
+                "translation": translated_text,
+                "tone": "",  # Not used for cover
+                "emotion": "",  # Not used for cover
+                "pacing": "",  # Not used for cover
+                "korean": title
+            }]
+        }
+        
+        # Generate TTS for both voices (now returns tuple directly)
+        tts_male, tts_female = await self.run_tts_cover_only(
+            translation_data, session_id, page_index, 0
+        )
+        
+        return tts_male, tts_female
+
+    async def translate_and_tts_cover(self, title: str, session_id: str, page_index: int) -> tuple[str, str]:
+        """
+        Translate title and generate TTS for both male and female voices.
+        
+        Args:
+            title: Korean title text
+            session_id: Session UUID
+            page_index: Page index (0 for cover)
+            
+        Returns:
+            (tts_male_base64, tts_female_base64)
+        """
+        # Translate the title
+        trans_response = await self.translate(f"[CURRENT]: {title}")
+        
+        if isinstance(trans_response["result"], Exception):
+            return "", ""
+        
+        translated_text = trans_response["result"].translated_text.strip()
+        if not translated_text:
+            return "", ""
+        
+        # Generate TTS for male voice (echo)
+        male_latency, male_audio = await self.synthesize_tts_lite(
+            voice="echo",
+            text=translated_text
+        )
+        
+        # Generate TTS for female voice (shimmer)
+        female_latency, female_audio = await self.synthesize_tts_lite(
+            voice="shimmer",
+            text=translated_text
+        )
+        
+        # Convert to base64
+        male_b64 = base64.b64encode(male_audio).decode("utf-8") if male_audio else ""
+        female_b64 = base64.b64encode(female_audio).decode("utf-8") if female_audio else ""
+        
+        return male_b64, female_b64
+
+    # async def run_tts_cover_only(self, translation_data: Dict[str, Any], session_id: str, page_index: int, para_index: int) -> tuple[str, str]:
+        """
+        Run TTS for book cover titles without sentiment analysis.
+        Generates both male (echo) and female (shimmer) voices.
+        Uses a fixed instruction suited for title reading.
+        
+        Returns:
+            (male_audio_base64, female_audio_base64)
+        """
+        sentences_data = translation_data["sentences"]
+        if not sentences_data:
+            return "", ""
+        
+        stem = f"{session_id}_{page_index}_{para_index}"
+        
+        async def synthesize_sentence(i: int, sentence_data: dict, voice: str, voice_type: str):
+            out_file = self.OUT_DIR / f"{stem}_cover_{voice_type}_sent{i+1}.mp3"
+            
+            # Fixed instruction for cover title reading
+            tts_instr = (
+                "[Affect: Speak clearly and confidently, as if announcing the title of a children's storybook.] "
+                "[Tone: Warm, friendly, and engaging, inviting the listener into a magical world.] "
+                "[Pacing: Steady and clear, with emphasis on key words in the title.]"
+            )
+            
+            tts_latency, tts_result = await self.synthesize_tts(
+                voice=voice,
+                text=sentence_data.get('translation', ''),
+                instructions=tts_instr,
+                out_path=out_file,
+                response_format='mp3'
+            )
+            
+            if tts_result:
+                return base64.b64encode(tts_result).decode('utf-8')
+            return None
+        
+        # Generate male and female voices for all sentences concurrently
+        male_tasks = [synthesize_sentence(i, sent_data, "echo", "male") 
+                    for i, sent_data in enumerate(sentences_data)]
+        female_tasks = [synthesize_sentence(i, sent_data, "shimmer", "female") 
+                        for i, sent_data in enumerate(sentences_data)]
+        
+        # Run all TTS tasks in parallel
+        all_results = await asyncio.gather(*male_tasks, *female_tasks)
+        
+        # Split results into male and female
+        mid_point = len(male_tasks)
+        male_results = all_results[:mid_point]
+        female_results = all_results[mid_point:]
+        
+        # Filter out None results and join (for cover, typically just one sentence)
+        male_audio = male_results[0] if male_results and male_results[0] else ""
+        female_audio = female_results[0] if female_results and female_results[0] else ""
+        
+        return male_audio, female_audio
 
     async def process_paragraph(
         self,

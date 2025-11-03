@@ -1,6 +1,7 @@
 package com.example.storybridge_android.network
 
 import retrofit2.Call
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.PATCH
@@ -9,26 +10,26 @@ import retrofit2.http.Query
 
 // Retrofit API Interface
 interface UserApi {
-
     @POST("/user/register")
-    fun userRegister(
+    suspend fun userRegister(
         @Body request: UserRegisterRequest
-    ): Call<UserRegisterResponse>
+    ): Response<UserRegisterResponse>
 
     @POST("/user/login")
-    fun userLogin(
+    suspend fun userLogin(
         @Body request: UserLoginRequest
-    ): Call<UserLoginResponse>
+    ): Response<UserLoginResponse>
 
     @PATCH("/user/lang")
-    fun userLang(
+    suspend fun userLang(
         @Body request: UserLangRequest
-    ): Call<UserLangResponse>
+    ): Response<UserLangResponse>
 
     @GET("/user/info")
-    fun userInfo(
-        @Query("device_info") device_info: String
-    ): Call<UserInfoResponse>
+    suspend fun userInfo(
+        @Query("device_info") deviceInfo: String
+    ): Response<UserInfoResponse>
+
 }
 
 // --------------------

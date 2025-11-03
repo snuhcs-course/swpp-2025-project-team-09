@@ -18,7 +18,7 @@ class Session(models.Model):
     ended_at = models.DateTimeField(null=True, blank=True)
     isOngoing = models.BooleanField(default=True)
     totalPages = models.IntegerField(default=0)
-    voicePreference = models.CharField(max_length=50, null=True, blank=True)
+    voicePreference = models.CharField(max_length=50, default = "Shimmer",null=True, blank=True)
 
     def __str__(self):
         return f"{self.user.device_info} - {self.title}"

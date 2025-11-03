@@ -1,102 +1,108 @@
 package com.example.storybridge_android.network
 
+import com.google.gson.annotations.SerializedName
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Query
 
-
 // Retrofit API Interface
-interface PageApi {
+interface ProcessApi {
 
-    @GET("/page/get_image/")
-    fun getImage(
+    @POST("/process/upload/")
+    fun uploadImage(
+        @Body request: UploadImageRequest
+    ): Call<UploadImageResponse>
+
+    @POST("/process/upload_cover/")
+    fun uploadCoverImage(
+        @Body request: UploadImageRequest
+    ): Call<UploadCoverResponse>
+    @GET("/process/check_ocr/")
+    fun checkOcrStatus(
         @Query("session_id") session_id: String,
         @Query("page_index") page_index: Int
-    ): Call<GetImageResponse>
+    ): Call<CheckOcrResponse>
 
-    @GET("/page/get_ocr/")
-    fun getOcrResults(
+    @GET("/process/check_tts/")
+    fun checkTtsStatus(
         @Query("session_id") session_id: String,
         @Query("page_index") page_index: Int
-    ): Call<GetOcrTranslationResponse>
-
-    @GET("/page/get_tts/")
-    fun getTtsResults(
-        @Query("session_id") session_id: String,
-        @Query("page_index") page_index: Int
-    ): Call<GetTtsResponse>
+    ): Call<CheckTtsResponse>
 }
-
 
 // --------------------
 // Request / Response data classes
 // --------------------
 
-// 4-1. Get Image
-data class GetImageRequest(
-    val session_id: String,
-    val page_index: Int
-)
-
-data class GetImageResponse(
+// 3-1. Upload Image
+data class UploadImageRequest(
     val session_id: String,
     val page_index: Int,
-    val image_base64: String,
-    val stored_at: String // datetime as ISO string
+    val lang: String,
+    val image_base64: String
 )
 
-// 4-2. Get OCR Results
-data class GetOcrTranslationRequest(
-    val session_id: String,
-    val page_index: Int
-)
-
-data class OcrBox(
-    val bbox: BBox,
-    val original_txt: String,
-    val translation_txt: String
-)
-
-data class BBox(
-    val x1: Int,
-    val y1: Int,
-    val x2: Int,
-    val y2: Int,
-    val x3: Int,
-    val y3: Int,
-    val x4: Int,
-    val y4: Int
-) {
-    // 편의 프로퍼티: 좌상단(x,y)와 width/height 계산
-    val x: Int get() = minOf(x1, x2, x3, x4)
-    val y: Int get() = minOf(y1, y2, y3, y4)
-    val width: Int get() = maxOf(x1, x2, x3, x4) - x
-    val height: Int get() = maxOf(y1, y2, y3, y4) - y
-}
-
-data class GetOcrTranslationResponse(
+data class UploadImageResponse(
     val session_id: String,
     val page_index: Int,
-    val ocr_results: List<OcrBox>,
-    val processed_at: String // datetime as ISO string
+    val status: String,
+    val submitted_at: String // datetime as ISO string
 )
 
-// 4-3. Get TTS Results
-data class GetTtsRequest(
+data class UploadCoverResponse(
+    val session_id: String,
+    val page_index: Int,
+    val status: String,
+    val submitted_at: String, // datetime as ISO string
+    val title: String,
+    val tts_male: String,
+    val tts_female: String
+)
+
+// 3-2. Check OCR, Translation Status
+data class CheckOcrRequest(
     val session_id: String,
     val page_index: Int
 )
 
-data class AudioResult(
+data class CheckOcrResponse(
+    val session_id: String,
+    val page_index: Int,
+    val status: String,           // "pending", "processing", "ready"
+    val progress: Int,            // 0-100
+    val submitted_at: String,
+    val processed_at: String?     // nullable, if not ready
+)
+
+// 3-3. Check TTS Status
+data class CheckTtsRequest(
+    val session_id: String,
+    val page_index: Int
+)
+
+/**
+ * Updated to match new backend response format
+ * Backend now returns bb_status for granular TTS progress tracking
+ */
+data class CheckTtsResponse(
+    val session_id: String,
+    val page_index: Int,
+    val status: String,           // "pending", "processing", "ready"
+    val progress: Int,            // 0-100
+    @SerializedName("bb_status")
+    val bb_status: List<BBoxStatus>? = null  // New field for per-bbox status
+)
+
+/**
+ * Status information for individual bounding boxes
+ * Allows tracking which specific text boxes have audio ready
+ */
+data class BBoxStatus(
+    @SerializedName("bbox_index")
     val bbox_index: Int,
-    val audio_base64_list: List<String> // 단일 String이 아닌 List<String>
-)
-
-data class GetTtsResponse(
-    val session_id: String,
-    val page_index: Int,
-    val audio_results: List<AudioResult>,
-    val generated_at: String // datetime as ISO string
+    val status: String,  // "pending", "processing", "ready", "failed"
+    @SerializedName("has_audio")
+    val has_audio: Boolean
 )
