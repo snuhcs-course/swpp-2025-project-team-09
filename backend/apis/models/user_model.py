@@ -27,7 +27,7 @@ class User(models.Model):
 
     def deleteSession(self, session_id: int):
         """특정 세션 삭제"""
-        return self.session_set.filter(id=session_id).delete()
+        return self.sessions.filter(id=session_id).delete()
     class Meta:
         # Use the table name that exists in the current sqlite database.
         # Migration files show the DB contains `apis_user`, so align the model
