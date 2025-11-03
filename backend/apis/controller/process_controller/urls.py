@@ -1,5 +1,10 @@
 from django.urls import path
-from .views import ProcessUploadCoverView, ProcessUploadView, CheckOCRStatusView, CheckTTSStatusView
+from .views import (
+    ProcessUploadCoverView,
+    ProcessUploadView,
+    CheckOCRStatusView,
+    CheckTTSStatusView,
+)
 
 urlpatterns = [
     path("upload_cover/", ProcessUploadCoverView.as_view()),

@@ -202,7 +202,7 @@ class OCRModule:
         response = requests.post(self.api_url, headers=headers, files=files)
         print(f"[DEBUG] OCR API call took {time.time() - start:.2f}s")
         result = response.json()
-        
+
         filtered_json = self._filter_low_confidence(result)
         fs = self._font_size(filtered_json)
         images_f = filtered_json.get("images", [])
@@ -227,32 +227,34 @@ class OCRModule:
                 )
         if not tokens:
             return None
-        
+
         heights = [max(t["ys"]) - min(t["ys"]) for t in tokens if t["ys"]]
         max_height = max(heights) if heights else 0
-        tokens = [t for t in tokens if (max(t["ys"]) - min(t["ys"])) >= 0.33 * max_height]
-        
+        tokens = [
+            t for t in tokens if (max(t["ys"]) - min(t["ys"])) >= 0.33 * max_height
+        ]
+
         if not tokens:
             return None
-        
+
         # Paragraph clustering (2D DBSCAN on x, y)
         X = np.array([[t["x"], t["y"]] for t in tokens])
         para_eps = max(fs * 6.0, 15.0)
         para_db = DBSCAN(eps=para_eps, min_samples=1)
         para_labels = para_db.fit_predict(X)
-        
+
         for t, lbl in zip(tokens, para_labels):
             t["para_label"] = int(lbl)
-        
+
         paragraphs: List[List[Dict[str, Any]]] = []
         for lbl in sorted(set(para_labels)):
             if lbl == -1:
                 continue  # skip noise cluster
             paragraph_tokens = [t for t in tokens if t["para_label"] == lbl]
             paragraphs.append(paragraph_tokens)
-        
+
         results: List[Dict[str, Any]] = []
-        
+
         # For each paragraph, cluster lines by Y and sort words by X, build paragraph text
         for para in paragraphs:
             if not para:
@@ -263,7 +265,7 @@ class OCRModule:
             line_labels = line_db.fit_predict(Y)
             for t, lbl in zip(para, line_labels):
                 t["line_label"] = int(lbl)
-            
+
             lines = []
             for lbl in sorted(set(line_labels)):
                 line_tokens = [t for t in para if t["line_label"] == lbl]
@@ -274,20 +276,20 @@ class OCRModule:
                 for tkn in line_tokens:
                     ys.extend(tkn["ys"])
                 lines.append({"text": line_text, "y": y_mean, "ys": ys})
-            
+
             lines_sorted = sorted(lines, key=lambda l: l["y"])
             paragraph_text = "\n".join(l["text"] for l in lines_sorted)
-            
+
             # Calculate height for sorting
             all_ys = []
             for l in lines_sorted:
                 all_ys.extend(l["ys"])
             height = max(all_ys) - min(all_ys) if all_ys else 0
-            
+
             results.append({"text": paragraph_text.strip(), "height": height})
-        
+
         # Sort paragraphs by height (largest first)
         results.sort(key=lambda r: r["height"], reverse=True)
-        
+
         # Return just the largest text as a string, or None if no results
         return results[0]["text"] if results else None

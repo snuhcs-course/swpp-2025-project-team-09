@@ -27,14 +27,27 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Session",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('title', models.CharField(max_length=255)),
-                ('cover_img_url', models.TextField(blank=True, null=True)),
-                ('created_at', models.DateTimeField(default=django.utils.timezone.now)),
-                ('ended_at', models.DateTimeField(blank=True, null=True)),
-                ('isOngoing', models.BooleanField(default=True)),
-                ('totalPages', models.IntegerField(default=0)),
-                ('voicePreference', models.CharField(blank=True, default='Shimmer', max_length=50, null=True)),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("title", models.CharField(max_length=255)),
+                ("cover_img_url", models.TextField(blank=True, null=True)),
+                ("created_at", models.DateTimeField(default=django.utils.timezone.now)),
+                ("ended_at", models.DateTimeField(blank=True, null=True)),
+                ("isOngoing", models.BooleanField(default=True)),
+                ("totalPages", models.IntegerField(default=0)),
+                (
+                    "voicePreference",
+                    models.CharField(
+                        blank=True, default="Shimmer", max_length=50, null=True
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
@@ -55,19 +68,46 @@ class Migration(migrations.Migration):
                 ("updated_at", models.DateTimeField(auto_now=True)),
             ],
             options={
-                'db_table': 'user',
+                "db_table": "user",
             },
         ),
         migrations.CreateModel(
             name="BB",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('original_text', models.TextField()),
-                ('translated_text', models.TextField(blank=True, null=True)),
-                ('audio_base64', models.JSONField(blank=True, default=list)),
-                ('coordinates', models.JSONField(blank=True, default=dict)),
-                ('tts_status', models.CharField(choices=[('pending', 'Pending'), ('processing', 'Processing'), ('ready', 'Ready'), ('failed', 'Failed')], default='pending', max_length=20)),
-                ('page', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='bbs', to='apis.page')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("original_text", models.TextField()),
+                ("translated_text", models.TextField(blank=True, null=True)),
+                ("audio_base64", models.JSONField(blank=True, default=list)),
+                ("coordinates", models.JSONField(blank=True, default=dict)),
+                (
+                    "tts_status",
+                    models.CharField(
+                        choices=[
+                            ("pending", "Pending"),
+                            ("processing", "Processing"),
+                            ("ready", "Ready"),
+                            ("failed", "Failed"),
+                        ],
+                        default="pending",
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "page",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="bbs",
+                        to="apis.page",
+                    ),
+                ),
             ],
         ),
         migrations.AddField(
