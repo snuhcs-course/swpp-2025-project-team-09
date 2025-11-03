@@ -27,6 +27,7 @@
         <item name="android:gravity">center</item>
     </style>
 
+<<<<<<< HEAD
     <style name="text40pt">
         <item name="android:fontFamily">@font/pinkfong_baby_shark_bold</item>
         <item name="android:textSize">40sp</item>
@@ -45,6 +46,8 @@
         <item name="android:gravity">center</item>
     </style>
 
+=======
+>>>>>>> 5105a8a5 (add: resources and landing acitivity)
 
 
     <style name="BoldText48">
