@@ -30,8 +30,10 @@ class OCRModule:
             c = f.get("inferConfidence", None)
             if c is None or c > threshold:
                 filtered_fields.append(f)
-                
-        print(f"[DEBUG] Confidence filter: {len(fields)} -> {len(filtered_fields)} fields kept (threshold={threshold})")
+
+        print(
+            f"[DEBUG] Confidence filter: {len(fields)} -> {len(filtered_fields)} fields kept (threshold={threshold})"
+        )
 
         new_json = dict(result_json)
         new_images = list(images)
