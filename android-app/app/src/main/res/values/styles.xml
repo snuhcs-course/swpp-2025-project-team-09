@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <style name="BoldText96">
+        <item name="android:textSize">96sp</item>
+        <item name="android:textColor">@color/black</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+    <!-- 안내 문구 (Language Selection 화면) -->
     <style name="text80pt">
         <item name="android:fontFamily">@font/pinkfong_baby_shark_bold</item>
         <item name="android:textSize">80sp</item>
