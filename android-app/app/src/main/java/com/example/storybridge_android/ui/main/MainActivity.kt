@@ -20,13 +20,13 @@ import com.example.storybridge_android.ui.common.SessionCard
 import com.example.storybridge_android.ui.common.TopNavigationBar
 import androidx.activity.viewModels
 import androidx.lifecycle.lifecycleScope
-import com.example.storybridge_android.data.DefaultUserRepository
+import com.example.storybridge_android.data.UserRepositoryImpl
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
     private val viewModel: MainViewModel by viewModels {
-        MainViewModelFactory(DefaultUserRepository())
+        MainViewModelFactory(UserRepositoryImpl())
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

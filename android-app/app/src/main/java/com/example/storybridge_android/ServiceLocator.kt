@@ -1,6 +1,6 @@
 package com.example.storybridge_android
 
-import com.example.storybridge_android.data.DefaultUserRepository
+import com.example.storybridge_android.data.UserRepositoryImpl
 import com.example.storybridge_android.data.UserRepository
 
 object ServiceLocator {
@@ -11,6 +11,6 @@ object ServiceLocator {
     }
 
     fun reset() {
-        userRepository = DefaultUserRepository()
+        userRepository = UserRepositoryImpl()
     }
 }

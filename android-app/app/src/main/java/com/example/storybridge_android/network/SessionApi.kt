@@ -1,6 +1,7 @@
     package com.example.storybridge_android.network
 
 import retrofit2.Call
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -10,25 +11,26 @@ import retrofit2.http.Query
 interface SessionApi {
 
     @POST("/session/start")
-    fun startSession(
+    suspend fun startSession(
         @Body request: StartSessionRequest
-    ): Call<StartSessionResponse>
+    ): Response<StartSessionResponse>
 
     @POST("/session/voice")
-    fun selectVoice(
+    suspend fun selectVoice(
         @Body request: SelectVoiceRequest
-    ): Call<SelectVoiceResponse>
+    ): Response<SelectVoiceResponse>
 
     @POST("/session/end")
-    fun endSession(
+    suspend fun endSession(
         @Body request: EndSessionRequest
-    ): Call<EndSessionResponse>
+    ): Response<EndSessionResponse>
 
     @GET("/session/stats")
-    fun getSessionStats(
+    suspend fun getSessionStats(
         @Query("session_id") session_id: String
-    ): Call<SessionStatsResponse>
+    ): Response<SessionStatsResponse>
 
+    // 두 개는 안 쓰는 중인듯
     @GET("/session/info")
     fun getSessionInfo(
         @Query("session_id") session_id: String

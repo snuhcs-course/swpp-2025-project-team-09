@@ -3,7 +3,7 @@ package com.example.storybridge_android.data
 import com.example.storybridge_android.network.*
 import retrofit2.Response
 
-class DefaultUserRepository : UserRepository {
+class UserRepositoryImpl : UserRepository {
     override suspend fun login(request: UserLoginRequest): Response<UserLoginResponse> {
         return RetrofitClient.userApi.userLogin(request)
     }

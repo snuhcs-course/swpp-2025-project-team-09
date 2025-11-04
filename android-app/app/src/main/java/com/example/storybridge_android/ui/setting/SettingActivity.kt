@@ -11,7 +11,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.R
-import com.example.storybridge_android.data.DefaultUserRepository
+import com.example.storybridge_android.data.UserRepositoryImpl
 import com.example.storybridge_android.network.UserLangRequest
 import com.example.storybridge_android.ui.common.TopNavigationBar
 import kotlinx.coroutines.flow.collectLatest
@@ -22,7 +22,7 @@ class SettingActivity : AppCompatActivity() {
     private lateinit var voiceGroup: RadioGroup
 
     private val viewModel: SettingViewModel by viewModels {
-        SettingViewModelFactory(DefaultUserRepository())
+        SettingViewModelFactory(UserRepositoryImpl())
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
