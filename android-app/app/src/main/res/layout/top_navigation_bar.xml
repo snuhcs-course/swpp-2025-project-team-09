@@ -4,32 +4,28 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="120dp"
-    android:background="@color/gray_light">
+    android:background="@color/yellow_primary"
+    android:padding="24dp">
 
-    <!-- STORY BRIDGE 타이틀 -->
-    <TextView
-        android:id="@+id/storyBridgeTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="58dp"
-        android:text="@string/story_bridge"
-        android:textColor="@color/black"
-        style="@style/BoldText48"
+    <!-- Story Bridge logo -->
+    <ImageView
+        android:id="@+id/navbarLogoImage"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:adjustViewBounds="true"
+        android:src="@drawable/logo_1"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginStart="32dp"/>
+        app:layout_constraintBottom_toBottomOf="parent" />
 
-    <!-- Settings 아이콘 -->
+    <!-- Settings button -->
     <ImageView
-        android:id="@+id/settingsIcon"
-        android:layout_width="64dp"
-        android:layout_height="64dp"
-        android:padding="8dp"
-        android:background="@drawable/circle_gray"
+        android:id="@+id/navbarSettingsButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:src="@drawable/ic_settings"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginEnd="32dp"/>
+        app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

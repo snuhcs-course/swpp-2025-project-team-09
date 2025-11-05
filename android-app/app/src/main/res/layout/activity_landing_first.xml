@@ -5,24 +5,17 @@
     android:id="@+id/landing"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp"
-    android:background="@color/gray_light">
+    android:background="@drawable/gradient_background">
 
-    <!-- 앱 이름 텍스트 -->
-    <TextView
-        android:id="@+id/tvAppName"
+    <ImageView
+        android:id="@+id/logo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="STORY BRIDGE"
-        style="@style/BoldText96"
-        android:paddingStart="96dp"
-        android:paddingEnd="96dp"
-
+        android:src="@drawable/logo"
+        android:scaleType="fitCenter"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
-
-    <!-- 영어 버튼 (초기 숨김) -->
 
 </androidx.constraintlayout.widget.ConstraintLayout>

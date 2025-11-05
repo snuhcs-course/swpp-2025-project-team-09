@@ -2,4 +2,25 @@
     <string name="app_name">storybridge-android</string>
     <string name="story_bridge">story bridge</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <!-- 메인 화면 -->
+    <string name="start_new_reading">Start New Reading</string>
+    <string name="previous_readings">Previous Readings</string>
+    <string name="no_previous_readings">No previous readings found.</string>
+
+    <!-- 세팅 -->
+    <string name="language_label">Language</string>
+    <string name="english">English</string>
+    <string name="chinese">Chinese</string>
+    <string name="voice_label">Voice Type</string>
+    <string name="male_voice">MAN</string>
+    <string name="female_voice">WOMAN</string>
+    <string name="save_settings">Save Settings</string>
+
+    <!-- 읽기 -->
+    <string name="first_page">This is the first page</string>
+    <string name="last_page">This is the last page</string>
+    <string name="current_page">This is the current page</string>
+    <string name="loading_error">Failed to load page</string>
+    <string name="audio_error">Audio playback error</string>
 </resources>

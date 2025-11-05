@@ -12,7 +12,7 @@ class UserRepositoryImpl : UserRepository {
         return RetrofitClient.userApi.userRegister(request)
     }
 
-    override suspend fun getUserInfo(deviceInfo: String): Response<UserInfoResponse> {
+    override suspend fun getUserInfo(deviceInfo: String): Response<List<UserInfoResponse>> {
         return RetrofitClient.userApi.userInfo(deviceInfo)
     }
 

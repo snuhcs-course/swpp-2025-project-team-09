@@ -57,7 +57,7 @@
             android:id="@+id/menuButton"
             android:layout_width="64dp"
             android:layout_height="64dp"
-            android:background="@drawable/ic_menus"
+            android:background="@drawable/ic_menu"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"/>
@@ -178,4 +178,3 @@
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
-

@@ -2,9 +2,39 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
+    android:id="@+id/startSessionMain"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".ui.session.StartSessionActivity">
+
+    <!-- Instruction text -->
+    <TextView
+        android:id="@+id/startSessionInstructionText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="200dp"
+        android:text="Take a photo of\nyour book cover"
+        style="@style/text80pt"
+        app:layout_constraintBottom_toTopOf="@id/startSessionButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="packed" />
+
+    <!-- Start button -->
+    <android.widget.Button
+        android:id="@+id/startSessionButton"
+        android:layout_width="400dp"
+        android:layout_height="120dp"
+        android:background="@drawable/grad_button"
+        android:elevation="8dp"
+        android:translationZ="8dp"
+        android:text="Start!"
+        android:textAllCaps="false"
+        style="@style/text64pt"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/startSessionInstructionText" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

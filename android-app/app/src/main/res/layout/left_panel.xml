@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Left slide-in overlay panel -->
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/leftOverlay"
+    android:layout_width="400dp"
+    android:layout_height="match_parent"
+    android:background="@color/yellow_light"
+    android:paddingTop="50dp"
+    tools:context=".ui.common.LeftOverlay"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintStart_toStartOf="parent">
+
+    <!-- Scrollable page list -->
+    <ScrollView
+        android:id="@+id/overlayScroll"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:id="@+id/pageListContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Placeholder page thumbnails -->
+            <View
+                android:layout_width="300dp"
+                android:layout_height="350dp"
+                android:layout_marginBottom="40dp"
+                android:background="@color/white" />
+
+            <View
+                android:layout_width="300dp"
+                android:layout_height="350dp"
+                android:layout_marginBottom="40dp"
+                android:background="@color/white" />
+
+            <View
+                android:layout_width="300dp"
+                android:layout_height="350dp"
+                android:layout_marginBottom="40dp"
+                android:background="@color/white" />
+
+            <View
+                android:layout_width="300dp"
+                android:layout_height="350dp"
+                android:layout_marginBottom="40dp"
+                android:background="@color/white" />
+
+            <View
+                android:layout_width="300dp"
+                android:layout_height="350dp"
+                android:layout_marginBottom="40dp"
+                android:background="@color/white" />
+
+        </LinearLayout>
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+

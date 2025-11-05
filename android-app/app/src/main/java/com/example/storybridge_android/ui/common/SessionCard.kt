@@ -17,16 +17,16 @@ class SessionCard @JvmOverloads constructor(
     private val bookImage: ImageView
     private val bookTitle: TextView
     private val bookProgress: TextView
-    private val nextButton: ConstraintLayout
+    private val nextButton: ImageView
 
     init {
         LayoutInflater.from(context).inflate(R.layout.card_item, this, true)
 
         // 필요한 뷰만 참조
-        bookImage = findViewById(R.id.bookImage)
-        bookTitle = findViewById(R.id.bookTitle)
-        bookProgress = findViewById(R.id.bookProgress)
-        nextButton = findViewById(R.id.nextButton)
+        bookImage = findViewById(R.id.cardBookImage)
+        bookTitle = findViewById(R.id.cardBookTitle)
+        bookProgress = findViewById(R.id.cardBookDate)
+        nextButton = findViewById(R.id.cardPlayButton)
     }
 
     fun setBookImage(resId: Int) {

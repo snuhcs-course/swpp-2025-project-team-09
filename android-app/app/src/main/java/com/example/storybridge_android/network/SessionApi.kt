@@ -40,6 +40,13 @@ interface SessionApi {
     fun getSessionReview(
         @Query("session_id") session_id: String
     ): Call<SessionReviewResponse>
+
+    @GET("/session/reload")
+    suspend fun reloadSession(
+        @Query("user_id") userId: String,
+        @Query("started_at") startedAt: String,
+        @Query("page_index") pageIndex: Int
+    ): Response<ReloadSessionResponse>
 }
 
 // --------------------
@@ -121,4 +128,13 @@ data class SessionReviewResponse(
     val started_at: String,
     val ended_at: String,
     val total_pages: Int
+)
+
+// 2-7. Reload Session (이어보기)
+data class ReloadSessionResponse(
+    val session_id: String,
+    val page_index: Int,
+    val image_base64: String?,         // 이미지 base64 문자열
+    val translation_text: String?,     // 번역 텍스트
+    val audio_url: String?             // 오디오 파일 경로 or base64
 )

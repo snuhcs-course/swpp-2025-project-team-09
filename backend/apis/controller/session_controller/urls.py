@@ -6,6 +6,7 @@ from .views import (
     GetSessionInfoView,
     GetSessionStatsView,
     SessionReviewView,
+    SessionReloadView,
 )
 
 urlpatterns = [
@@ -15,4 +16,5 @@ urlpatterns = [
     path("info", GetSessionInfoView.as_view()),
     path("stats", GetSessionStatsView.as_view()),
     path("review", SessionReviewView.as_view()),
+    path("reload", SessionReloadView.as_view()),
 ]

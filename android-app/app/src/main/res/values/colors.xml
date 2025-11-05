@@ -16,4 +16,13 @@
 
     <color name="audio_playing">#4CAF50</color>
     <color name="button_bg_selected">#007AFF</color>
+
+    <color name="yellow_primary">#FFBF08</color>
+    <color name="yellow_light">#FFE7A1</color>
+    <color name="yellow_bright">#FCEE21</color>
+
+    <color name="red_light">#FFC0C3</color>
+    <color name="teal_light">#97E2DB</color>
+    <color name="purple_light">#EAC4FF</color>
+    <color name="blue_light">#C2D9FF</color>
 </resources>
