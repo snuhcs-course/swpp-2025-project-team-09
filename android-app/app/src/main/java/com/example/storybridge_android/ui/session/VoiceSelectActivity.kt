@@ -65,6 +65,29 @@ class VoiceSelectActivity : AppCompatActivity() {
         val manButton = findViewById<Button>(R.id.manButton)
         val womanButton = findViewById<Button>(R.id.womanButton)
         val nextButton = findViewById<Button>(R.id.nextButton)
+
+        val currentLang = AppSettings.getLanguage(this)
+
+        when (currentLang) {
+            "en" -> {
+                manButton.text = "Male Voice"
+                womanButton.text = "Female Voice"
+                nextButton.text = "Next"
+            }
+
+            "zh" -> {
+                manButton.text = "男声"
+                womanButton.text = "女声"
+                nextButton.text = "下一步"
+            }
+
+            else -> {
+                manButton.text = "Male Voice"
+                womanButton.text = "Female Voice"
+                nextButton.text = "Next"
+            }
+        }
+
         nextButton.isEnabled = false
 
         manButton.setOnClickListener {

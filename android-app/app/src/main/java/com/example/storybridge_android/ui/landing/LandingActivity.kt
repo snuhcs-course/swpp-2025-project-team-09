@@ -46,7 +46,7 @@ class LandingActivity : AppCompatActivity() {
             navigateToMain()
         }
         findViewById<Button>(R.id.btnChinese).setOnClickListener {
-            AppSettings.setLanguage(this, "ch")
+            AppSettings.setLanguage(this, "zh")
             navigateToMain()
         }
     }

@@ -50,11 +50,11 @@ class SettingActivity : AppCompatActivity() {
 
         when (currentLang) {
             "en" -> english.isChecked = true
-            "cn" -> chinese.isChecked = true
+            "zh" -> chinese.isChecked = true
         }
 
         english.setOnClickListener { AppSettings.setLanguage(this, "en") }
-        chinese.setOnClickListener { AppSettings.setLanguage(this, "cn") }
+        chinese.setOnClickListener { AppSettings.setLanguage(this, "zh") }
     }
 
     private fun setupVoiceOptions() {
@@ -78,7 +78,7 @@ class SettingActivity : AppCompatActivity() {
             val deviceInfo = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
             val selectedLang = when (languageGroup.checkedRadioButtonId) {
                 R.id.radioEnglish -> "en"
-                R.id.radioChinese -> "cn"
+                R.id.radioChinese -> "zh"
                 else -> "en"
             }
             val request = UserLangRequest(device_info = deviceInfo, language_preference = selectedLang)
@@ -93,7 +93,7 @@ class SettingActivity : AppCompatActivity() {
                 if (response.isSuccessful) {
                     val selectedLang = when (languageGroup.checkedRadioButtonId) {
                         R.id.radioEnglish -> "en"
-                        R.id.radioChinese -> "cn"
+                        R.id.radioChinese -> "zh"
                         else -> "en"
                     }
                     AppSettings.setLanguage(this@SettingActivity, selectedLang)
