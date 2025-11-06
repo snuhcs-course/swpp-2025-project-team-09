@@ -48,7 +48,6 @@
                 android:visibility="gone"
                 tools:visibility="visible"
                 android:columnCount="3"
-                android:orientation="horizontal"
                 android:alignmentMode="alignMargins"
                 android:useDefaultMargins="true"
                 android:gravity="center"
