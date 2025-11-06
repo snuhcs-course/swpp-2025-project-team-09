@@ -77,7 +77,7 @@ class LoadingActivity : AppCompatActivity() {
             lifecycleScope.launchWhenStarted {
                 viewModel.navigateToReading.collectLatest { session ->
                     session?.let {
-                        navigateToReading(it.session_id, it.page_index)
+                        navigateToReading(it.session_id, it.page_index, it.total_pages)
                     }
                 }
             }
@@ -119,16 +119,17 @@ class LoadingActivity : AppCompatActivity() {
         lifecycleScope.launchWhenStarted {
             viewModel.status.collectLatest {
                 if (it == "ready") {
-                    navigateToReading(sessionId, pageIndex)
+                    navigateToReading(sessionId, pageIndex, pageIndex + 1)
                 }
             }
         }
     }
 
-    private fun navigateToReading(sessionId: String, pageIndex: Int) {
+    private fun navigateToReading(sessionId: String, pageIndex: Int, totalPages: Int = pageIndex + 1) {
         val intent = Intent(this, ReadingActivity::class.java).apply {
             putExtra("session_id", sessionId)
             putExtra("page_index", pageIndex)
+            putExtra("total_pages", totalPages)
         }
         startActivity(intent)
         finish()

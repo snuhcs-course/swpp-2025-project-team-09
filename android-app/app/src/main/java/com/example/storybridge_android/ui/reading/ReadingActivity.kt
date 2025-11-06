@@ -86,7 +86,7 @@ class ReadingActivity : AppCompatActivity() {
 
         sessionId = intent.getStringExtra("session_id") ?: ""
         pageIndex = intent.getIntExtra("page_index", 0)
-        totalPages = pageIndex + 1
+        totalPages = intent.getIntExtra("total_pages", pageIndex + 1)
 
         observeViewModel()
         fetchPage()
@@ -424,7 +424,11 @@ class ReadingActivity : AppCompatActivity() {
     }
 
     private fun navigateToCamera() {
-        startActivity(Intent(this, CameraSessionActivity::class.java).putExtra("session_id", sessionId))
+        val intent = Intent(this, CameraSessionActivity::class.java).apply {
+            putExtra("session_id", sessionId)
+            putExtra("page_index", totalPages)  // 새 페이지 인덱스
+        }
+        startActivity(intent)
         finish()
     }
 

@@ -20,7 +20,7 @@ import java.io.File
 import kotlin.math.max
 
 data class CoverResult(val title: String, val maleTts: String?, val femaleTts: String?)
-data class SessionResumeResult(val session_id: String, val page_index: Int)
+data class SessionResumeResult(val session_id: String, val page_index: Int, val total_pages: Int = page_index + 1)
 
 class LoadingViewModel(
     private val processRepo: ProcessRepository,
@@ -242,7 +242,8 @@ class LoadingViewModel(
                 onSuccess = { data ->
                     stopRamp()
                     _progress.value = 100
-                    _navigateToReading.emit(SessionResumeResult(data.session_id, 0))
+                    val totalPages = data.pages.size
+                    _navigateToReading.emit(SessionResumeResult(data.session_id, 0, totalPages))
                 },
                 onFailure = { e ->
                     stopRamp()

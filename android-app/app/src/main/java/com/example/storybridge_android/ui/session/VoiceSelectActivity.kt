@@ -145,8 +145,10 @@ class VoiceSelectActivity : AppCompatActivity() {
     }
 
     private fun goToCamera() {
-        val intent = Intent(this, CameraSessionActivity::class.java)
-        intent.putExtra("session_id", sessionId)
+        val intent = Intent(this, CameraSessionActivity::class.java).apply {
+            putExtra("session_id", sessionId)
+            putExtra("page_index", 0)  // first page
+        }
         startActivity(intent)
         finish()
     }
