@@ -32,7 +32,7 @@
         android:translationZ="8dp"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
-        android:text="Finish Reading"
+        android:text="@string/finish_reading"
         android:textAllCaps="false"
         style="@style/text40pt"
         app:layout_constraintEnd_toEndOf="parent"

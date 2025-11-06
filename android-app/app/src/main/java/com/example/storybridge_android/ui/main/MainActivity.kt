@@ -115,7 +115,7 @@ class MainActivity : AppCompatActivity() {
                     /*
                     for (data in sessions) {
                         val sessionCard = SessionCard(this@MainActivity)
-                        sessionCard.setBookTitle(data.title)
+                        sessionCard.setBookTitle(data.translated_title)
 
                         val raw = data.started_at.take(10)
                         val parts = raw.split("-")

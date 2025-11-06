@@ -213,10 +213,12 @@ class UserInfoView(APIView):
                     {
                         "user_id": user.uid,
                         "title": session.title,
+                        "translate_title": session.translated_title,
                         "image_base64": image_base64,
                         "started_at": session.created_at,
                     }
                 )
+            print(session.translated_title)
 
             return Response(result, status=status.HTTP_200_OK)
 

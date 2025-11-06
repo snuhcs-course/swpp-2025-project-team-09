@@ -69,22 +69,15 @@ class VoiceSelectActivity : AppCompatActivity() {
         val currentLang = AppSettings.getLanguage(this)
 
         when (currentLang) {
-            "en" -> {
-                manButton.text = "Male Voice"
-                womanButton.text = "Female Voice"
-                nextButton.text = "Next"
+            "en", "zh" -> {
+                manButton.text = getString(R.string.male_voice)
+                womanButton.text = getString(R.string.female_voice)
+                nextButton.text = getString(R.string.next)
             }
-
-            "zh" -> {
-                manButton.text = "男声"
-                womanButton.text = "女声"
-                nextButton.text = "下一步"
-            }
-
             else -> {
-                manButton.text = "Male Voice"
-                womanButton.text = "Female Voice"
-                nextButton.text = "Next"
+                manButton.text = getString(R.string.male_voice)
+                womanButton.text = getString(R.string.female_voice)
+                nextButton.text = getString(R.string.next)
             }
         }
 

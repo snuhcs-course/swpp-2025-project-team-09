@@ -365,15 +365,16 @@ class ProcessUploadCoverView(APIView):
                 {"error_code": 422, "message": "PROCESS__UNABLE_TO_PROCESS_IMAGE"},
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
-        session.title = title
-        session.save()
 
         # Run translation for title synchronously
-        tts_male, tts_female = self._run_async(
+        translated_text, tts_male, tts_female = self._run_async(
             TTSModule().translate_and_tts_cover(title, session_id, page_index)
         )
 
         # Update session
+        session.title = title
+        session.translated_title = translated_text
+        print(f'[debug]{session.translated_title}')
         session.totalPages += 1
         session.save()
 
@@ -384,6 +385,7 @@ class ProcessUploadCoverView(APIView):
                 "status": "ready",
                 "submitted_at": timezone.now().isoformat(),
                 "title": session.title,
+                "translated_title": session.translated_title,
                 "tts_male": tts_male,
                 "tts_female": tts_female,
             },

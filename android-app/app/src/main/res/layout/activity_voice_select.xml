@@ -15,7 +15,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="80dp"
-        android:text="What's your\npreferred voice?"
+        android:text="@string/preferred_voice_question"
         style="@style/text80pt"
         app:layout_constraintBottom_toTopOf="@id/manButtonContainer"
         app:layout_constraintEnd_toEndOf="parent"
