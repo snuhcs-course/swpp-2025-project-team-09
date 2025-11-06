@@ -66,6 +66,10 @@ class VoiceSelectActivity : AppCompatActivity() {
         val womanButton = findViewById<Button>(R.id.womanButton)
         val nextButton = findViewById<Button>(R.id.nextButton)
 
+        fun updateButtonState(selected: Button) {
+            listOf(manButton, womanButton).forEach { it.isSelected = it == selected }
+        }
+
         val currentLang = AppSettings.getLanguage(this)
 
         when (currentLang) {
@@ -88,6 +92,7 @@ class VoiceSelectActivity : AppCompatActivity() {
             viewModel.selectVoice(sessionId!!, MALE_VOICE)
             playTts(maleTts, MALE_VOICE)
             nextButton.isEnabled = true
+            updateButtonState(manButton)
         }
 
         womanButton.setOnClickListener {
@@ -95,6 +100,7 @@ class VoiceSelectActivity : AppCompatActivity() {
             viewModel.selectVoice(sessionId!!, FEMALE_VOICE)
             playTts(femaleTts, FEMALE_VOICE)
             nextButton.isEnabled = true
+            updateButtonState(womanButton)
         }
 
         nextButton.setOnClickListener {
