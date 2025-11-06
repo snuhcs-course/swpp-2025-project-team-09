@@ -8,6 +8,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.ui.session.LoadingActivity
+import com.example.storybridge_android.ui.setting.AppSettings
 import kotlinx.coroutines.flow.collectLatest
 
 class CameraSessionActivity : AppCompatActivity() {
@@ -68,6 +69,7 @@ class CameraSessionActivity : AppCompatActivity() {
         intent.putExtra("page_index", pageIndex)
         intent.putExtra("image_path", imagePath)
         intent.putExtra("is_cover", isCover)
+        intent.putExtra("lang", AppSettings.getLanguage(this))  // 현재 언어 설정 전달
         startActivity(intent)
         finish()
     }

@@ -50,8 +50,12 @@ class ProcessUploadView(APIView):
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
 
+        # Map language codes to full names for TTS
+        lang_map = {"en": "English", "zh": "Chinese"}
+        target_lang = lang_map.get(lang, "English")
+
         # Run translation synchronously (fast, ~2-3s per paragraph)
-        tts_module = TTSModule()
+        tts_module = TTSModule(target_lang=target_lang)
         translation_data = self._get_all_translations(
             tts_module, ocr_result, session_id, page_index
         )
@@ -366,9 +370,13 @@ class ProcessUploadCoverView(APIView):
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
 
+        # Map language codes to full names for TTS
+        lang_map = {"en": "English", "zh": "Chinese"}
+        target_lang = lang_map.get(lang, "English")
+
         # Run translation for title synchronously
         translated_text, tts_male, tts_female = self._run_async(
-            TTSModule().translate_and_tts_cover(title, session_id, page_index)
+            TTSModule(target_lang=target_lang).translate_and_tts_cover(title, session_id, page_index)
         )
 
         # Update session

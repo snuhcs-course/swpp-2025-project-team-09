@@ -11,12 +11,12 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.R
+import com.example.storybridge_android.StoryBridgeApplication
 import com.example.storybridge_android.data.UserRepositoryImpl
 import com.example.storybridge_android.network.UserLangRequest
 import com.example.storybridge_android.ui.common.TopNavigationBar
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import java.util.Locale
 
 class SettingActivity : AppCompatActivity() {
     private lateinit var languageGroup: RadioGroup
@@ -85,7 +85,7 @@ class SettingActivity : AppCompatActivity() {
 
                     // ✅ 서버 성공 시 무조건 저장 + 적용
                     AppSettings.setLanguage(this@SettingActivity, selectedLang)
-                    applyLanguage(selectedLang)
+                    StoryBridgeApplication.applyLanguage(this@SettingActivity)
                     setResult(RESULT_OK)
                     finish()
 
@@ -94,15 +94,5 @@ class SettingActivity : AppCompatActivity() {
                 }
             }
         }
-    }
-
-    private fun applyLanguage(languageCode: String) {
-        val locale = Locale(languageCode)
-        Locale.setDefault(locale)
-
-        val config = resources.configuration
-        config.setLocale(locale)
-        config.setLayoutDirection(locale)
-        resources.updateConfiguration(config, resources.displayMetrics)
     }
 }
