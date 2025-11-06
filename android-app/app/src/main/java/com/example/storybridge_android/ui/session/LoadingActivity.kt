@@ -39,6 +39,12 @@ class LoadingActivity : AppCompatActivity() {
         loadingBar = findViewById(R.id.loadingBar)
         loadingBar.max = 100
 
+        lifecycleScope.launchWhenStarted {
+            viewModel.progress.collectLatest { progress ->
+                loadingBar.progress = progress.coerceIn(0, 100)
+            }
+        }
+
         val startedAt = intent.getStringExtra("started_at")
         val sessionId = intent.getStringExtra("session_id")
         val imagePath = intent.getStringExtra("image_path")
@@ -94,12 +100,6 @@ class LoadingActivity : AppCompatActivity() {
         lifecycleScope.launch {
             if (isCover) viewModel.uploadCover(sessionId, lang, imagePath)
             else viewModel.uploadImage(sessionId, pageIndex, lang, imagePath)
-        }
-
-        lifecycleScope.launchWhenStarted {
-            viewModel.progress.collectLatest { progress ->
-                loadingBar.progress = progress.coerceIn(0, 100)
-            }
         }
 
         lifecycleScope.launchWhenStarted {

@@ -229,6 +229,9 @@ class LoadingViewModel(
 
     fun reloadAllSession(startedAt: String, context: Context) {
         viewModelScope.launch {
+            _status.value = "reloading"
+            startRampTo(100, 1000L)
+
             val deviceInfo = Settings.Secure.getString(
                 context.contentResolver,
                 Settings.Secure.ANDROID_ID
@@ -237,12 +240,16 @@ class LoadingViewModel(
             val result = sessionRepo.reloadAllSession(deviceInfo, startedAt)
             result.fold(
                 onSuccess = { data ->
+                    stopRamp()
+                    _progress.value = 100
                     _navigateToReading.emit(SessionResumeResult(data.session_id, 0))
                 },
                 onFailure = { e ->
+                    stopRamp()
                     _error.emit("ReloadAll failed: ${e.message}")
                 }
             )
         }
     }
+
 }
