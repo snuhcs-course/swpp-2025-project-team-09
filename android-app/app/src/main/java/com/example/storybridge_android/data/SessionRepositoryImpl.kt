@@ -74,4 +74,20 @@ class SessionRepositoryImpl : SessionRepository {
                 Result.failure(e)
             }
         }
+
+    override suspend fun reloadAllSession(
+        userId: String,
+        startedAt: String
+    ): Result<ReloadAllSessionResponse> =
+        withContext(Dispatchers.IO) {
+            try {
+                val res = RetrofitClient.sessionApi.reloadAllSession(userId, startedAt)
+                if (res.isSuccessful && res.body() != null)
+                    Result.success(res.body()!!)
+                else
+                    Result.failure(Exception("Reload all session failed: ${res.code()}"))
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
 }

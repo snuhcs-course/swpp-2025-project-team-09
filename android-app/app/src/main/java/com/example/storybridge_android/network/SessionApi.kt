@@ -1,4 +1,4 @@
-    package com.example.storybridge_android.network
+package com.example.storybridge_android.network
 
 import retrofit2.Call
 import retrofit2.Response
@@ -47,6 +47,13 @@ interface SessionApi {
         @Query("started_at") startedAt: String,
         @Query("page_index") pageIndex: Int
     ): Response<ReloadSessionResponse>
+
+    @GET("/session/reload_all")
+    suspend fun reloadAllSession(
+        @Query("user_id") userId: String,
+        @Query("started_at") startedAt: String
+    ): Response<ReloadAllSessionResponse>
+
 }
 
 // --------------------
@@ -138,3 +145,18 @@ data class ReloadSessionResponse(
     val translation_text: String?,     // 번역 텍스트
     val audio_url: String?             // 오디오 파일 경로 or base64
 )
+
+data class ReloadAllSessionResponse(
+    val session_id: String,
+    val started_at: String,
+    val pages: List<ReloadedPage>
+)
+
+data class ReloadedPage(
+    val page_index: Int,
+    val img_url: String?,
+    val translation_text: String?,
+    val audio_url: String?,
+    val ocr_results: List<OcrBox>?
+)
+

@@ -8,4 +8,5 @@ interface SessionRepository {
     suspend fun endSession(sessionId: String): Result<EndSessionResponse>
     suspend fun getSessionStats(sessionId: String): Result<SessionStatsResponse>
     suspend fun reloadSession(userId: String, startedAt: String, pageIndex: Int): Result<ReloadSessionResponse>
+    suspend fun reloadAllSession(userId: String, startedAt: String): Result<ReloadAllSessionResponse>
 }

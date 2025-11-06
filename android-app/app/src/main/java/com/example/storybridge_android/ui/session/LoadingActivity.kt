@@ -3,7 +3,9 @@ package com.example.storybridge_android.ui.session
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
+import android.view.View
 import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -46,6 +48,7 @@ class LoadingActivity : AppCompatActivity() {
 
         // ---------- 이전 세션 이어보기 ----------
         if (startedAt != null) {
+
             lifecycleScope.launch {
                 val deviceInfo = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
                 viewModel.loadUserInfo(deviceInfo)
@@ -57,7 +60,8 @@ class LoadingActivity : AppCompatActivity() {
                     val sessions = response.body() ?: return@collectLatest
                     val match = sessions.find { it.started_at == startedAt }
                     if (match != null) {
-                        viewModel.reloadSession(match.started_at, 0, this@LoadingActivity)
+                        // viewModel.reloadSession(match.started_at, 0, this@LoadingActivity)
+                        viewModel.reloadAllSession(match.started_at, this@LoadingActivity)
                     } else {
                         showError("Session not found")
                     }
