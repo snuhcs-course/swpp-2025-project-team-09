@@ -43,14 +43,24 @@ class LandingActivity : AppCompatActivity() {
         setContentView(R.layout.activity_landing_second)
         var selectedLang: String? = null
 
-        findViewById<Button>(R.id.btnEnglish).setOnClickListener {
-            selectedLang = "en"
-            AppSettings.setLanguage(this, "en")
+        val btnEnglish = findViewById<Button>(R.id.btnEnglish)
+        val btnChinese = findViewById<Button>(R.id.btnChinese)
+
+        val buttons = listOf(btnEnglish, btnChinese)
+        fun updateButtonState(selected: Button) {
+            buttons.forEach { it.isSelected = it == selected }
         }
 
-        findViewById<Button>(R.id.btnChinese).setOnClickListener {
+        btnEnglish.setOnClickListener {
+            selectedLang = "en"
+            AppSettings.setLanguage(this, "en")
+            updateButtonState(btnEnglish)
+        }
+
+        btnChinese.setOnClickListener {
             selectedLang = "zh"
             AppSettings.setLanguage(this, "zh")
+            updateButtonState(btnChinese)
         }
 
         findViewById<Button>(R.id.startButton).setOnClickListener {
