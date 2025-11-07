@@ -36,7 +36,7 @@ ENGLISH directions for Tone, Pacing, and Emotion.
 """
 
 
-# Pydantic Models
+# Pydantic Models.
 class Translation(BaseModel):
     """A single, fluent translation of a Korean sentence."""
 
