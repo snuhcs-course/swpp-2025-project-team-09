@@ -30,7 +30,11 @@ jobs:
         
         # 2. EC2에서 실행할 deploy.sh 스크립트 경로 (확정된 경로)
         script: |
+          export OCR_API_URL=${{ secrets.OCR_API_URL }}
+          export OCR_SECRET=${{ secrets.OCR_SECRET }}
+          export OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
           export PYTHONUNBUFFERED=1
           cd /home/${{ secrets.EC2_USER }}/storybridge/swpp-2025-project-team-09
+          sleep 2
           chmod +x deploy.sh
           ./deploy.sh

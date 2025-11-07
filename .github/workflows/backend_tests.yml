@@ -1,0 +1,78 @@
+name: Django Backend Test Automation (CI)
+
+on:
+  push:
+    branches:
+      - '**'
+    paths:
+      - 'backend/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up Python Environment
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Cache Python Dependencies
+      uses: actions/cache@v4
+      with:
+        path: ${{ github.workspace }}/.venv-ci
+        key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install Dependencies
+      run: |
+        # CI 전용 가상 환경 초기화
+        rm -rf ${{ github.workspace }}/.venv-ci
+        python -m venv ${{ github.workspace }}/.venv-ci
+        source ${{ github.workspace }}/.venv-ci/bin/activate
+
+        # 의존성 설치
+        pip install -r backend/requirements.txt
+        pip install pytest pytest-django
+        
+    - name: Run Django Migrations
+      working-directory: ./backend
+      env:
+        DJANGO_SETTINGS_MODULE: settings
+        PYTHONPATH: ${{ github.workspace }}/backend
+      run: |
+        source ${{ github.workspace }}/.venv-ci/bin/activate
+        export DJANGO_SETTINGS_MODULE=settings
+        export PYTHONPATH=${{ github.workspace }}/backend
+        python manage.py makemigrations --noinput
+        python manage.py migrate --noinput
+
+    - name: Run Pytest
+      working-directory: ./backend  # backend를 루트처럼 사용
+      env:
+        DJANGO_SETTINGS_MODULE: settings
+        PYTHONPATH: ${{ github.workspace }}/backend
+      run: |
+        source ${{ github.workspace }}/.venv-ci/bin/activate
+        export DJANGO_SETTINGS_MODULE=settings
+        export PYTHONPATH=${{ github.workspace }}/backend
+        pytest tests/
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install Black
+        run: pip install black
+      - name: Run Black Lint Check
+        working-directory: ./backend
+        run: black --check .

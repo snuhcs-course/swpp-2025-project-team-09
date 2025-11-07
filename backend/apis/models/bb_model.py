@@ -1,6 +1,7 @@
 from django.db import models
 from apis.models.page_model import Page
 
+
 class BB(models.Model):
     """
     Bounding Box (텍스트 박스 단위)
@@ -13,14 +14,14 @@ class BB(models.Model):
     audio_base64 = models.JSONField(default=list, blank=True)
     coordinates = models.JSONField(default=dict, blank=True)
     tts_status = models.CharField(
-        max_length=20, 
+        max_length=20,
         default="pending",
         choices=[
             ("pending", "Pending"),
             ("processing", "Processing"),
             ("ready", "Ready"),
-            ("failed", "Failed")
-        ]
+            ("failed", "Failed"),
+        ],
     )
 
     def __str__(self):

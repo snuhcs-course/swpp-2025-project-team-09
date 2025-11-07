@@ -58,7 +58,8 @@ class OCRModule:
 
     def _parse_infer_text(self, result_json: Dict[str, Any]) -> List[str]:
 
-        # 1) Filter out low-confidence fields before computing font size or tokens
+        # 1) Filter out low-confidence fields before computing
+        # font size or tokens
         filtered_json = self._filter_low_confidence(result_json)
 
         # 2) Compute font size from filtered fields
@@ -108,7 +109,7 @@ class OCRModule:
 
         results: List[str] = []
 
-        # 5) For each paragraph, cluster lines by Y and sort words by X
+        # 5) For each paragraph, cluster lines by Y and sort words by X.
         for para in paragraphs:
             if not para:
                 continue
@@ -135,15 +136,15 @@ class OCRModule:
                 lines.append({"text": line_text, "y": y_mean, "xs": xs, "ys": ys})
 
             # Sort lines vertically and join into paragraph text
-            lines_sorted = sorted(lines, key=lambda l: l["y"])
-            paragraph_text = "\n".join(l["text"] for l in lines_sorted)
+            lines_sorted = sorted(lines, key=lambda line: line["y"])
+            paragraph_text = "\n".join(line["text"] for line in lines_sorted)
 
             # Calculate bbox from all vertices in paragraph
             xs = []
             ys = []
-            for l in lines_sorted:
-                xs.extend(l["xs"])
-                ys.extend(l["ys"])
+            for line in lines_sorted:
+                xs.extend(line["xs"])
+                ys.extend(line["ys"])
 
             x_min, x_max = float(min(xs)), float(max(xs))
             y_min, y_max = float(min(ys)), float(max(ys))
