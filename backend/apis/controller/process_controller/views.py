@@ -379,11 +379,19 @@ class ProcessUploadCoverView(APIView):
             TTSModule(target_lang=target_lang).translate_and_tts_cover(title, session_id, page_index)
         )
 
+        # Create a Page object for the cover
+        Page.objects.create(
+            session=session,
+            img_url=image_path,
+            bbox_json={},  # Cover doesn't need OCR bboxes
+            created_at=timezone.now(),
+        )
+
         # Update session
         session.title = title
         session.translated_title = translated_text
+        session.cover_img_url = image_path  # Also save to cover_img_url field
         print(f'[debug]{session.translated_title}')
-        session.cover_img_url = image_path
         session.totalPages += 1
         session.save()
 
