@@ -189,17 +189,13 @@ class UserInfoView(APIView):
         try:
             user = User.objects.get(device_info=device_info)
             sessions = Session.objects.filter(user=user)
-            if not sessions.exists():
-                return Response(
-                    {"user_id": user.uid, "sessions": []}, status=status.HTTP_200_OK
-                )
 
             result = []
             for session in sessions:
-                pages = Page.objects.filter(session=session)
+                pages = Page.objects.filter(session=session).order_by('id')
                 if pages.exists():
-                    first_page = pages.order_by('id').first()
-                    image_path = first_page.img_url  # 필드명 맞게 변경
+                    first_page = pages.first()
+                    image_path = first_page.img_url
                     try:
                         with open(image_path, "rb") as img_file:
                             encoded = base64.b64encode(img_file.read())
@@ -209,14 +205,12 @@ class UserInfoView(APIView):
                 else:
                     image_base64 = None
 
-                result.append(
-                    {
-                        "user_id": user.uid,
-                        "title": session.title,
-                        "image_base64": image_base64,
-                        "started_at": session.created_at,
-                    }
-                )
+                result.append({
+                    "user_id": user.uid,
+                    "title": session.title,
+                    "image_base64": image_base64,
+                    "started_at": session.created_at,
+                })
 
             return Response(result, status=status.HTTP_200_OK)
 
