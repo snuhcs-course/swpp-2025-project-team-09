@@ -198,7 +198,7 @@ class UserInfoView(APIView):
             for session in sessions:
                 pages = Page.objects.filter(session=session)
                 if pages.exists():
-                    first_page = pages.first()
+                    first_page = pages.order_by('id').first()
                     image_path = first_page.img_url  # 필드명 맞게 변경
                     try:
                         with open(image_path, "rb") as img_file:
