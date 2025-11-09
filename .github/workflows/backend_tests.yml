@@ -58,7 +58,7 @@ jobs:
       env:
         DJANGO_SETTINGS_MODULE: settings
         PYTHONPATH: ${{ github.workspace }}/backend
-        SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}  # 이 줄 추가
+        SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
 
       run: |
         source ${{ github.workspace }}/.venv-ci/bin/activate
