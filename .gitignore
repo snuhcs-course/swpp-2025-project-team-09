@@ -14,6 +14,13 @@ local.properties
 # SSH Keys / Security
 *.pem
 
+# Logs and databases
+logs/
+*.log
+
+*.jpg
+*.jpeg
+
 # Django / Python
 __pycache__/
 *.pyc
