@@ -78,20 +78,24 @@ class DecideSaveActivity : AppCompatActivity() {
 
     private fun handleDiscard() {
         decisionMade = true
+        Log.d(TAG, "Attempting to discard session: $sessionId")
 
         lifecycleScope.launch {
             try {
                 val result = repository.discardSession(sessionId)
                 if (result.isSuccess) {
+                    Log.d(TAG, "Session discarded successfully")
                     Toast.makeText(this@DecideSaveActivity, "Session discarded", Toast.LENGTH_SHORT).show()
                     showMainButton()
                 } else {
-                    Toast.makeText(this@DecideSaveActivity, "Failed to discard session", Toast.LENGTH_SHORT).show()
+                    val error = result.exceptionOrNull()
+                    Log.e(TAG, "Failed to discard session: ${error?.message}", error)
+                    Toast.makeText(this@DecideSaveActivity, "Failed to discard session: ${error?.message}", Toast.LENGTH_LONG).show()
                     decisionMade = false
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error discarding session", e)
-                Toast.makeText(this@DecideSaveActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@DecideSaveActivity, "Error: ${e.message}", Toast.LENGTH_LONG).show()
                 decisionMade = false
             }
         }
@@ -106,6 +110,12 @@ class DecideSaveActivity : AppCompatActivity() {
         val intent = Intent(this, FinishActivity::class.java).apply {
             putExtra("session_id", sessionId)
         }
+        startActivity(intent)
+        finish()
+    }
+
+    private fun navigateToMain() {
+        val intent = Intent(this, MainActivity::class.java)
         startActivity(intent)
         finish()
     }
