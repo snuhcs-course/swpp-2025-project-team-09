@@ -52,4 +52,10 @@
     <string name="discard">放弃</string>
     <string name="go_back_to_main">回到主页</string>
 
+    <!-- exit 팝업 -->
+    <string name="exit_dialog_title">离开</string>
+    <string name="exit_dialog_message">要离开阅读画面吗？</string>
+    <string name="exit_dialog_confirm">离开</string>
+    <string name="exit_dialog_cancel">取消</string>
+
 </resources>

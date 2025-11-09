@@ -52,4 +52,10 @@
     <string name="discard">Discard</string>
     <string name="go_back_to_main">Go back to Main</string>
 
+    <!--exit 다이얼로그 -->
+    <string name="exit_dialog_title">Exit</string>
+    <string name="exit_dialog_message">Do you want to leave the reading screen?</string>
+    <string name="exit_dialog_confirm">Exit</string>
+    <string name="exit_dialog_cancel">Cancel</string>
+
 </resources>
