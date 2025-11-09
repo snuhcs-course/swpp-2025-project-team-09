@@ -383,6 +383,7 @@ class ProcessUploadCoverView(APIView):
         session.title = title
         session.translated_title = translated_text
         print(f'[debug]{session.translated_title}')
+        session.cover_img_url = image_path
         session.totalPages += 1
         session.save()
 

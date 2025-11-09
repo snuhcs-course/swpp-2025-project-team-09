@@ -191,21 +191,20 @@ class UserInfoView(APIView):
             sessions = Session.objects.filter(user=user)
             if not sessions.exists():
                 return Response([], status=status.HTTP_200_OK)
-
+            
+            # Around line 103-120 in user_controller/views.py
             result = []
             for session in sessions:
-                pages = Page.objects.filter(session=session)
-                if pages.exists():
-                    first_page = pages.first()
-                    image_path = first_page.img_url  # 필드명 맞게 변경
+                image_base64 = None
+                
+                # Use cover_img_url from session instead of first page
+                if session.cover_img_url:
                     try:
-                        with open(image_path, "rb") as img_file:
+                        with open(session.cover_img_url, "rb") as img_file:
                             encoded = base64.b64encode(img_file.read())
                             image_base64 = encoded.decode("utf-8")
                     except FileNotFoundError:
                         image_base64 = None
-                else:
-                    image_base64 = None
 
                 result.append(
                     {
@@ -216,6 +215,7 @@ class UserInfoView(APIView):
                         "started_at": session.created_at,
                     }
                 )
+                
             print(session.translated_title)
 
             return Response(result, status=status.HTTP_200_OK)
