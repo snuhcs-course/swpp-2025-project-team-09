@@ -132,14 +132,12 @@ class ReadingActivity : AppCompatActivity() {
 
         // BottomNav listeners
         bottomUi.setOnPrevButtonClickListener {
-            if (pageIndex > 0) loadPage(pageIndex - 1)
-            else Toast.makeText(this, "This is the first page", Toast.LENGTH_SHORT).show()
+            loadPage(pageIndex - 1)
         }
         bottomUi.setOnCaptureButtonClickListener { navigateToCamera() }
+        
         bottomUi.setOnNextButtonClickListener {
-            if (pageIndex + 1 >= totalPages)
-                Toast.makeText(this, "This is the last page", Toast.LENGTH_SHORT).show()
-            else loadPage(pageIndex + 1)
+            loadPage(pageIndex + 1)
         }
 
         // Dim background listener - closes overlay when clicking outside
