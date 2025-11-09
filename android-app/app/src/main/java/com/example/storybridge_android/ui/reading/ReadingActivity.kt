@@ -33,7 +33,9 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
-import kotlin.math.min
+import com.example.storybridge_android.ui.common.TopNav
+import com.example.storybridge_android.ui.common.BottomNav
+import com.example.storybridge_android.ui.common.LeftOverlay
 
 class ReadingActivity : AppCompatActivity() {
 
@@ -42,9 +44,9 @@ class ReadingActivity : AppCompatActivity() {
     private var totalPages = 0
     private lateinit var mainLayout: ConstraintLayout
     private lateinit var pageImage: ImageView
-    private lateinit var topUi: View
-    private lateinit var bottomUi: View
-    private lateinit var overlay: ConstraintLayout
+    private lateinit var topUi: TopNav
+    private lateinit var bottomUi: BottomNav
+    private lateinit var leftPanel: LeftOverlay
     private lateinit var dimBackground: View
     private lateinit var thumbnailRecyclerView: RecyclerView
 
@@ -88,6 +90,9 @@ class ReadingActivity : AppCompatActivity() {
         pageIndex = intent.getIntExtra("page_index", 0)
         totalPages = intent.getIntExtra("total_pages", pageIndex + 1)
 
+        // Update page status on BottomNav
+        updateBottomNavStatus()
+
         observeViewModel()
         fetchPage()
         fetchAllThumbnails()
@@ -98,11 +103,11 @@ class ReadingActivity : AppCompatActivity() {
         pageImage = findViewById(R.id.pageImage)
         topUi = findViewById(R.id.topUi)
         bottomUi = findViewById(R.id.bottomUi)
-        overlay = findViewById(R.id.sideOverlay)
+        leftPanel = findViewById(R.id.leftPanel)
         dimBackground = findViewById(R.id.dimBackground)
-        thumbnailRecyclerView = findViewById(R.id.thumbnailRecyclerView)
 
-        findViewById<ImageButton>(R.id.playButton).visibility = View.GONE
+        // Get RecyclerView from LeftOverlay component
+        thumbnailRecyclerView = leftPanel.thumbnailRecyclerView
 
         thumbnailAdapter = ThumbnailAdapter { onThumbnailClick(it) }
         thumbnailRecyclerView.apply {
@@ -114,25 +119,33 @@ class ReadingActivity : AppCompatActivity() {
     private fun initUiState() {
         topUi.post { topUi.translationY = -topUi.height.toFloat() }
         bottomUi.post { bottomUi.translationY = bottomUi.height.toFloat() }
+
+        // Hide left panel initially
+        leftPanel.visibility = View.GONE
+        leftPanel.post { leftPanel.translationX = -leftPanel.width.toFloat() }
     }
 
     private fun initListeners() {
-        findViewById<Button>(R.id.startButton).setOnClickListener { navigateToCamera() }
-        findViewById<ImageButton>(R.id.menuButton).setOnClickListener { toggleOverlay(true) }
-        findViewById<Button>(R.id.closeOverlayButton).setOnClickListener { toggleOverlay(false) }
-        findViewById<Button>(R.id.finishButton).setOnClickListener { navigateToFinish() }
-        findViewById<View>(R.id.dimBackground).setOnClickListener { toggleOverlay(false) }
+        // TopNav listeners
+        topUi.setOnMenuButtonClickListener { toggleOverlay(true) }
+        topUi.setOnFinishButtonClickListener { navigateToFinish() }
 
-        findViewById<Button>(R.id.prevButton).setOnClickListener {
+        // BottomNav listeners
+        bottomUi.setOnPrevButtonClickListener {
             if (pageIndex > 0) loadPage(pageIndex - 1)
             else Toast.makeText(this, "This is the first page", Toast.LENGTH_SHORT).show()
         }
-        findViewById<Button>(R.id.nextButton).setOnClickListener {
+        bottomUi.setOnCaptureButtonClickListener { navigateToCamera() }
+        bottomUi.setOnNextButtonClickListener {
             if (pageIndex + 1 >= totalPages)
                 Toast.makeText(this, "This is the last page", Toast.LENGTH_SHORT).show()
             else loadPage(pageIndex + 1)
         }
 
+        // Dim background listener - closes overlay when clicking outside
+        dimBackground.setOnClickListener { toggleOverlay(false) }
+
+        // Main layout listener for toggling UI
         mainLayout.setOnClickListener { toggleUI() }
     }
 
@@ -194,16 +207,16 @@ class ReadingActivity : AppCompatActivity() {
 
     private fun toggleOverlay(show: Boolean) {
         if (show && !isOverlayVisible) {
-            overlay.visibility = View.VISIBLE
+            leftPanel.visibility = View.VISIBLE
             dimBackground.visibility = View.VISIBLE
-            overlay.animate().translationX(0f).setDuration(300).start()
+            leftPanel.animate().translationX(0f).setDuration(300).start()
             isOverlayVisible = true
         } else if (!show && isOverlayVisible) {
-            overlay.animate()
-                .translationX(-overlay.width.toFloat())
+            leftPanel.animate()
+                .translationX(-leftPanel.width.toFloat())
                 .setDuration(300)
                 .withEndAction {
-                    overlay.visibility = View.GONE
+                    leftPanel.visibility = View.GONE
                     dimBackground.visibility = View.GONE
                 }
                 .start()
@@ -400,7 +413,12 @@ class ReadingActivity : AppCompatActivity() {
         pageImage.setImageDrawable(null)
         playButtonsMap.clear()
         boundingBoxViewsMap.clear()
+        updateBottomNavStatus()
         fetchPage()
+    }
+
+    private fun updateBottomNavStatus() {
+        bottomUi.updatePageStatus(pageIndex, totalPages)
     }
 
     private fun fetchAllThumbnails() {
