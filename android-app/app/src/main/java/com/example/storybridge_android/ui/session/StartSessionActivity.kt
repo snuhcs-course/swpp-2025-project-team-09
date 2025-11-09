@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
+import android.widget.Button
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -27,9 +28,20 @@ class StartSessionActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_start_session)
 
+        val startButton = findViewById<Button>(R.id.startSessionButton)
+        startButton.setOnClickListener {
+            startNewSession()
+        }
+
+        observeViewModel()
+    }
+
+    private fun startNewSession() {
         val deviceInfo = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
         viewModel.startSession(deviceInfo)
+    }
 
+    private fun observeViewModel() {
         lifecycleScope.launchWhenStarted {
             viewModel.state.collectLatest { state ->
                 when (state) {
