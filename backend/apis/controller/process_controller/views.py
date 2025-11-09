@@ -376,13 +376,15 @@ class ProcessUploadCoverView(APIView):
 
         # Run translation for title synchronously
         translated_text, tts_male, tts_female = self._run_async(
-            TTSModule(target_lang=target_lang).translate_and_tts_cover(title, session_id, page_index)
+            TTSModule(target_lang=target_lang).translate_and_tts_cover(
+                title, session_id, page_index
+            )
         )
 
         # Update session
         session.title = title
         session.translated_title = translated_text
-        print(f'[debug]{session.translated_title}')
+        print(f"[debug]{session.translated_title}")
         session.totalPages += 1
         session.save()
 

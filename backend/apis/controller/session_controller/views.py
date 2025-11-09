@@ -8,6 +8,7 @@ from apis.models.user_model import User
 from apis.models.page_model import Page
 import base64
 
+
 class StartSessionView(APIView):
     """
     [POST] /session/start
@@ -317,6 +318,7 @@ class SessionReviewView(APIView):
         except Session.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
+
 class SessionReloadView(APIView):
     """
     [GET] /session/reload
@@ -384,9 +386,7 @@ class SessionReloadView(APIView):
                     status=status.HTTP_200_OK,
                 )
 
-            page = (
-                pages[page_index] if page_index < len(pages) else pages.first()
-            )
+            page = pages[page_index] if page_index < len(pages) else pages.first()
 
             # 이미지 base64 변환
             try:
@@ -413,6 +413,7 @@ class SessionReloadView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+
 class SessionReloadAllView(APIView):
     def get(self, request):
         user_id = request.query_params.get("user_id")
@@ -423,7 +424,7 @@ class SessionReloadAllView(APIView):
                 {"error": "Missing user_id or started_at"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        
+
         try:
             user = User.objects.get(device_info=user_id)
         except User.DoesNotExist:
@@ -439,7 +440,7 @@ class SessionReloadAllView(APIView):
                 {"error": "Invalid started_at format"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-            
+
         try:
             session = Session.objects.filter(user=user, created_at=parsed_time).first()
             if not session:
