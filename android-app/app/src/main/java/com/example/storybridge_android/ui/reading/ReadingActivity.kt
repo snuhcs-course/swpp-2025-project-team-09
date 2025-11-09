@@ -297,8 +297,9 @@ class ReadingActivity : AppCompatActivity() {
                 text = box.text
                 setBackgroundResource(R.drawable.bbox_background)
                 setTextAppearance(R.style.BBoxText)
+                setLineSpacing(0f, 0.8f)  // 줄 간격 설정 (multiplier = 0.8)
                 gravity = Gravity.START or Gravity.TOP
-                setPadding(12, 12, 12, 12)
+                setPadding(24, 16, 24, 16)
                 tag = "bbox"
             }
 
@@ -325,14 +326,14 @@ class ReadingActivity : AppCompatActivity() {
     }
 
     private fun createPlayButton(bboxIndex: Int, rect: RectF) {
-        val playButton = ImageButton(this).apply {
+        val playButton = ImageButton(this, null, android.R.attr.borderlessButtonStyle).apply {
             setImageResource(R.drawable.ic_headphone)
-            setBackgroundResource(R.drawable.circle_dark)
+            background = null
+            scaleType = ImageView.ScaleType.FIT_CENTER
             tag = "play_button"
-            alpha = 0.9f
-            setPadding(8, 8, 8, 8)
+            setPadding(0, 0, 0, 0)
         }
-        val size = (54 * resources.displayMetrics.density).toInt()
+        val size = (40 * resources.displayMetrics.density).toInt()
         val params = ConstraintLayout.LayoutParams(size, size)
         params.startToStart = pageImage.id
         params.topToTop = pageImage.id
@@ -412,7 +413,6 @@ class ReadingActivity : AppCompatActivity() {
     private fun resetButtonState(bboxIndex: Int) {
         playButtonsMap[bboxIndex]?.apply {
             setImageResource(R.drawable.ic_headphone)
-            alpha = 0.9f
         }
     }
 
