@@ -15,4 +15,5 @@ urlpatterns = [
     path("info", GetSessionInfoView.as_view()),
     path("stats", GetSessionStatsView.as_view()),
     path("review", SessionReviewView.as_view()),
+    path("reload_all", SessionReloadAllView.as_view()),
 ]

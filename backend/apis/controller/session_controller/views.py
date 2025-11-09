@@ -314,3 +314,72 @@ class SessionReviewView(APIView):
             )
         except Session.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
+
+class SessionReloadAllView(APIView):
+    def get(self, request):
+        user_id = request.query_params.get("user_id")
+        started_at = request.query_params.get("started_at")
+
+        if not user_id or not started_at:
+            return Response(
+                {"error": "Missing user_id or started_at"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            user = User.objects.get(device_info=user_id)
+        except User.DoesNotExist:
+            return Response(
+                {"error_code": 404, "message": "USER__NOT_FOUND"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # created_at으로 세션 찾기
+        parsed_time = parse_datetime(started_at)
+        if not parsed_time:
+            return Response(
+                {"error": "Invalid started_at format"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            session = Session.objects.filter(user=user, created_at=parsed_time).first()
+            if not session:
+                return Response(
+                    {"error_code": 404, "message": "SESSION__NOT_FOUND"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            pages_data = []
+            for page in session.pages.all().order_by("id"):
+                page_info = {
+                    "page_index": page.id,
+                    "img_url": page.img_url,
+                    "translation_text": page.translation_text,
+                    "audio_url": page.audio_url,
+                    "ocr_results": [
+                        {
+                            "bbox": bb.coordinates,
+                            "original_txt": bb.original_text,
+                            "translation_txt": bb.translated_text,
+                        }
+                        for bb in page.bbs.all()
+                    ],
+                }
+                pages_data.append(page_info)
+
+            return Response(
+                {
+                    "session_id": str(session.id),
+                    "started_at": session.created_at.isoformat(),
+                    "pages": pages_data,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as e:
+            print("[DEBUG][ReloadAll]", e)
+            return Response(
+                {"error": "Internal server error"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
