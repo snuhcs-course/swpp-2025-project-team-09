@@ -7,7 +7,7 @@
     android:background="@drawable/card_background"
     android:padding="24dp"
     android:clipChildren="false"
-    android:clipToPadding="false">
+    android:clipToPadding="false" >
 
     <!-- Book cover image -->
     <ImageView
