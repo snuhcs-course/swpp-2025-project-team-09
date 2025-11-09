@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/bottomNav"
+    android:layout_width="match_parent"
+    android:layout_height="200dp"
+    android:background="@color/yellow_light"
+    android:padding="32dp"
+    tools:context=".ui.common.BottomNav"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintEnd_toEndOf="parent">
+
+    <!-- Previous page button -->
+    <ImageButton
+        android:id="@+id/prevButton"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:background="@drawable/ic_background"
+        android:elevation="8dp"
+        android:translationZ="8dp"
+        android:src="@drawable/ic_left_arrow"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/statusText"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/startButton"
+        app:layout_constraintHorizontal_chainStyle="packed" />
+
+    <!-- Add new page button -->
+    <android.widget.Button
+        android:id="@+id/startButton"
+        android:layout_width="320dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="40dp"
+        android:layout_marginEnd="40dp"
+        android:background="@drawable/white_button"
+        android:elevation="8dp"
+        android:translationZ="8dp"
+        android:text="Add New Page"
+        android:textAllCaps="false"
+        style="@style/text40pt"
+        app:layout_constraintTop_toTopOf="@id/prevButton"
+        app:layout_constraintBottom_toBottomOf="@id/prevButton"
+        app:layout_constraintStart_toEndOf="@id/prevButton"
+        app:layout_constraintEnd_toStartOf="@id/nextButton" />
+
+    <!-- Next page button -->
+    <ImageButton
+        android:id="@+id/nextButton"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:background="@drawable/ic_background"
+        android:elevation="8dp"
+        android:translationZ="8dp"
+        android:src="@drawable/ic_right_arrow"
+        app:layout_constraintTop_toTopOf="@id/startButton"
+        app:layout_constraintBottom_toBottomOf="@id/startButton"
+        app:layout_constraintStart_toEndOf="@id/startButton"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Page status text -->
+    <TextView
+        android:id="@+id/statusText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="page 1/2"
+        android:textColor="@color/gray_dark"
+        style="@style/text40pt"
+        app:layout_constraintTop_toBottomOf="@id/startButton"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

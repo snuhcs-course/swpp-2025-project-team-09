@@ -57,7 +57,7 @@
             android:id="@+id/menuButton"
             android:layout_width="64dp"
             android:layout_height="64dp"
-            android:background="@drawable/ic_menus"
+            android:background="@drawable/ic_menu"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"/>
@@ -66,7 +66,7 @@
             android:id="@+id/finishButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Finish Reading"
+            android:text="@string/finish_reading"
             android:background="@drawable/rounded_button"
             android:paddingStart = "16dp"
             android:paddingEnd = "16dp"
@@ -106,7 +106,7 @@
             android:id="@+id/startButton"
             android:layout_width="wrap_content"
             android:layout_height="64dp"
-            android:text="Capture New Page"
+            android:text="@string/capture_new_page"
             android:background="@drawable/rounded_button"
             style="@style/BoldText48"
             android:paddingStart="16dp"
@@ -178,4 +178,3 @@
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
-

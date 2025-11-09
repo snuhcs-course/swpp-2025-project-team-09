@@ -2,6 +2,7 @@ package com.example.storybridge_android.network
 
 import com.google.gson.annotations.SerializedName
 import retrofit2.Call
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -11,25 +12,26 @@ import retrofit2.http.Query
 interface ProcessApi {
 
     @POST("/process/upload/")
-    fun uploadImage(
+    suspend fun uploadImage(
         @Body request: UploadImageRequest
-    ): Call<UploadImageResponse>
+    ): Response<UploadImageResponse>
 
     @POST("/process/upload_cover/")
-    fun uploadCoverImage(
+    suspend fun uploadCoverImage(
         @Body request: UploadImageRequest
-    ): Call<UploadCoverResponse>
+    ): Response<UploadCoverResponse>
+
     @GET("/process/check_ocr/")
-    fun checkOcrStatus(
+    suspend fun checkOcrStatus(
         @Query("session_id") session_id: String,
         @Query("page_index") page_index: Int
-    ): Call<CheckOcrResponse>
+    ): Response<CheckOcrResponse>
 
     @GET("/process/check_tts/")
-    fun checkTtsStatus(
+    suspend fun checkTtsStatus(
         @Query("session_id") session_id: String,
         @Query("page_index") page_index: Int
-    ): Call<CheckTtsResponse>
+    ): Response<CheckTtsResponse>
 }
 
 // --------------------
@@ -57,6 +59,7 @@ data class UploadCoverResponse(
     val status: String,
     val submitted_at: String, // datetime as ISO string
     val title: String,
+    val translated_title: String,
     val tts_male: String,
     val tts_female: String
 )

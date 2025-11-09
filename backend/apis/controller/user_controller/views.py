@@ -190,9 +190,7 @@ class UserInfoView(APIView):
             user = User.objects.get(device_info=device_info)
             sessions = Session.objects.filter(user=user)
             if not sessions.exists():
-                return Response(
-                    {"user_id": user.uid, "sessions": []}, status=status.HTTP_200_OK
-                )
+                return Response([], status=status.HTTP_200_OK)
 
             result = []
             for session in sessions:
@@ -213,10 +211,12 @@ class UserInfoView(APIView):
                     {
                         "user_id": user.uid,
                         "title": session.title,
+                        "translated_title": session.translated_title,
                         "image_base64": image_base64,
                         "started_at": session.created_at,
                     }
                 )
+            print(session.translated_title)
 
             return Response(result, status=status.HTTP_200_OK)
 

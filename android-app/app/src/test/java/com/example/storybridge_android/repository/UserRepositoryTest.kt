@@ -1,6 +1,6 @@
 package com.example.storybridge_android.repository
 
-import com.example.storybridge_android.data.DefaultUserRepository
+import com.example.storybridge_android.data.UserRepositoryImpl
 import com.example.storybridge_android.network.UserLoginRequest
 import com.example.storybridge_android.network.UserRegisterRequest
 import com.example.storybridge_android.network.RetrofitClient
@@ -15,7 +15,7 @@ import org.junit.Assert.*
 class UserRepositoryTest {
 
     private lateinit var server: MockWebServer
-    private lateinit var repository: DefaultUserRepository
+    private lateinit var repository: UserRepositoryImpl
 
     @Before
     fun setup() {
@@ -23,7 +23,7 @@ class UserRepositoryTest {
         server.start()
 
         RetrofitClient.overrideBaseUrl(server.url("/").toString())
-        repository = DefaultUserRepository()
+        repository = UserRepositoryImpl()
     }
 
     @After

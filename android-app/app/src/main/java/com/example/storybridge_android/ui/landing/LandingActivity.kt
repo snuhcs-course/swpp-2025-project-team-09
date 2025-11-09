@@ -41,13 +41,34 @@ class LandingActivity : AppCompatActivity() {
 
     private fun showLanguageSelection() {
         setContentView(R.layout.activity_landing_second)
-        findViewById<Button>(R.id.btnEnglish).setOnClickListener {
-            AppSettings.setLanguage(this, "en")
-            navigateToMain()
+        var selectedLang: String? = null
+
+        val btnEnglish = findViewById<Button>(R.id.btnEnglish)
+        val btnChinese = findViewById<Button>(R.id.btnChinese)
+
+        val buttons = listOf(btnEnglish, btnChinese)
+        fun updateButtonState(selected: Button) {
+            buttons.forEach { it.isSelected = it == selected }
         }
-        findViewById<Button>(R.id.btnChinese).setOnClickListener {
-            AppSettings.setLanguage(this, "ch")
-            navigateToMain()
+
+        btnEnglish.setOnClickListener {
+            selectedLang = "en"
+            AppSettings.setLanguage(this, "en")
+            updateButtonState(btnEnglish)
+        }
+
+        btnChinese.setOnClickListener {
+            selectedLang = "zh"
+            AppSettings.setLanguage(this, "zh")
+            updateButtonState(btnChinese)
+        }
+
+        findViewById<Button>(R.id.startButton).setOnClickListener {
+            if (selectedLang != null) {
+                navigateToMain()
+            } else {
+                Toast.makeText(this, "Please select a language first!", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 

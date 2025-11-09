@@ -28,8 +28,7 @@ interface UserApi {
     @GET("/user/info")
     suspend fun userInfo(
         @Query("device_info") deviceInfo: String
-    ): Response<UserInfoResponse>
-
+    ): Response<List<UserInfoResponse>>
 }
 
 // --------------------
@@ -74,9 +73,13 @@ data class UserInfoRequest(
     val device_info: String
 )
 
+
 data class UserInfoResponse(
     val user_id: String,
     val title: String,
+    val translated_title: String,
     val image_base64: String,
-    val started_at: String // datetime as ISO string
+    val started_at: String  // datetime as ISO string
 )
+
+typealias UserInfoListResponse = List<UserInfoResponse>
