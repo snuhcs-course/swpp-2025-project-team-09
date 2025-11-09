@@ -17,95 +17,46 @@
         android:layout_marginBottom="80dp"
         android:text="@string/preferred_voice_question"
         style="@style/text80pt"
-        app:layout_constraintBottom_toTopOf="@id/manButtonContainer"
+        app:layout_constraintBottom_toTopOf="@id/manButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_chainStyle="packed" />
 
-    <!-- Man voice button container -->
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/manButtonContainer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="40dp"
-        android:clipChildren="false"
-        android:clipToPadding="false"
+    <!-- Man voice button -->
+    <android.widget.Button
+        android:id="@+id/manButton"
+        android:layout_width="480dp"
+        android:layout_height="160dp"
+        android:background="@drawable/big_button"
+        android:elevation="8dp"
+        android:translationZ="8dp"
+        android:text="Man"
+        android:textAllCaps="false"
+        style="@style/text80pt"
         app:layout_constraintTop_toBottomOf="@id/voiceSelectTitleText"
+        app:layout_constraintBottom_toTopOf="@id/womanButton"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/womanButtonContainer">
+        android:layout_marginBottom="40dp"/>
 
-        <android.widget.Button
-            android:id="@+id/manButton"
-            android:layout_width="480dp"
-            android:layout_height="160dp"
-            android:background="@drawable/big_button"
-            android:elevation="8dp"
-            android:translationZ="8dp"
-            android:text="Echo"
-            android:textAllCaps="false"
-            style="@style/text80pt"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
 
-        <!-- Headphone icon -->
-        <ImageButton
-            android:id="@+id/manHeadphoneIcon"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:background="@drawable/ic_background"
-            android:elevation="8dp"
-            android:translationZ="8dp"
-            android:src="@drawable/ic_headphone"
-            app:layout_constraintTop_toTopOf="@id/manButton"
-            app:layout_constraintEnd_toEndOf="@id/manButton" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <!-- Woman voice button container -->
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/womanButtonContainer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="120dp"
-        android:clipChildren="false"
-        android:clipToPadding="false"
-        app:layout_constraintTop_toBottomOf="@id/manButtonContainer"
-        app:layout_constraintStart_toStartOf="parent"
+    <!-- Woman voice button -->
+    <android.widget.Button
+        android:id="@+id/womanButton"
+        style="@style/text80pt"
+        android:layout_width="480dp"
+        android:layout_height="160dp"
+        android:background="@drawable/big_button"
+        android:elevation="8dp"
+        android:text="Woman"
+        android:textAllCaps="false"
+        android:translationZ="8dp"
+        app:layout_constraintBottom_toTopOf="@id/nextButton"
+        app:layout_constraintTop_toBottomOf="@id/manButton"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/nextButton">
-
-        <android.widget.Button
-            android:id="@+id/womanButton"
-            android:layout_width="480dp"
-            android:layout_height="160dp"
-            android:background="@drawable/big_button"
-            android:elevation="8dp"
-            android:translationZ="8dp"
-            android:text="Shimmer"
-            android:textAllCaps="false"
-            style="@style/text80pt"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
-
-        <!-- Headphone icon -->
-        <ImageButton
-            android:id="@+id/womanHeadphoneIcon"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:background="@drawable/ic_background"
-            android:elevation="8dp"
-            android:translationZ="8dp"
-            android:src="@drawable/ic_headphone"
-            app:layout_constraintTop_toTopOf="@id/womanButton"
-            app:layout_constraintEnd_toEndOf="@id/womanButton" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginBottom="120dp"/>
 
     <!-- Next button -->
     <android.widget.Button
@@ -121,6 +72,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/womanButtonContainer" />
+        app:layout_constraintTop_toBottomOf="@id/womanButton" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
