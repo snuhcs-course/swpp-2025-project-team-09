@@ -136,10 +136,14 @@ class LoadingActivity : AppCompatActivity() {
     }
 
     private fun navigateToReading(sessionId: String, pageIndex: Int, totalPages: Int = pageIndex + 1) {
+        // Check if this is a new session (no started_at) or existing session (has started_at)
+        val isNewSession = intent.getStringExtra("started_at") == null
+
         val intent = Intent(this, ReadingActivity::class.java).apply {
             putExtra("session_id", sessionId)
             putExtra("page_index", pageIndex)
             putExtra("total_pages", totalPages)
+            putExtra("is_new_session", isNewSession)
         }
         startActivity(intent)
         finish()
