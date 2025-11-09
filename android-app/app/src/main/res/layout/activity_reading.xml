@@ -53,13 +53,19 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#80000000"
-        android:visibility="gone"/>
+        android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true"
+        android:elevation="10dp"/>
 
     <!-- 왼쪽에서 슬라이드 되는 오버레이 -->
     <com.example.storybridge_android.ui.common.LeftOverlay
         android:id= "@+id/leftPanel"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
+        android:clickable="true"
+        android:focusable="true"
+        android:elevation="11dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"/>
