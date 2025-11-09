@@ -37,6 +37,8 @@ import com.example.storybridge_android.ui.common.TopNav
 import com.example.storybridge_android.ui.common.BottomNav
 import com.example.storybridge_android.ui.common.LeftOverlay
 import com.example.storybridge_android.ui.session.DecideSaveActivity
+import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.AlertDialog
 
 class ReadingActivity : AppCompatActivity() {
 
@@ -82,6 +84,19 @@ class ReadingActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_reading)
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                AlertDialog.Builder(this@ReadingActivity)
+                    .setTitle(getString(R.string.exit_dialog_title))
+                    .setMessage(getString(R.string.exit_dialog_message))
+                    .setPositiveButton(getString(R.string.exit_dialog_confirm)) { _, _ ->
+                        navigateToFinish()
+                    }
+                    .setNegativeButton(getString(R.string.exit_dialog_cancel), null)
+                    .show()
+            }
+        })
 
         initViews()
         initUiState()

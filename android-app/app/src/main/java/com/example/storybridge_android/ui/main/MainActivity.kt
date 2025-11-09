@@ -64,7 +64,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun observeUserInfo() {
-        val container = findViewById<GridLayout>(R.id.cardContainer)
+        val container = findViewById<com.google.android.flexbox.FlexboxLayout>(R.id.cardContainer)
         val emptyContainer = findViewById<LinearLayout>(R.id.emptyContainer)
 
         lifecycleScope.launch {
@@ -80,42 +80,9 @@ class MainActivity : AppCompatActivity() {
                         return@collectLatest
                     }
 
-                    // --- 최신 1개만 남기기 ----
-
-                    val latest = sessions.maxByOrNull { it.started_at }
-                    if (latest != null) {
-                        val sessionCard = SessionCard(this@MainActivity)
-                        sessionCard.setBookTitle(latest.title)
-
-                        val raw = latest.started_at.take(10)
-                        val parts = raw.split("-")
-                        if (parts.size >= 3) {
-                            val formatted = "${parts[1]}/${parts[2]}"
-                            sessionCard.setBookProgress(formatted)
-                        } else {
-                            sessionCard.setBookProgress(latest.started_at)
-                        }
-
-                            if (!latest.image_base64.isNullOrEmpty()) {
-                            val imageBytes = Base64.decode(latest.image_base64, Base64.DEFAULT)
-                            val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-                            sessionCard.findViewById<ImageView>(R.id.cardBookImage).setImageBitmap(bitmap)
-                        }
-
-                        sessionCard.setOnNextClickListener {
-                            val intent = Intent(this@MainActivity, LoadingActivity::class.java)
-                            intent.putExtra("started_at", latest.started_at)
-                            startActivity(intent)
-                        }
-
-                        container.addView(sessionCard)
-                    }
-
-                    // --- 여러 개 띄우기 ---
-                    /*
                     for (data in sessions) {
                         val sessionCard = SessionCard(this@MainActivity)
-                        sessionCard.setBookTitle(data.translated_title)
+                        sessionCard.setBookTitle(data.translated_title ?: "NULL")
 
                         val raw = data.started_at.take(10)
                         val parts = raw.split("-")
@@ -139,7 +106,6 @@ class MainActivity : AppCompatActivity() {
                         }
                         container.addView(sessionCard)
                     }
-                    */
 
                     container.visibility = LinearLayout.VISIBLE
                     emptyContainer.visibility = LinearLayout.GONE
