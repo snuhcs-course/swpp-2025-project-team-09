@@ -1,0 +1,40 @@
+name: Django Backend EC2 Continuous Deployment
+
+on:
+  push:
+    # 'deployment' 브랜치에 코드가 푸시될 때만 실행됩니다.
+    branches:
+      - deployment 
+    # backend 폴더 내부에서 변경이 발생했을 때만 실행되도록 경로를 지정합니다.
+    paths:
+      - 'backend/**' 
+
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: Deploy to EC2 via SSH
+      uses: appleboy/ssh-action@v1.0.3 
+      with:
+        # 1. SSH 접속 정보
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: 22
+        
+        # 2. EC2에서 실행할 deploy.sh 스크립트 경로 (확정된 경로)
+        script: |
+          export OCR_API_URL=${{ secrets.OCR_API_URL }}
+          export OCR_SECRET=${{ secrets.OCR_SECRET }}
+          export OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+          export PYTHONUNBUFFERED=1
+          cd /home/${{ secrets.EC2_USER }}/storybridge/swpp-2025-project-team-09
+          sleep 2
+          chmod +x deploy.sh
+          ./deploy.sh
