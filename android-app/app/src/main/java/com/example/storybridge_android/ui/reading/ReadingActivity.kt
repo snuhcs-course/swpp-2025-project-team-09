@@ -281,16 +281,18 @@ class ReadingActivity : AppCompatActivity() {
 
             val boxView = TextView(this).apply {
                 text = box.text
-                setBackgroundColor(getColor(R.color.black_50))
-                setTextColor(getColor(R.color.white))
+                setBackgroundResource(R.drawable.bbox_background)
+                setTextAppearance(R.style.text24pt)
+                setTextColor(getColor(R.color.black))
                 gravity = Gravity.START or Gravity.TOP
-                setPadding(8, 8, 8, 8)
+                setPadding(12, 12, 12, 12)
                 tag = "bbox"
             }
 
-            boxView.textSize = 16f
-
-            val params = ConstraintLayout.LayoutParams(rect.width().toInt(), rect.height().toInt())
+            val params = ConstraintLayout.LayoutParams(
+                rect.width().toInt(),  // 너비는 서버 데이터 고정
+                ConstraintLayout.LayoutParams.WRAP_CONTENT  // 높이는 텍스트에 맞춤
+            )
             params.startToStart = pageImage.id
             params.topToTop = pageImage.id
             boxView.layoutParams = params
@@ -323,7 +325,7 @@ class ReadingActivity : AppCompatActivity() {
         params.topToTop = pageImage.id
         playButton.layoutParams = params
         playButton.translationX = rect.right - size / 2
-        playButton.translationY = rect.bottom - size / 2
+        playButton.translationY = rect.top - size / 2
         playButton.elevation = 8f
         playButton.setOnClickListener { playAudioForBox(bboxIndex) }
         mainLayout.addView(playButton)
