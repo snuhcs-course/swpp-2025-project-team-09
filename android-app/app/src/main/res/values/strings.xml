@@ -57,5 +57,7 @@
     <string name="exit_dialog_message">Do you want to leave the reading screen?</string>
     <string name="exit_dialog_confirm">Exit</string>
     <string name="exit_dialog_cancel">Cancel</string>
+    <string name="exit_loading">Please wait until loading is complete.</string>
+
 
 </resources>

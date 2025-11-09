@@ -7,8 +7,10 @@ import android.util.Base64
 import android.util.Log
 import android.widget.Button
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -118,6 +120,19 @@ class VoiceSelectActivity : AppCompatActivity() {
                 Toast.makeText(this@VoiceSelectActivity, msg, Toast.LENGTH_SHORT).show()
             }
         }
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                AlertDialog.Builder(this@VoiceSelectActivity)
+                    .setTitle(getString(R.string.exit_dialog_title))
+                    .setMessage(getString(R.string.exit_dialog_message))
+                    .setPositiveButton(getString(R.string.exit_dialog_confirm)) { _, _ ->
+                        isEnabled = false
+                        onBackPressedDispatcher.onBackPressed()
+                    }
+                    .setNegativeButton(getString(R.string.exit_dialog_cancel), null)
+                    .show()
+            }
+        })
     }
 
     private fun playTts(ttsBase64: String?, voice: String) {

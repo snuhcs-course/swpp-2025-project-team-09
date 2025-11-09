@@ -19,6 +19,8 @@ import com.example.storybridge_android.data.UserRepositoryImpl
 import com.example.storybridge_android.ui.reading.ReadingActivity
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.AlertDialog
 
 class LoadingActivity : AppCompatActivity() {
 
@@ -125,6 +127,12 @@ class LoadingActivity : AppCompatActivity() {
                 }
             }
         }
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                Toast.makeText(this@LoadingActivity, getString(R.string.exit_loading), Toast.LENGTH_SHORT).show()
+            }
+        })
+
     }
 
     private fun navigateToReading(sessionId: String, pageIndex: Int, totalPages: Int = pageIndex + 1) {
