@@ -10,8 +10,8 @@ import kotlinx.coroutines.launch
 import retrofit2.Response
 
 class MainViewModel(private val userRepository: UserRepository) : ViewModel() {
-    private val _userInfo = MutableStateFlow<Response<List<UserInfoResponse>>?>(null)
-    val userInfo: StateFlow<Response<List<UserInfoResponse>>?> = _userInfo
+    private val _userInfo = MutableStateFlow<Response<UserInfoResponse>?>(null)
+    val userInfo: StateFlow<Response<UserInfoResponse>?> = _userInfo
 
     fun loadUserInfo(deviceInfo: String) {
         viewModelScope.launch {

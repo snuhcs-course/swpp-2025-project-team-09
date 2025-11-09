@@ -11,9 +11,6 @@
 local.properties
 .env
 
-# SSH Keys / Security
-*.pem
-
 # Django / Python
 __pycache__/
 *.pyc

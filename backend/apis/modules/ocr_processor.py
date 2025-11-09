@@ -31,10 +31,6 @@ class OCRModule:
             if c is None or c > threshold:
                 filtered_fields.append(f)
 
-        print(
-            f"[DEBUG] Confidence filter: {len(fields)} -> {len(filtered_fields)} fields kept (threshold={threshold})"
-        )
-
         new_json = dict(result_json)
         new_images = list(images)
         new_first = dict(new_images[0])
@@ -184,7 +180,6 @@ class OCRModule:
         response = requests.post(self.api_url, headers=headers, files=files)
         # 디버깅용
         print(f"[DEBUG] OCR API call took {time.time() - start:.2f}s")
-        print(f"[DEBUG] OCR raw response text (first 300 chars): {response.text[:300]}")
         result = response.json()
         paragraphs = self._parse_infer_text(result)
 
@@ -212,8 +207,7 @@ class OCRModule:
         fs = self._font_size(filtered_json)
         images_f = filtered_json.get("images", [])
         if not images_f:
-            print("[DEBUG] OCR parse: no images field in response.")
-            return []
+            return None  # Changed from ""
         fields = images_f[0].get("fields", [])
         tokens = []
         for field in fields:
@@ -232,8 +226,7 @@ class OCRModule:
                     }
                 )
         if not tokens:
-            print(f"[DEBUG] OCR parse: no tokens extracted. Field count: {len(fields)}")
-            return []
+            return None
 
         heights = [max(t["ys"]) - min(t["ys"]) for t in tokens if t["ys"]]
         max_height = max(heights) if heights else 0
@@ -242,8 +235,7 @@ class OCRModule:
         ]
 
         if not tokens:
-            print(f"[DEBUG] OCR parse: no tokens extracted. Field count: {len(fields)}")
-            return []
+            return None
 
         # Paragraph clustering (2D DBSCAN on x, y)
         X = np.array([[t["x"], t["y"]] for t in tokens])

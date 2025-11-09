@@ -50,12 +50,8 @@ class ProcessUploadView(APIView):
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
 
-        # Map language codes to full names for TTS
-        lang_map = {"en": "English", "zh": "Chinese"}
-        target_lang = lang_map.get(lang, "English")
-
         # Run translation synchronously (fast, ~2-3s per paragraph)
-        tts_module = TTSModule(target_lang=target_lang)
+        tts_module = TTSModule()
         translation_data = self._get_all_translations(
             tts_module, ocr_result, session_id, page_index
         )
@@ -369,20 +365,15 @@ class ProcessUploadCoverView(APIView):
                 {"error_code": 422, "message": "PROCESS__UNABLE_TO_PROCESS_IMAGE"},
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
-
-        # Map language codes to full names for TTS
-        lang_map = {"en": "English", "zh": "Chinese"}
-        target_lang = lang_map.get(lang, "English")
+        session.title = title
+        session.save()
 
         # Run translation for title synchronously
-        translated_text, tts_male, tts_female = self._run_async(
-            TTSModule(target_lang=target_lang).translate_and_tts_cover(title, session_id, page_index)
+        tts_male, tts_female = self._run_async(
+            TTSModule().translate_and_tts_cover(title, session_id, page_index)
         )
 
         # Update session
-        session.title = title
-        session.translated_title = translated_text
-        print(f'[debug]{session.translated_title}')
         session.totalPages += 1
         session.save()
 
@@ -393,7 +384,6 @@ class ProcessUploadCoverView(APIView):
                 "status": "ready",
                 "submitted_at": timezone.now().isoformat(),
                 "title": session.title,
-                "translated_title": session.translated_title,
                 "tts_male": tts_male,
                 "tts_female": tts_female,
             },

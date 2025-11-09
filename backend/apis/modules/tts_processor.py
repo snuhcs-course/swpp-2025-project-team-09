@@ -408,7 +408,7 @@ class TTSModule:
             base64.b64encode(female_audio).decode("utf-8") if female_audio else ""
         )
 
-        return translated_text, male_b64, female_b64
+        return male_b64, female_b64
 
         # async def run_tts_cover_only(self, translation_data: Dict[str, Any], session_id: str, page_index: int, para_index: int) -> tuple[str, str]:
         """

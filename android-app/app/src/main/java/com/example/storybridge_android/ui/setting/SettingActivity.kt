@@ -11,8 +11,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.R
-import com.example.storybridge_android.StoryBridgeApplication
-import com.example.storybridge_android.data.UserRepositoryImpl
+import com.example.storybridge_android.data.DefaultUserRepository
 import com.example.storybridge_android.network.UserLangRequest
 import com.example.storybridge_android.ui.common.TopNavigationBar
 import kotlinx.coroutines.flow.collectLatest
@@ -23,7 +22,7 @@ class SettingActivity : AppCompatActivity() {
     private lateinit var voiceGroup: RadioGroup
 
     private val viewModel: SettingViewModel by viewModels {
-        SettingViewModelFactory(UserRepositoryImpl())
+        SettingViewModelFactory(DefaultUserRepository())
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,6 +32,7 @@ class SettingActivity : AppCompatActivity() {
 
         setupTopBar()
         setupLanguageOptions()
+        setupVoiceOptions()
         setupSaveButton()
         observeLangResponse()
     }
@@ -50,20 +50,35 @@ class SettingActivity : AppCompatActivity() {
 
         when (currentLang) {
             "en" -> english.isChecked = true
-            "zh" -> chinese.isChecked = true
+            "cn" -> chinese.isChecked = true
         }
 
         english.setOnClickListener { AppSettings.setLanguage(this, "en") }
-        chinese.setOnClickListener { AppSettings.setLanguage(this, "zh") }
+        chinese.setOnClickListener { AppSettings.setLanguage(this, "cn") }
+    }
+
+    private fun setupVoiceOptions() {
+        voiceGroup = findViewById(R.id.voiceGroup)
+        val male = findViewById<RadioButton>(R.id.radioMan)
+        val female = findViewById<RadioButton>(R.id.radioWoman)
+        val currentVoice = AppSettings.getVoice(this)
+
+        when (currentVoice) {
+            "MAN" -> male.isChecked = true
+            "WOMAN" -> female.isChecked = true
+        }
+
+        male.setOnClickListener { AppSettings.setVoice(this, "MAN") }
+        female.setOnClickListener { AppSettings.setVoice(this, "WOMAN") }
     }
 
     private fun setupSaveButton() {
-        val saveButton = findViewById<Button>(R.id.btnBack)
+        val saveButton = findViewById<Button>(R.id.btnSaveSettings)
         saveButton.setOnClickListener {
             val deviceInfo = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
             val selectedLang = when (languageGroup.checkedRadioButtonId) {
                 R.id.radioEnglish -> "en"
-                R.id.radioChinese -> "zh"
+                R.id.radioChinese -> "cn"
                 else -> "en"
             }
             val request = UserLangRequest(device_info = deviceInfo, language_preference = selectedLang)
@@ -75,20 +90,14 @@ class SettingActivity : AppCompatActivity() {
         lifecycleScope.launch {
             viewModel.langResponse.collectLatest { response ->
                 if (response == null) return@collectLatest
-
                 if (response.isSuccessful) {
                     val selectedLang = when (languageGroup.checkedRadioButtonId) {
                         R.id.radioEnglish -> "en"
-                        R.id.radioChinese -> "zh"
+                        R.id.radioChinese -> "cn"
                         else -> "en"
                     }
-
-                    // ✅ 서버 성공 시 무조건 저장 + 적용
                     AppSettings.setLanguage(this@SettingActivity, selectedLang)
-                    StoryBridgeApplication.applyLanguage(this@SettingActivity)
-                    setResult(RESULT_OK)
                     finish()
-
                 } else {
                     Log.e("SettingActivity", "PATCH failed: ${response.code()}")
                 }

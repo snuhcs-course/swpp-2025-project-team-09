@@ -1,7 +1,6 @@
 package com.example.storybridge_android.network
 
 import retrofit2.Call
-import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -12,22 +11,22 @@ import retrofit2.http.Query
 interface PageApi {
 
     @GET("/page/get_image/")
-    suspend fun getImage(
+    fun getImage(
         @Query("session_id") session_id: String,
         @Query("page_index") page_index: Int
-    ): Response<GetImageResponse>
+    ): Call<GetImageResponse>
 
     @GET("/page/get_ocr/")
-    suspend fun getOcrResults(
+    fun getOcrResults(
         @Query("session_id") session_id: String,
         @Query("page_index") page_index: Int
-    ): Response<GetOcrTranslationResponse>
+    ): Call<GetOcrTranslationResponse>
 
     @GET("/page/get_tts/")
-    suspend fun getTtsResults(
+    fun getTtsResults(
         @Query("session_id") session_id: String,
         @Query("page_index") page_index: Int
-    ): Response<GetTtsResponse>
+    ): Call<GetTtsResponse>
 }
 
 

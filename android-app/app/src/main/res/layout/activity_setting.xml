@@ -1,76 +1,100 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/settingLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:clipChildren="false"
-    android:clipToPadding="false"
-    tools:context=".ui.setting.SettingActivity"
     android:background="@color/white">
 
-    <!-- Top navigation bar -->
+    <!-- 상단바 -->
     <com.example.storybridge_android.ui.common.TopNavigationBar
         android:id="@+id/topNavigationBar"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="120dp"
-        android:elevation="8dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"/>
 
-    <!-- Language setting title -->
+    <!-- 언어 설정 -->
     <TextView
         android:id="@+id/languageTitle"
-        style="@style/text40pt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="64dp"
-        android:layout_marginTop="32dp"
         android:text="Language"
+        style="@style/BoldText48"
+        app:layout_constraintTop_toBottomOf="@id/topNavigationBar"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/topNavigationBar" />
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="32dp"
+        />
 
-    <!-- Language selection -->
     <RadioGroup
         android:id="@+id/languageGroup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="64dp"
-        android:orientation="horizontal"
         app:layout_constraintTop_toBottomOf="@id/languageTitle"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="32dp"
+        android:orientation="horizontal">
 
         <RadioButton
             android:id="@+id/radioEnglish"
-            style="@style/text24pt"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="32dp"
-            android:text="English" />
+            android:text="English"
+            android:layout_marginEnd="32dp"/>
 
         <RadioButton
             android:id="@+id/radioChinese"
-            style="@style/text24pt"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Chinese" />
-
+            android:text="Chinese"/>
     </RadioGroup>
 
-    <!-- Save settings button -->
-    <android.widget.Button
-        android:id="@+id/btnBack"
-        style="@style/text64pt"
-        android:layout_width="400dp"
+    <!-- 음성 선택 -->
+    <TextView
+        android:id="@+id/voiceTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Voice Type"
+        style="@style/BoldText48"
+        app:layout_constraintTop_toBottomOf="@id/languageGroup"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="32dp"
+        android:layout_marginStart="32dp"/>
+
+    <RadioGroup
+        android:id="@+id/voiceGroup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/voiceTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="32dp"
+        android:orientation="horizontal">
+
+        <RadioButton
+            android:id="@+id/radioMan"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="MAN"
+            android:layout_marginEnd="32dp"/>
+
+        <RadioButton
+            android:id="@+id/radioWoman"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="WOMAN"/>
+    </RadioGroup>
+
+    <!-- 저장 버튼 -->
+    <Button
+        android:id="@+id/btnSaveSettings"
+        style="@style/BoldText48"
+        android:layout_width="560dp"
         android:layout_height="120dp"
-        android:layout_marginBottom="120dp"
-        android:background="@drawable/grad_button"
-        android:elevation="8dp"
-        android:text="Back"
-        android:textAllCaps="false"
-        android:translationZ="8dp"
+        android:layout_marginBottom="48dp"
+        android:background="@drawable/round_button"
+        android:text="Save Settings"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />

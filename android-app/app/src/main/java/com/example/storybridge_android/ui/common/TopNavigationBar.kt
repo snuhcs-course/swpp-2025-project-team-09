@@ -17,11 +17,11 @@ class TopNavigationBar @JvmOverloads constructor(
         LayoutInflater.from(context).inflate(R.layout.top_navigation_bar, this, true)
         // Settings 클릭 이벤트
         // UI 이벤트만 담당 Intent는 MainActivity에서 처리
-        findViewById<ImageView>(R.id.navbarSettingsButton)
+        findViewById<ImageView>(R.id.settingsIcon)
 
     }
 
     fun setOnSettingsClickListener(listener: () -> Unit) {
-        findViewById<ImageView>(R.id.navbarSettingsButton).setOnClickListener { listener() }
+        findViewById<ImageView>(R.id.settingsIcon).setOnClickListener { listener() }
     }
 }

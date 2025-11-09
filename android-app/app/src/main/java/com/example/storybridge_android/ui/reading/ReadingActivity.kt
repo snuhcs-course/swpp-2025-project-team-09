@@ -14,23 +14,25 @@ import android.util.Log
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
-import android.widget.*
+import android.widget.Button
+import android.widget.ImageButton
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.storybridge_android.R
-import com.example.storybridge_android.data.PageRepositoryImpl
 import com.example.storybridge_android.network.GetImageResponse
 import com.example.storybridge_android.network.GetOcrTranslationResponse
 import com.example.storybridge_android.network.GetTtsResponse
+import com.example.storybridge_android.network.RetrofitClient
 import com.example.storybridge_android.ui.camera.CameraSessionActivity
 import com.example.storybridge_android.ui.session.FinishActivity
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.math.min
@@ -38,40 +40,46 @@ import kotlin.math.min
 class ReadingActivity : AppCompatActivity() {
 
     private lateinit var sessionId: String
-    private var pageIndex = 0
-    private var totalPages = 0
+    private var pageIndex: Int = 0 // 0-indexed to match backend
+    private var totalPages: Int = 0 // Total pages in session (pageIndex + 1)
+    private val pageApi = RetrofitClient.pageApi
     private lateinit var mainLayout: ConstraintLayout
-    private lateinit var pageImage: ImageView
     private lateinit var topUi: View
     private lateinit var bottomUi: View
+    private var uiVisible = false
     private lateinit var overlay: ConstraintLayout
     private lateinit var dimBackground: View
-    private lateinit var thumbnailRecyclerView: RecyclerView
-
-    private var uiVisible = false
     private var isOverlayVisible = false
-    private val handler = Handler(Looper.getMainLooper())
     private var mediaPlayer: MediaPlayer? = null
     private var pageBitmap: Bitmap? = null
+    private lateinit var pageImage: ImageView
+    private val handler = Handler(Looper.getMainLooper())
     private var isTtsPolling = false
-
-    private val viewModel: ReadingViewModel by viewModels {
-        ReadingViewModelFactory(PageRepositoryImpl())
-    }
+    private val TTS_POLL_INTERVAL = 2000L
 
     companion object {
         private const val TAG = "ReadingActivity"
-        private const val TTS_POLL_INTERVAL = 2000L
-        private const val TOUCH_SLOP = 10f
     }
 
+    // Audio data storage per bounding box
     private var audioResultsMap: Map<Int, List<String>> = emptyMap()
     private var currentPlayingIndex: Int = -1
     private var currentAudioIndex: Int = 0
+
+    // Play button references for state changes
     private val playButtonsMap: MutableMap<Int, ImageButton> = mutableMapOf()
+
+    // Bounding box references for dragging
     private val boundingBoxViewsMap: MutableMap<Int, TextView> = mutableMapOf()
+
+    // Cached OCR results for adding buttons after TTS load
     private var cachedBoundingBoxes: List<BoundingBox> = emptyList()
 
+    // Touch and drag constant
+    private val TOUCH_SLOP = 10f
+
+    // Thumbnail RecyclerView
+    private lateinit var thumbnailRecyclerView: RecyclerView
     private lateinit var thumbnailAdapter: ThumbnailAdapter
     private val thumbnailList = mutableListOf<PageThumbnail>()
 
@@ -80,31 +88,42 @@ class ReadingActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_reading)
 
+        Log.d(TAG, "=== ReadingActivity onCreate ===")
+
         initViews()
         initUiState()
         initListeners()
 
         sessionId = intent.getStringExtra("session_id") ?: ""
         pageIndex = intent.getIntExtra("page_index", 0)
-        totalPages = intent.getIntExtra("total_pages", pageIndex + 1)
+        // If coming from LoadingActivity, we know this is the latest page
+        // So totalPages = pageIndex + 1
+        totalPages = pageIndex + 1
 
-        observeViewModel()
-        fetchPage()
+        Log.d(TAG, "Session ID: $sessionId")
+        Log.d(TAG, "Page index: $pageIndex")
+        Log.d(TAG, "Total pages (calculated): $totalPages")
+
         fetchAllThumbnails()
+        fetchPageData()
     }
 
     private fun initViews() {
         mainLayout = findViewById(R.id.main)
-        pageImage = findViewById(R.id.pageImage)
         topUi = findViewById(R.id.topUi)
         bottomUi = findViewById(R.id.bottomUi)
         overlay = findViewById(R.id.sideOverlay)
         dimBackground = findViewById(R.id.dimBackground)
+        pageImage = findViewById(R.id.pageImage)
         thumbnailRecyclerView = findViewById(R.id.thumbnailRecyclerView)
 
+        // Hide global play button
         findViewById<ImageButton>(R.id.playButton).visibility = View.GONE
 
-        thumbnailAdapter = ThumbnailAdapter { onThumbnailClick(it) }
+        // Setup RecyclerView
+        thumbnailAdapter = ThumbnailAdapter { selectedPageIndex ->
+            onThumbnailClick(selectedPageIndex)
+        }
         thumbnailRecyclerView.apply {
             layoutManager = LinearLayoutManager(this@ReadingActivity)
             adapter = thumbnailAdapter
@@ -117,68 +136,376 @@ class ReadingActivity : AppCompatActivity() {
     }
 
     private fun initListeners() {
-        findViewById<Button>(R.id.startButton).setOnClickListener { navigateToCamera() }
-        findViewById<ImageButton>(R.id.menuButton).setOnClickListener { toggleOverlay(true) }
-        findViewById<Button>(R.id.closeOverlayButton).setOnClickListener { toggleOverlay(false) }
-        findViewById<Button>(R.id.finishButton).setOnClickListener { navigateToFinish() }
-        findViewById<View>(R.id.dimBackground).setOnClickListener { toggleOverlay(false) }
-
-        findViewById<Button>(R.id.prevButton).setOnClickListener {
-            if (pageIndex > 0) loadPage(pageIndex - 1)
-            else Toast.makeText(this, "This is the first page", Toast.LENGTH_SHORT).show()
-        }
-        findViewById<Button>(R.id.nextButton).setOnClickListener {
-            if (pageIndex + 1 >= totalPages)
-                Toast.makeText(this, "This is the last page", Toast.LENGTH_SHORT).show()
-            else loadPage(pageIndex + 1)
-        }
+        val startButton = findViewById<Button>(R.id.startButton)
+        val menuButton = findViewById<ImageButton>(R.id.menuButton)
+        val closeButton = findViewById<Button>(R.id.closeOverlayButton)
+        val finishButton = findViewById<Button>(R.id.finishButton)
+        val prevButton = findViewById<Button>(R.id.prevButton)
+        val nextButton = findViewById<Button>(R.id.nextButton)
 
         mainLayout.setOnClickListener { toggleUI() }
-    }
 
-    private fun observeViewModel() {
-        lifecycleScope.launch {
-            viewModel.uiState.collectLatest { state ->
-                state.image?.let { displayPage(it) }
-                state.ocr?.let { handleOcr(it) }
-                state.tts?.let { handleTts(it) }
-                state.error?.let { Toast.makeText(this@ReadingActivity, it, Toast.LENGTH_SHORT).show() }
+        startButton.setOnClickListener { navigateToCamera() }
+        menuButton.setOnClickListener { toggleOverlay(true) }
+        closeButton.setOnClickListener { toggleOverlay(false) }
+        dimBackground.setOnClickListener { toggleOverlay(false) }
+        finishButton.setOnClickListener { navigateToFinish() }
+
+        prevButton.setOnClickListener {
+            if (pageIndex > 0) {
+                loadPage(pageIndex - 1)
+            } else {
+                Log.d(TAG, "Already at the first page.")
+                android.widget.Toast.makeText(this, "첫 페이지입니다", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        nextButton.setOnClickListener {
+            if (pageIndex + 1 >= totalPages) {
+                Log.d(TAG, "Already at the last page. (pageIndex=$pageIndex, totalPages=$totalPages)")
+                android.widget.Toast.makeText(this, "마지막 페이지입니다", android.widget.Toast.LENGTH_SHORT).show()
+            } else {
+                loadPage(pageIndex + 1)
             }
         }
     }
 
-    private fun fetchPage() {
-        viewModel.fetchPage(sessionId, pageIndex)
+    @SuppressLint("ClickableViewAccessibility")
+    private fun setupBoundingBoxTouchListener(boxView: TextView, boxIndex: Int) {
+        var boxLastTouchX = 0f
+        var boxLastTouchY = 0f
+        var boxIsDragging = false
+
+        boxView.setOnTouchListener { view, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    boxLastTouchX = event.rawX
+                    boxLastTouchY = event.rawY
+                    boxIsDragging = false
+                    return@setOnTouchListener true
+                }
+
+                MotionEvent.ACTION_MOVE -> {
+                    val deltaX = event.rawX - boxLastTouchX
+                    val deltaY = event.rawY - boxLastTouchY
+
+                    if (!boxIsDragging && (Math.abs(deltaX) > TOUCH_SLOP || Math.abs(deltaY) > TOUCH_SLOP)) {
+                        boxIsDragging = true
+                    }
+
+                    if (boxIsDragging) {
+                        boxView.translationX += deltaX
+                        boxView.translationY += deltaY
+
+                        playButtonsMap[boxIndex]?.let { button ->
+                            button.translationX += deltaX
+                            button.translationY += deltaY
+                        }
+
+                        boxLastTouchX = event.rawX
+                        boxLastTouchY = event.rawY
+                    }
+                    return@setOnTouchListener true
+                }
+
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    boxIsDragging = false
+                    return@setOnTouchListener true
+                }
+
+                else -> return@setOnTouchListener false
+            }
+        }
     }
 
-    private fun displayPage(data: GetImageResponse) {
+    private fun navigateToFinish() {
+        val intent = Intent(this, FinishActivity::class.java)
+        intent.putExtra("session_id", sessionId)
+        startActivity(intent)
+        finish()
+    }
+
+    private fun navigateToCamera() {
+        val intent = Intent(this, CameraSessionActivity::class.java)
+        intent.putExtra("session_id", sessionId)
+        // Next page will have index = totalPages (0-indexed)
+        // Backend will calculate it as session.getPages().count()
+        startActivity(intent)
+        finish()
+    }
+
+    private fun displayPage(base64Image: String?) {
         try {
-            val bytes = Base64.decode(data.image_base64, Base64.DEFAULT)
-            val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-            pageBitmap = bmp
-            pageImage.setImageBitmap(bmp)
+            val decodedBytes = Base64.decode(base64Image, Base64.DEFAULT)
+            val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+            pageBitmap = bitmap
+            pageImage.setImageBitmap(bitmap)
+            Log.d(TAG, "✓ Page image displayed")
         } catch (e: Exception) {
-            Log.e(TAG, "Image decode failed", e)
+            Log.e(TAG, "✗ Error displaying page image", e)
+            e.printStackTrace()
         }
     }
 
     data class BoundingBox(
-        val x: Int, val y: Int, val width: Int, val height: Int,
-        val text: String, val index: Int
+        val x: Int,
+        val y: Int,
+        val width: Int,
+        val height: Int,
+        val text: String,
+        val index: Int
     )
 
-    private fun handleOcr(data: GetOcrTranslationResponse) {
-        val boxes = data.ocr_results.mapIndexed { i, ocrBox ->
-            val box = ocrBox.bbox
-            BoundingBox(box.x, box.y, box.width, box.height, ocrBox.translation_txt, i)
+    private fun displayBB(bboxes: List<BoundingBox>) {
+        Log.d(TAG, "=== Displaying Bounding Boxes ===")
+        Log.d(TAG, "Number of boxes: ${bboxes.size}")
+
+        if (pageImage.drawable == null) {
+            Log.e(TAG, "✗ Page image not loaded yet")
+            return
         }
-        cachedBoundingBoxes = boxes
-        if (boxes.isNotEmpty()) pageImage.post { displayBB(boxes) }
+
+        // Remove existing boxes and buttons
+        for (i in mainLayout.childCount - 1 downTo 0) {
+            val child = mainLayout.getChildAt(i)
+            if (child.tag == "bbox" || child.tag == "play_button") {
+                mainLayout.removeViewAt(i)
+            }
+        }
+
+        playButtonsMap.clear()
+        boundingBoxViewsMap.clear()
+
+        val imageMatrix = pageImage.imageMatrix
+
+        for (box in bboxes) {
+            Log.d(TAG, "Processing box ${box.index}: '${box.text.take(20)}...'")
+
+            val rect = RectF(
+                box.x.toFloat(),
+                box.y.toFloat(),
+                (box.x + box.width).toFloat(),
+                (box.y + box.height).toFloat()
+            )
+            imageMatrix.mapRect(rect)
+
+            val boxView = TextView(this).apply {
+                text = box.text
+                setBackgroundColor(getColor(R.color.black_50))
+                setTextColor(getColor(R.color.white))
+                gravity = Gravity.START or Gravity.TOP
+                setPadding(8, 8, 8, 8)
+                tag = "bbox"
+            }
+
+            val baseTextSize = 14f
+            boxView.textSize = baseTextSize
+            boxView.measure(
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+            )
+            val measuredWidth = boxView.measuredWidth.toFloat()
+            val measuredHeight = boxView.measuredHeight.toFloat()
+
+            val desiredWidth = rect.width()
+            val desiredHeight = rect.height()
+
+            val widthRatio = desiredWidth / measuredWidth
+            val heightRatio = desiredHeight / measuredHeight
+            val scaleRatio = min(widthRatio, heightRatio)
+
+            val newTextSize = (baseTextSize * scaleRatio).coerceIn(16f, 30f)
+            boxView.textSize = newTextSize
+
+            boxView.measure(
+                View.MeasureSpec.makeMeasureSpec(desiredWidth.toInt(), View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+            )
+
+            val finalTextWidth = desiredWidth
+            val finalTextHeight = boxView.measuredHeight.toFloat()
+
+            val params = ConstraintLayout.LayoutParams(finalTextWidth.toInt(), finalTextHeight.toInt())
+            params.startToStart = pageImage.id
+            params.topToTop = pageImage.id
+            boxView.layoutParams = params
+            boxView.translationX = rect.left
+            boxView.translationY = rect.top
+            mainLayout.addView(boxView)
+
+            boundingBoxViewsMap[box.index] = boxView
+
+            setupBoundingBoxTouchListener(boxView, box.index)
+
+            // Create play button if audio exists for this box
+            if (audioResultsMap.containsKey(box.index)) {
+                Log.d(TAG, "Box ${box.index} has audio, creating play button")
+                val textRect = RectF(
+                    rect.left,
+                    rect.top,
+                    rect.left + finalTextWidth,
+                    rect.top + finalTextHeight
+                )
+                createPlayButton(box.index, textRect, pageImage.id)
+            } else {
+                Log.d(TAG, "Box ${box.index} has NO audio")
+            }
+        }
+
+        Log.d(TAG, "✓ Displayed ${bboxes.size} boxes and ${playButtonsMap.size} play buttons")
     }
 
-    private fun handleTts(data: GetTtsResponse) {
-        audioResultsMap = data.audio_results.associate { it.bbox_index to it.audio_base64_list }
-        if (cachedBoundingBoxes.isNotEmpty()) pageImage.post { displayBB(cachedBoundingBoxes) }
+    private fun createPlayButton(bboxIndex: Int, rect: RectF, pageImageId: Int) {
+        Log.d(TAG, "Creating play button for box $bboxIndex at position (${rect.right}, ${rect.bottom})")
+
+        val playButton = ImageButton(this).apply {
+            setImageResource(android.R.drawable.ic_media_play)
+            setBackgroundResource(R.drawable.circle_dark)
+            alpha = 0.9f
+            tag = "play_button"
+            contentDescription = "Play audio for box $bboxIndex"
+            scaleType = ImageView.ScaleType.CENTER_INSIDE
+            setPadding(8, 8, 8, 8)
+        }
+
+        val buttonSize = (54 * resources.displayMetrics.density).toInt()
+        val params = ConstraintLayout.LayoutParams(buttonSize, buttonSize)
+        params.startToStart = pageImageId
+        params.topToTop = pageImageId
+
+        playButton.layoutParams = params
+
+        playButton.translationX = rect.right - buttonSize/2 + 4
+        playButton.translationY = rect.bottom - buttonSize/2 + 4
+
+        playButton.elevation = 8f
+
+        playButton.setOnClickListener {
+            Log.d(TAG, "Play button clicked for box $bboxIndex")
+            playAudioForBox(bboxIndex)
+        }
+
+        mainLayout.addView(playButton)
+
+        playButtonsMap[bboxIndex] = playButton
+
+        Log.d(TAG, "✓ Play button created for box $bboxIndex")
+    }
+
+    private fun updateButtonToPaused(bboxIndex: Int) {
+        playButtonsMap[bboxIndex]?.apply {
+            setImageResource(android.R.drawable.ic_media_play)
+            setBackgroundResource(R.drawable.circle_dark)
+            alpha = 1.0f
+            Log.d(TAG, "✓ Button $bboxIndex set to paused state")
+        }
+    }
+
+    private fun playAudioForBox(bboxIndex: Int) {
+        Log.d(TAG, "=== Playing Audio for Box $bboxIndex ===")
+
+        if (currentPlayingIndex == bboxIndex) {
+            if (mediaPlayer?.isPlaying == true) {
+                mediaPlayer?.pause()
+                updateButtonToPaused(bboxIndex)
+                Log.d(TAG, "Audio paused for box $bboxIndex at ${mediaPlayer?.currentPosition}")
+            } else if (mediaPlayer != null) {
+                mediaPlayer?.start()
+                updateButtonToPlaying(bboxIndex)
+                Log.d(TAG, "Audio resumed for box $bboxIndex")
+            }
+            return
+        }
+
+        val audioList = audioResultsMap[bboxIndex]
+        if (audioList == null) {
+            Log.e(TAG, "✗ No audio found for box $bboxIndex")
+            return
+        }
+
+        Log.d(TAG, "Audio list size: ${audioList.size}")
+
+        // Reset previous button state
+        if (currentPlayingIndex != -1 && currentPlayingIndex != bboxIndex) {
+            resetButtonState(currentPlayingIndex)
+        }
+
+        mediaPlayer?.release()
+        mediaPlayer = null
+
+        currentPlayingIndex = bboxIndex
+        currentAudioIndex = 0
+
+        updateButtonToPlaying(bboxIndex)
+
+        playNextAudioInBox(audioList)
+    }
+
+    private fun playNextAudioInBox(audioList: List<String>) {
+        if (currentAudioIndex >= audioList.size) {
+            Log.d(TAG, "✓ All audio clips played for box $currentPlayingIndex")
+            resetButtonState(currentPlayingIndex)
+            currentAudioIndex = 0
+            currentPlayingIndex = -1
+            return
+        }
+
+        Log.d(TAG, "Playing audio clip ${currentAudioIndex + 1}/${audioList.size} for box $currentPlayingIndex")
+
+        val base64Audio = audioList[currentAudioIndex]
+        val audioFile = File(cacheDir, "temp_audio_${currentPlayingIndex}_$currentAudioIndex.mp3")
+
+        try {
+            val audioBytes = Base64.decode(base64Audio, Base64.DEFAULT)
+            FileOutputStream(audioFile).use { it.write(audioBytes) }
+
+            Log.d(TAG, "Audio file saved: ${audioFile.absolutePath}, size: ${audioFile.length()} bytes")
+
+            mediaPlayer?.release()
+            mediaPlayer = MediaPlayer().apply {
+                setDataSource(audioFile.absolutePath)
+                setOnPreparedListener {
+                    Log.d(TAG, "MediaPlayer prepared, starting playback")
+                    start()
+                }
+                setOnCompletionListener {
+                    Log.d(TAG, "Audio clip completed")
+                    currentAudioIndex++
+                    playNextAudioInBox(audioList)
+                }
+                setOnErrorListener { _, what, extra ->
+                    Log.e(TAG, "MediaPlayer error: what=$what, extra=$extra")
+                    resetButtonState(currentPlayingIndex)
+                    currentPlayingIndex = -1
+                    true
+                }
+                prepareAsync()
+            }
+
+        } catch (e: Exception) {
+            Log.e(TAG, "✗ Error playing audio", e)
+            e.printStackTrace()
+            resetButtonState(currentPlayingIndex)
+            currentPlayingIndex = -1
+        }
+    }
+
+    private fun updateButtonToPlaying(bboxIndex: Int) {
+        playButtonsMap[bboxIndex]?.apply {
+            setImageResource(android.R.drawable.ic_media_pause)
+            setBackgroundResource(R.drawable.circle_dark)
+            alpha = 1.0f
+            Log.d(TAG, "✓ Button $bboxIndex set to playing state")
+        }
+    }
+
+    private fun resetButtonState(bboxIndex: Int) {
+        playButtonsMap[bboxIndex]?.apply {
+            setImageResource(android.R.drawable.ic_media_play)
+            setBackgroundResource(R.drawable.circle_dark)
+            alpha = 0.9f
+            Log.d(TAG, "✓ Button $bboxIndex reset to default state")
+        }
     }
 
     private fun toggleUI() {
@@ -211,233 +538,280 @@ class ReadingActivity : AppCompatActivity() {
         }
     }
 
-    @SuppressLint("ClickableViewAccessibility")
-    private fun setupBoundingBoxTouchListener(boxView: TextView, boxIndex: Int) {
-        var lastX = 0f
-        var lastY = 0f
-        var dragging = false
-        boxView.setOnTouchListener { _, event ->
-            when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    lastX = event.rawX
-                    lastY = event.rawY
-                    dragging = false
-                    true
-                }
-                MotionEvent.ACTION_MOVE -> {
-                    val dx = event.rawX - lastX
-                    val dy = event.rawY - lastY
-                    if (!dragging && (kotlin.math.abs(dx) > TOUCH_SLOP || kotlin.math.abs(dy) > TOUCH_SLOP))
-                        dragging = true
-                    if (dragging) {
-                        boxView.translationX += dx
-                        boxView.translationY += dy
-                        playButtonsMap[boxIndex]?.apply {
-                            translationX += dx
-                            translationY += dy
-                        }
-                        lastX = event.rawX
-                        lastY = event.rawY
-                    }
-                    true
-                }
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    dragging = false; true
-                }
-                else -> false
-            }
-        }
+    // Server communication
+
+    private fun fetchPageData() {
+        Log.d(TAG, "=== Fetching Page Data ===")
+        fetchImage()
+        fetchOcrResults()
+        fetchTtsResults()
+        startTtsPolling()
     }
 
-    private fun displayBB(bboxes: List<BoundingBox>) {
-        for (i in mainLayout.childCount - 1 downTo 0) {
-            val child = mainLayout.getChildAt(i)
-            if (child.tag == "bbox" || child.tag == "play_button") mainLayout.removeViewAt(i)
-        }
-
-        playButtonsMap.clear()
-        boundingBoxViewsMap.clear()
-
-        for (box in bboxes) {
-            val rect = RectF(
-                box.x.toFloat(),
-                box.y.toFloat(),
-                (box.x + box.width).toFloat(),
-                (box.y + box.height).toFloat()
-            )
-
-            val boxView = TextView(this).apply {
-                text = box.text
-                setBackgroundColor(getColor(R.color.black_50))
-                setTextColor(getColor(R.color.white))
-                gravity = Gravity.START or Gravity.TOP
-                setPadding(8, 8, 8, 8)
-                tag = "bbox"
-            }
-
-            boxView.textSize = 16f
-
-            val params = ConstraintLayout.LayoutParams(rect.width().toInt(), rect.height().toInt())
-            params.startToStart = pageImage.id
-            params.topToTop = pageImage.id
-            boxView.layoutParams = params
-
-            boxView.translationX = rect.left
-            boxView.translationY = rect.top
-
-            mainLayout.addView(boxView)
-            boundingBoxViewsMap[box.index] = boxView
-
-            setupBoundingBoxTouchListener(boxView, box.index)
-
-            if (audioResultsMap.containsKey(box.index)) {
-                createPlayButton(box.index, rect)
-            }
-        }
-    }
-
-    private fun createPlayButton(bboxIndex: Int, rect: RectF) {
-        val playButton = ImageButton(this).apply {
-            setImageResource(android.R.drawable.ic_media_play)
-            setBackgroundResource(R.drawable.circle_dark)
-            tag = "play_button"
-            alpha = 0.9f
-            setPadding(8, 8, 8, 8)
-        }
-        val size = (54 * resources.displayMetrics.density).toInt()
-        val params = ConstraintLayout.LayoutParams(size, size)
-        params.startToStart = pageImage.id
-        params.topToTop = pageImage.id
-        playButton.layoutParams = params
-        playButton.translationX = rect.right - size / 2
-        playButton.translationY = rect.bottom - size / 2
-        playButton.elevation = 8f
-        playButton.setOnClickListener { playAudioForBox(bboxIndex) }
-        mainLayout.addView(playButton)
-        playButtonsMap[bboxIndex] = playButton
-    }
-
-    private fun playAudioForBox(bboxIndex: Int) {
-        if (currentPlayingIndex == bboxIndex) {
-            if (mediaPlayer?.isPlaying == true) {
-                mediaPlayer?.pause()
-                updateButtonToPaused(bboxIndex)
-            } else {
-                mediaPlayer?.start()
-                updateButtonToPlaying(bboxIndex)
-            }
+    private fun loadPage(newPageIndex: Int) {
+        if (newPageIndex < 0) {
+            Log.d(TAG, "Page index cannot be less than 0.")
             return
         }
 
-        val audioList = audioResultsMap[bboxIndex] ?: return
-        if (currentPlayingIndex != -1) resetButtonState(currentPlayingIndex)
+        pageIndex = newPageIndex
+        Log.d(TAG, "--- Loading page: $pageIndex ---")
+
+        // 1. Stop ongoing processes
+        isTtsPolling = false
+        handler.removeCallbacksAndMessages(null)
         mediaPlayer?.release()
         mediaPlayer = null
-        currentPlayingIndex = bboxIndex
+        currentPlayingIndex = -1
         currentAudioIndex = 0
-        updateButtonToPlaying(bboxIndex)
-        playNextAudio(audioList)
+
+        // 2. Clear data
+        audioResultsMap = emptyMap()
+        cachedBoundingBoxes = emptyList()
+
+        // 3. Clear UI
+        pageImage.setImageDrawable(null) // Show a blank while loading
+        // Remove all bounding boxes and play buttons
+        val viewsToRemove = mutableListOf<View>()
+        for (i in 0 until mainLayout.childCount) {
+            val child = mainLayout.getChildAt(i)
+            if (child.tag == "bbox" || child.tag == "play_button") {
+                viewsToRemove.add(child)
+            }
+        }
+        viewsToRemove.forEach { mainLayout.removeView(it) }
+        playButtonsMap.clear()
+        boundingBoxViewsMap.clear()
+
+        // 4. Fetch new data
+        fetchPageData()
     }
 
-    private fun playNextAudio(list: List<String>) {
-        if (currentAudioIndex >= list.size) {
-            resetButtonState(currentPlayingIndex)
-            currentPlayingIndex = -1
+    private fun fetchImage() {
+        Log.d(TAG, "Fetching image for session=$sessionId, page=$pageIndex")
+        pageApi.getImage(sessionId, pageIndex).enqueue(object : Callback<GetImageResponse> {
+            override fun onResponse(call: Call<GetImageResponse>, response: Response<GetImageResponse>) {
+                if (response.isSuccessful) {
+                    Log.d(TAG, "✓ Image fetched successfully for page $pageIndex")
+                    displayPage(response.body()?.image_base64)
+                } else {
+                    Log.e(TAG, "✗ Image fetch failed for page $pageIndex: ${response.code()} - ${response.message()}")
+                    if (response.code() == 404) {
+                        // Page doesn't exist - revert pageIndex
+                        android.widget.Toast.makeText(this@ReadingActivity, "페이지가 존재하지 않습니다", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+            override fun onFailure(call: Call<GetImageResponse>, t: Throwable) {
+                Log.e(TAG, "✗ Image fetch error for page $pageIndex", t)
+                t.printStackTrace()
+            }
+        })
+    }
+
+    private fun fetchOcrResults() {
+        Log.d(TAG, "Fetching OCR results for session=$sessionId, page=$pageIndex")
+        pageApi.getOcrResults(sessionId, pageIndex).enqueue(object :
+            Callback<GetOcrTranslationResponse> {
+            override fun onResponse(call: Call<GetOcrTranslationResponse>, response: Response<GetOcrTranslationResponse>) {
+                if (response.isSuccessful) {
+                    Log.d(TAG, "✓ OCR results fetched successfully for page $pageIndex")
+                    val ocrList = response.body()?.ocr_results
+                    Log.d(TAG, "OCR results count: ${ocrList?.size ?: 0}")
+
+                    val boxes = ocrList?.mapIndexed { index, ocrBox ->
+                        ocrBox.bbox.let { box ->
+                            BoundingBox(box.x, box.y, box.width, box.height, ocrBox.translation_txt, index)
+                        }
+                    } ?: emptyList()
+
+                    cachedBoundingBoxes = boxes
+
+                    if (boxes.isNotEmpty()) {
+                        pageImage.post {
+                            displayBB(boxes)
+                        }
+                    } else {
+                        Log.w(TAG, "No bounding boxes to display")
+                    }
+                } else {
+                    Log.e(TAG, "✗ OCR fetch failed for page $pageIndex: ${response.code()} - ${response.message()}")
+                }
+            }
+            override fun onFailure(call: Call<GetOcrTranslationResponse>, t: Throwable) {
+                Log.e(TAG, "✗ OCR fetch error for page $pageIndex", t)
+            }
+        })
+    }
+
+    private fun fetchTtsResults() {
+        Log.d(TAG, "Fetching TTS results for session=$sessionId, page=$pageIndex")
+        pageApi.getTtsResults(sessionId, pageIndex).enqueue(object : Callback<GetTtsResponse> {
+            override fun onResponse(call: Call<GetTtsResponse>, response: Response<GetTtsResponse>) {
+                if (response.isSuccessful) {
+                    Log.d(TAG, "✓ TTS results fetched successfully for page $pageIndex")
+                    val audioList = response.body()?.audio_results
+                    Log.d(TAG, "TTS results count: ${audioList?.size ?: 0}")
+
+                    if (!audioList.isNullOrEmpty()) {
+                        // Create map with bbox_index as key
+                        audioResultsMap = audioList.associate { audioResult ->
+                            Log.d(TAG, "Audio for bbox ${audioResult.bbox_index}: ${audioResult.audio_base64_list.size} clips")
+                            audioResult.bbox_index to audioResult.audio_base64_list
+                        }
+
+                        // If OCR results already displayed, add play buttons
+                        if (cachedBoundingBoxes.isNotEmpty()) {
+                            pageImage.post {
+                                Log.d(TAG, "Re-displaying bounding boxes with audio buttons")
+                                displayBB(cachedBoundingBoxes)
+                            }
+                        }
+                    } else {
+                        Log.w(TAG, "No TTS results available")
+                    }
+                } else {
+                    Log.e(TAG, "✗ TTS fetch failed for page $pageIndex: ${response.code()} - ${response.message()}")
+                }
+            }
+            override fun onFailure(call: Call<GetTtsResponse>, t: Throwable) {
+                Log.e(TAG, "✗ TTS fetch error for page $pageIndex", t)
+            }
+        })
+    }
+
+    private fun startTtsPolling() {
+        if (isTtsPolling) {
+            Log.d(TAG, "TTS polling already active")
             return
         }
 
-        val base64Audio = list[currentAudioIndex]
-        val audioFile = File(cacheDir, "temp_audio_${currentPlayingIndex}_$currentAudioIndex.mp3")
-        try {
-            val bytes = Base64.decode(base64Audio, Base64.DEFAULT)
-            FileOutputStream(audioFile).use { it.write(bytes) }
-            mediaPlayer = MediaPlayer().apply {
-                setDataSource(audioFile.absolutePath)
-                setOnPreparedListener { start() }
-                setOnCompletionListener {
-                    currentAudioIndex++
-                    playNextAudio(list)
+        isTtsPolling = true
+        Log.d(TAG, "=== Starting TTS Polling ===")
+        pollTtsStatus()
+    }
+
+    private fun pollTtsStatus() {
+        if (!isTtsPolling) {
+            Log.d(TAG, "TTS polling stopped")
+            return
+        }
+
+        Log.d(TAG, "Polling TTS status...")
+
+        pageApi.getTtsResults(sessionId, pageIndex).enqueue(object : Callback<GetTtsResponse> {
+            override fun onResponse(call: Call<GetTtsResponse>, response: Response<GetTtsResponse>) {
+                if (response.isSuccessful) {
+                    val audioList = response.body()?.audio_results
+                    Log.d(TAG, "TTS poll: ${audioList?.size ?: 0} boxes have audio")
+
+                    if (!audioList.isNullOrEmpty()) {
+                        val oldSize = audioResultsMap.size
+
+                        // Update audio map
+                        audioResultsMap = audioList.associate { audioResult ->
+                            audioResult.bbox_index to audioResult.audio_base64_list
+                        }
+
+                        val newSize = audioResultsMap.size
+
+                        // If new audio appeared, update UI
+                        if (newSize > oldSize) {
+                            Log.d(TAG, "New audio detected! Updating buttons ($oldSize → $newSize)")
+
+                            if (cachedBoundingBoxes.isNotEmpty()) {
+                                pageImage.post {
+                                    displayBB(cachedBoundingBoxes)
+                                }
+                            }
+                        }
+
+                        // Check if all boxes have audio
+                        val totalBoxes = cachedBoundingBoxes.size
+                        if (newSize >= totalBoxes) {
+                            Log.d(TAG, "✓ All TTS complete! Stopping polling")
+                            isTtsPolling = false
+                            return
+                        }
+                    }
+
+                    // Continue polling
+                    handler.postDelayed({ pollTtsStatus() }, TTS_POLL_INTERVAL)
+                } else {
+                    Log.e(TAG, "✗ TTS poll failed: ${response.code()}")
+                    handler.postDelayed({ pollTtsStatus() }, TTS_POLL_INTERVAL)
                 }
-                setOnErrorListener { _, _, _ ->
-                    resetButtonState(currentPlayingIndex); true
-                }
-                prepareAsync()
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Audio error", e)
-            resetButtonState(currentPlayingIndex)
-        }
-    }
 
-    private fun updateButtonToPlaying(bboxIndex: Int) {
-        playButtonsMap[bboxIndex]?.apply {
-            setImageResource(android.R.drawable.ic_media_pause)
-        }
-    }
-
-    private fun updateButtonToPaused(bboxIndex: Int) {
-        playButtonsMap[bboxIndex]?.apply {
-            setImageResource(android.R.drawable.ic_media_play)
-        }
-    }
-
-    private fun resetButtonState(bboxIndex: Int) {
-        playButtonsMap[bboxIndex]?.apply {
-            setImageResource(android.R.drawable.ic_media_play)
-            alpha = 0.9f
-        }
-    }
-
-    private fun onThumbnailClick(index: Int) {
-        if (index != pageIndex) loadPage(index)
-        else Toast.makeText(this, "This is the current page", Toast.LENGTH_SHORT).show()
-    }
-
-    private fun loadPage(newIndex: Int) {
-        pageIndex = newIndex
-        audioResultsMap = emptyMap()
-        cachedBoundingBoxes = emptyList()
-        pageImage.setImageDrawable(null)
-        playButtonsMap.clear()
-        boundingBoxViewsMap.clear()
-        fetchPage()
+            override fun onFailure(call: Call<GetTtsResponse>, t: Throwable) {
+                Log.e(TAG, "✗ TTS poll error", t)
+                handler.postDelayed({ pollTtsStatus() }, TTS_POLL_INTERVAL)
+            }
+        })
     }
 
     private fun fetchAllThumbnails() {
-        // ViewModel에 썸네일 요청
+        Log.d(TAG, "=== Fetching All Thumbnails (totalPages=$totalPages) ===")
+        thumbnailList.clear()
+
         for (i in 0 until totalPages) {
-            viewModel.fetchThumbnail(sessionId, i)
-        }
+            pageApi.getImage(sessionId, i).enqueue(object : Callback<GetImageResponse> {
+                override fun onResponse(call: Call<GetImageResponse>, response: Response<GetImageResponse>) {
+                    if (response.isSuccessful) {
+                        val imageBase64 = response.body()?.image_base64
+                        thumbnailList.add(PageThumbnail(i, imageBase64))
+                        Log.d(TAG, "✓ Thumbnail loaded for page $i (${thumbnailList.size}/$totalPages)")
 
-        // Flow 수집 → RecyclerView 갱신
-        lifecycleScope.launch {
-            viewModel.thumbnailList.collectLatest { list ->
-                val sortedList = list.sortedBy { it.pageIndex }
-                thumbnailAdapter.submitList(sortedList)
-            }
+                        // When all thumbnails are loaded, update RecyclerView
+                        if (thumbnailList.size == totalPages) {
+                            val sortedThumbnails = thumbnailList.sortedBy { it.pageIndex }
+                            thumbnailAdapter.submitList(sortedThumbnails)
+                            Log.d(TAG, "✓ All thumbnails loaded and submitted to adapter")
+                        }
+                    } else {
+                        Log.e(TAG, "✗ Thumbnail fetch failed for page $i: ${response.code()}")
+                        // Add placeholder
+                        thumbnailList.add(PageThumbnail(i, null))
+                        if (thumbnailList.size == totalPages) {
+                            val sortedThumbnails = thumbnailList.sortedBy { it.pageIndex }
+                            thumbnailAdapter.submitList(sortedThumbnails)
+                        }
+                    }
+                }
+
+                override fun onFailure(call: Call<GetImageResponse>, t: Throwable) {
+                    Log.e(TAG, "✗ Thumbnail fetch error for page $i", t)
+                    thumbnailList.add(PageThumbnail(i, null))
+                    if (thumbnailList.size == totalPages) {
+                        val sortedThumbnails = thumbnailList.sortedBy { it.pageIndex }
+                        thumbnailAdapter.submitList(sortedThumbnails)
+                    }
+                }
+            })
         }
     }
 
-    private fun navigateToFinish() {
-        startActivity(Intent(this, FinishActivity::class.java).putExtra("session_id", sessionId))
-        finish()
-    }
+    private fun onThumbnailClick(selectedPageIndex: Int) {
+        Log.d(TAG, "=== Thumbnail clicked: page $selectedPageIndex ===")
 
-    private fun navigateToCamera() {
-        val intent = Intent(this, CameraSessionActivity::class.java).apply {
-            putExtra("session_id", sessionId)
-            putExtra("page_index", totalPages)  // 새 페이지 인덱스
+        // Close overlay
+        toggleOverlay(false)
+
+        // Load selected page
+        if (selectedPageIndex != pageIndex) {
+            loadPage(selectedPageIndex)
+        } else {
+            Log.d(TAG, "Already on page $selectedPageIndex")
         }
-        startActivity(intent)
-        finish()
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        isTtsPolling = false
         handler.removeCallbacksAndMessages(null)
         mediaPlayer?.release()
-        mediaPlayer = null
         playButtonsMap.clear()
         boundingBoxViewsMap.clear()
+        Log.d(TAG, "=== Activity destroyed ===")
     }
 }
