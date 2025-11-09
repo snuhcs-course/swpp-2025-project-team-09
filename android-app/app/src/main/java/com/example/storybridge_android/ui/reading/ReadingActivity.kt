@@ -162,11 +162,6 @@ class ReadingActivity : AppCompatActivity() {
         }
     }
 
-    data class BoundingBox(
-        val x: Int, val y: Int, val width: Int, val height: Int,
-        val text: String, val index: Int
-    )
-
     private fun handleOcr(data: GetOcrTranslationResponse) {
         val boxes = data.ocr_results.mapIndexed { i, ocrBox ->
             val box = ocrBox.bbox
@@ -249,22 +244,48 @@ class ReadingActivity : AppCompatActivity() {
         }
     }
 
+
+    data class BoundingBox(
+        val x: Int,
+        val y: Int,
+        val width: Int,
+        val height: Int,
+        val text: String,
+        val index: Int
+    )
+
     private fun displayBB(bboxes: List<BoundingBox>) {
+        Log.d(TAG, "=== Displaying Bounding Boxes ===")
+        Log.d(TAG, "Number of boxes: ${bboxes.size}")
+
+        if (pageImage.drawable == null) {
+            Log.e(TAG, "✗ Page image not loaded yet")
+            return
+        }
+
+        // Remove existing boxes and buttons
         for (i in mainLayout.childCount - 1 downTo 0) {
             val child = mainLayout.getChildAt(i)
-            if (child.tag == "bbox" || child.tag == "play_button") mainLayout.removeViewAt(i)
+            if (child.tag == "bbox" || child.tag == "play_button") {
+                mainLayout.removeViewAt(i)
+            }
         }
 
         playButtonsMap.clear()
         boundingBoxViewsMap.clear()
 
+        val imageMatrix = pageImage.imageMatrix
+
         for (box in bboxes) {
+            Log.d(TAG, "Processing box ${box.index}: '${box.text.take(20)}...'")
+
             val rect = RectF(
                 box.x.toFloat(),
                 box.y.toFloat(),
                 (box.x + box.width).toFloat(),
                 (box.y + box.height).toFloat()
             )
+            imageMatrix.mapRect(rect)
 
             val boxView = TextView(this).apply {
                 text = box.text
@@ -275,46 +296,96 @@ class ReadingActivity : AppCompatActivity() {
                 tag = "bbox"
             }
 
-            boxView.textSize = 16f
+            val baseTextSize = 24f
+            boxView.textSize = baseTextSize
+            boxView.measure(
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+            )
+            val measuredWidth = boxView.measuredWidth.toFloat()
+            val measuredHeight = boxView.measuredHeight.toFloat()
 
-            val params = ConstraintLayout.LayoutParams(rect.width().toInt(), rect.height().toInt())
+            val desiredWidth = rect.width()
+            val desiredHeight = rect.height()
+
+            val widthRatio = desiredWidth / measuredWidth
+            val heightRatio = desiredHeight / measuredHeight
+            val scaleRatio = min(widthRatio, heightRatio)
+
+            val newTextSize = (baseTextSize * scaleRatio).coerceIn(24f, 36f)
+            boxView.textSize = newTextSize
+
+            boxView.measure(
+                View.MeasureSpec.makeMeasureSpec(desiredWidth.toInt(), View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+            )
+
+            val finalTextWidth = desiredWidth
+            val finalTextHeight = boxView.measuredHeight.toFloat()
+
+            val params = ConstraintLayout.LayoutParams(finalTextWidth.toInt(), finalTextHeight.toInt())
             params.startToStart = pageImage.id
             params.topToTop = pageImage.id
             boxView.layoutParams = params
-
             boxView.translationX = rect.left
             boxView.translationY = rect.top
-
             mainLayout.addView(boxView)
+
             boundingBoxViewsMap[box.index] = boxView
 
             setupBoundingBoxTouchListener(boxView, box.index)
 
+            // Create play button if audio exists for this box
             if (audioResultsMap.containsKey(box.index)) {
-                createPlayButton(box.index, rect)
+                Log.d(TAG, "Box ${box.index} has audio, creating play button")
+                val textRect = RectF(
+                    rect.left,
+                    rect.top,
+                    rect.left + finalTextWidth,
+                    rect.top + finalTextHeight
+                )
+                createPlayButton(box.index, textRect, pageImage.id)
+            } else {
+                Log.d(TAG, "Box ${box.index} has NO audio")
             }
         }
+        Log.d(TAG, "✓ Displayed ${bboxes.size} boxes and ${playButtonsMap.size} play buttons")
     }
+    private fun createPlayButton(bboxIndex: Int, rect: RectF, pageImageId: Int) {
+        Log.d(TAG, "Creating play button for box $bboxIndex at position (${rect.right}, ${rect.bottom})")
 
-    private fun createPlayButton(bboxIndex: Int, rect: RectF) {
         val playButton = ImageButton(this).apply {
             setImageResource(android.R.drawable.ic_media_play)
             setBackgroundResource(R.drawable.circle_dark)
-            tag = "play_button"
             alpha = 0.9f
+            tag = "play_button"
+            contentDescription = "Play audio for box $bboxIndex"
+            scaleType = ImageView.ScaleType.CENTER_INSIDE
             setPadding(8, 8, 8, 8)
         }
-        val size = (54 * resources.displayMetrics.density).toInt()
-        val params = ConstraintLayout.LayoutParams(size, size)
-        params.startToStart = pageImage.id
-        params.topToTop = pageImage.id
+
+        val buttonSize = (54 * resources.displayMetrics.density).toInt()
+        val params = ConstraintLayout.LayoutParams(buttonSize, buttonSize)
+        params.startToStart = pageImageId
+        params.topToTop = pageImageId
+
         playButton.layoutParams = params
-        playButton.translationX = rect.right - size / 2
-        playButton.translationY = rect.bottom - size / 2
+
+        playButton.translationX = rect.right - buttonSize/2 + 4
+        playButton.translationY = rect.bottom - buttonSize/2 + 4
+
         playButton.elevation = 8f
-        playButton.setOnClickListener { playAudioForBox(bboxIndex) }
+
+        playButton.setOnClickListener {
+            Log.d(TAG, "Play button clicked for box $bboxIndex")
+            playAudioForBox(bboxIndex)
+        }
+
         mainLayout.addView(playButton)
+
         playButtonsMap[bboxIndex] = playButton
+
+        Log.d(TAG, "✓ Play button created for box $bboxIndex")
     }
 
     private fun playAudioForBox(bboxIndex: Int) {
