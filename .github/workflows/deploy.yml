@@ -30,6 +30,7 @@ jobs:
         
         # 2. EC2에서 실행할 deploy.sh 스크립트 경로 (확정된 경로)
         script: |
+          export DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}
           export OCR_API_URL=${{ secrets.OCR_API_URL }}
           export OCR_SECRET=${{ secrets.OCR_SECRET }}
           export OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
