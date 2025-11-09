@@ -4,6 +4,10 @@ from rest_framework import status
 from django.utils import timezone
 from apis.models.session_model import Session
 from apis.models.user_model import User
+from apis.models.page_model import Page
+from django.utils.dateparse import parse_datetime
+import base64
+
 
 
 class StartSessionView(APIView):
