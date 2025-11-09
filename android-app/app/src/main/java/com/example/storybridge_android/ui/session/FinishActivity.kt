@@ -28,12 +28,8 @@ class FinishActivity : AppCompatActivity() {
         viewModel.endSession(sessionId)
 
         viewModel.sessionStats.observe(this, Observer { stats ->
-            binding.sessionSummary.text = """
-                Session: ${stats.session_id}
-                Pages: ${stats.total_pages}
-                Time: ${stats.total_time_spent}s
-                Words: ${stats.total_words_read}
-            """.trimIndent()
+            val minutes = stats.total_time_spent / 60
+            binding.sessionSummary.text = "You read ${stats.total_words_read} words and ${stats.total_pages} pages for $minutes minutes. Amazing!"
             binding.sessionSummary.visibility = View.VISIBLE
         })
 
