@@ -34,6 +34,8 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.math.min
+import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.AlertDialog
 
 class ReadingActivity : AppCompatActivity() {
 
@@ -80,6 +82,18 @@ class ReadingActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_reading)
 
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                AlertDialog.Builder(this@ReadingActivity)
+                    .setTitle("나가기")
+                    .setMessage("읽기 화면을 종료할까요?")
+                    .setPositiveButton("종료") { _, _ ->
+                        finish()
+                    }
+                    .setNegativeButton("취소", null)
+                    .show()
+            }
+        })
         initViews()
         initUiState()
         initListeners()
