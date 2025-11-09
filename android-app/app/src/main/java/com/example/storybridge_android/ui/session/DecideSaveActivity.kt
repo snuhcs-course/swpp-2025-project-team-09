@@ -44,12 +44,14 @@ class DecideSaveActivity : AppCompatActivity() {
     private fun setupListeners() {
         binding.btnSave.setOnClickListener {
             if (!decisionMade) {
+                setButtonSelected(binding.btnSave)
                 handleSave()
             }
         }
 
         binding.btnDiscard.setOnClickListener {
             if (!decisionMade) {
+                setButtonSelected(binding.btnDiscard)
                 handleDiscard()
             }
         }
@@ -57,6 +59,15 @@ class DecideSaveActivity : AppCompatActivity() {
         binding.mainButton.setOnClickListener {
             navigateToFinish()
         }
+    }
+
+    private fun setButtonSelected(selectedButton: View) {
+        // Reset all buttons
+        binding.btnSave.isSelected = false
+        binding.btnDiscard.isSelected = false
+
+        // Set selected button
+        selectedButton.isSelected = true
     }
 
     private fun handleSave() {
