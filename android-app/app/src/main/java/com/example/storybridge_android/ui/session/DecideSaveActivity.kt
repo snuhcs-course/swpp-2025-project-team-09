@@ -10,6 +10,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.data.SessionRepositoryImpl
 import com.example.storybridge_android.databinding.ActivityDecideSaveBinding
 import kotlinx.coroutines.launch
+import androidx.activity.enableEdgeToEdge
 
 class DecideSaveActivity : AppCompatActivity() {
 
@@ -24,6 +25,7 @@ class DecideSaveActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         binding = ActivityDecideSaveBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
