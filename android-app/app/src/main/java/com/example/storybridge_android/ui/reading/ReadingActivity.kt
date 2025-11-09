@@ -244,6 +244,7 @@ class ReadingActivity : AppCompatActivity() {
         }
     }
 
+
     data class BoundingBox(
         val x: Int,
         val y: Int,
