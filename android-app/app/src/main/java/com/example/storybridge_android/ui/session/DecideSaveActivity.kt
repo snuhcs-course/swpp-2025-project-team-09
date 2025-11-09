@@ -11,6 +11,7 @@ import com.example.storybridge_android.data.SessionRepositoryImpl
 import com.example.storybridge_android.databinding.ActivityDecideSaveBinding
 import kotlinx.coroutines.launch
 import androidx.activity.enableEdgeToEdge
+import com.example.storybridge_android.ui.main.MainActivity
 
 class DecideSaveActivity : AppCompatActivity() {
 
