@@ -73,6 +73,9 @@
             android:name=".ui.session.VoiceSelectActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.session.ContentInstructionActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.setting.SettingActivity"
             android:exported="false" />
     </application>

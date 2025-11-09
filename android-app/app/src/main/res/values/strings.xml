@@ -18,6 +18,9 @@
     <string name="take_photo_instruction">Take a photo of\nyour book cover</string>
     <string name="start">Start!</string>
 
+    <!-- 본문 촬영 -->
+    <string name="take_content_instruction">Now, take photos of\nthe book pages</string>
+
     <!-- 로딩 -->
     <string name="loading_text">Loading...</string>
 

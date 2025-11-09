@@ -15,7 +15,6 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.R
 import com.example.storybridge_android.data.SessionRepositoryImpl
-import com.example.storybridge_android.ui.camera.CameraSessionActivity
 import com.example.storybridge_android.ui.setting.AppSettings
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -104,7 +103,7 @@ class VoiceSelectActivity : AppCompatActivity() {
         }
 
         nextButton.setOnClickListener {
-            goToCamera()
+            goToContentInstruction()
         }
 
         lifecycleScope.launchWhenStarted {
@@ -150,10 +149,9 @@ class VoiceSelectActivity : AppCompatActivity() {
         }
     }
 
-    private fun goToCamera() {
-        val intent = Intent(this, CameraSessionActivity::class.java).apply {
+    private fun goToContentInstruction() {
+        val intent = Intent(this, ContentInstructionActivity::class.java).apply {
             putExtra("session_id", sessionId)
-            putExtra("page_index", 0)  // first page
         }
         startActivity(intent)
         finish()
