@@ -2,65 +2,52 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="200dp"
+    android:layout_width="210dp"
     android:layout_height="360dp"
+    android:background="@drawable/card_background"
     android:padding="24dp"
-    android:background="@drawable/rounded_button"
     android:clipChildren="false"
-    android:clipToPadding="false">
+    android:clipToPadding="false" >
 
-    <!-- 책 배경 -->
+    <!-- Book cover image -->
     <ImageView
-        android:id="@+id/bookImage"
+        android:id="@+id/cardBookImage"
         android:layout_width="match_parent"
         android:layout_height="200dp"
         android:background="@color/white"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Book Title -->
+    <!-- Book title -->
     <TextView
-        android:id="@+id/bookTitle"
-        android:layout_width="wrap_content"
+        android:id="@+id/cardBookTitle"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Book Title"
-        style="@style/BoldText24"
-        app:layout_constraintTop_toBottomOf="@id/bookImage"
+        android:layout_marginTop="8dp"
+        android:text="Title"
+        style="@style/text24pt"
+        app:layout_constraintTop_toBottomOf="@id/cardBookImage"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Read Date -->
+    <!-- Date (MM/DD) -->
     <TextView
-        android:id="@+id/bookProgress"
-        android:layout_width="wrap_content"
+        android:id="@+id/cardBookDate"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="XX / XX"
-        style="@style/BoldText24"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"/>
+        android:text="MM/DD"
+        style="@style/text24pt"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
-    <!-- Next 버튼 (동그라미 + 화살표) -->
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/nextButton"
+    <!-- Play button -->
+    <ImageView
+        android:id="@+id/cardPlayButton"
         android:layout_width="64dp"
         android:layout_height="64dp"
-        android:background="@drawable/circle_white"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
         android:translationX="8dp"
-        android:translationY="8dp">
-
-        <ImageView
-            android:id="@+id/arrowIcon"
-            android:layout_width="36dp"
-            android:layout_height="48dp"
-            android:src="@drawable/play_triangle"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        android:translationY="8dp"
+        android:src="@drawable/ic_right_arrow"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,20 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="BoldText96">
-        <item name="android:textSize">96sp</item>
+    <style name="text80pt">
+        <item name="android:fontFamily">@font/pinkfong_baby_shark_bold</item>
+        <item name="android:textSize">80sp</item>
         <item name="android:textColor">@color/black</item>
         <item name="android:textStyle">bold</item>
+        <item name="android:lineSpacingMultiplier">0.6</item>
         <item name="android:gravity">center</item>
     </style>
 
-    <!-- 안내 문구 (Language Selection 화면) -->
-    <style name="BoldText64">
+    <style name="text64pt">
+        <item name="android:fontFamily">@font/pinkfong_baby_shark_bold</item>
         <item name="android:textSize">64sp</item>
         <item name="android:textColor">@color/black</item>
         <item name="android:textStyle">bold</item>
+        <item name="android:lineSpacingMultiplier">0.6</item>
         <item name="android:gravity">center</item>
     </style>
+
+    <style name="text40pt">
+        <item name="android:fontFamily">@font/pinkfong_baby_shark_bold</item>
+        <item name="android:textSize">40sp</item>
+        <item name="android:textColor">@color/black</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:lineSpacingMultiplier">0.6</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+    <style name="text24pt">
+        <item name="android:fontFamily">@font/pinkfong_baby_shark_bold</item>
+        <item name="android:textSize">24sp</item>
+        <item name="android:textColor">@color/black</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:lineSpacingMultiplier">0.6</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+
 
     <style name="BoldText48">
         <item name="android:textSize">48sp</item>
@@ -23,23 +46,17 @@
         <item name="android:gravity">center</item>
     </style>
 
-    <style name="BoldText24">
+    <style name="Widget.Theme.Storybridgeandroid.MyView" parent="">
+        <item name="android:background">@color/gray_400</item>
+    </style>
+
+    <style name="BBoxText">
+        <item name="android:fontFamily">@font/pinkfong_baby_shark_bold</item>
         <item name="android:textSize">24sp</item>
         <item name="android:textColor">@color/black</item>
         <item name="android:textStyle">bold</item>
-        <item name="android:gravity">center</item>
-    </style>
-
-    <!-- 버튼 텍스트 (둥근 버튼 포함) -->
-    <style name="BoldText64W">
-        <item name="android:textSize">64sp</item>
-        <item name="android:textColor">@color/white</item>
-        <item name="android:textStyle">bold</item>
-        <item name="android:gravity">center</item>
-    </style>
-
-    <style name="Widget.Theme.Storybridgeandroid.MyView" parent="">
-        <item name="android:background">@color/gray_400</item>
+        <item name="android:lineSpacingMultiplier">0.2</item>
+        <item name="android:gravity">start|top</item>
     </style>
 
 </resources>

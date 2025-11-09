@@ -3,19 +3,16 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/language_se"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/gray_light"
-    android:paddingStart="160dp"
-    android:paddingEnd="160dp">
+    android:layout_height="match_parent">
 
     <!-- 안내 문구 -->
     <TextView
         android:id="@+id/tvLanguagePrompt"
-        style="@style/BoldText64"
-        android:layout_width="wrap_content"
+        style="@style/text80pt"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="20dp"
-        android:text="What's your first language?"
+        android:layout_marginBottom="80dp"
+        android:text="What's your\nfirst language?"
         app:layout_constraintBottom_toTopOf="@id/btnEnglish"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -24,13 +21,15 @@
 
     <android.widget.Button
         android:id="@+id/btnEnglish"
-        style="@style/BoldText64"
+        style="@style/text80pt"
         android:layout_width="480dp"
-        android:layout_height="120dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="20dp"
-        android:background="@drawable/rounded_button"
+        android:layout_height="160dp"
+        android:layout_marginBottom="40dp"
+        android:background="@drawable/big_button"
+        android:elevation="8dp"
+        android:translationZ="8dp"
         android:text="English"
+        android:textAllCaps="false"
         app:layout_constraintBottom_toTopOf="@id/btnChinese"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -38,16 +37,33 @@
 
     <android.widget.Button
         android:id="@+id/btnChinese"
-        style="@style/BoldText64"
+        style="@style/text80pt"
         android:layout_width="480dp"
-        android:layout_height="120dp"
-        android:layout_marginTop="20dp"
-        android:background="@drawable/rounded_button"
-        android:text="中文"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_height="160dp"
+        android:layout_marginBottom="120dp"
+        android:background="@drawable/big_button"
+        android:elevation="8dp"
+        android:translationZ="8dp"
+        android:text="汉语"
+        android:textAllCaps="false"
+        app:layout_constraintBottom_toTopOf="@id/startButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/btnEnglish" />
 
+    <android.widget.Button
+        android:id="@+id/startButton"
+        style="@style/text64pt"
+        android:layout_width="400dp"
+        android:layout_height="120dp"
+        android:background="@drawable/grad_button"
+        android:elevation="8dp"
+        android:translationZ="8dp"
+        android:text="Start!"
+        android:textAllCaps="false"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btnChinese" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

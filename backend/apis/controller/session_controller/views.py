@@ -2,13 +2,12 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from apis.models.session_model import Session
 from apis.models.user_model import User
 from apis.models.page_model import Page
-from django.utils.dateparse import parse_datetime
 import base64
-
-
+import os
 
 class StartSessionView(APIView):
     """
@@ -319,6 +318,102 @@ class SessionReviewView(APIView):
         except Session.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
+class SessionReloadView(APIView):
+    """
+    [GET] /session/reload
+    - created_at(=started_at) 기준으로 세션을 찾아
+      session_id 및 첫 페이지 데이터를 반환 (이어보기용)
+
+    - Request Example:
+        GET /session/reload?user_id=xxx&started_at=2025-11-06T04:30:00Z&page_index=0
+
+    - Response Example:
+        {
+            "session_id": "string",
+            "page_index": 0,
+            "image_base64": "string or null",
+            "translation_text": "string or null",
+            "audio_url": "string or null"
+        }
+    """
+
+    def get(self, request):
+        user_id = request.query_params.get("user_id")
+        started_at = request.query_params.get("started_at")
+        page_index = int(request.query_params.get("page_index", 0))
+
+        if not user_id or not started_at:
+            return Response(
+                {"error": "Missing user_id or started_at"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            user = User.objects.get(uid=user_id)
+        except User.DoesNotExist:
+            return Response(
+                {"error_code": 404, "message": "USER__NOT_FOUND"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # created_at으로 세션 찾기
+        parsed_time = parse_datetime(started_at)
+        if not parsed_time:
+            return Response(
+                {"error": "Invalid started_at format"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            session = Session.objects.filter(user=user, created_at=parsed_time).first()
+            if not session:
+                return Response(
+                    {"error_code": 404, "message": "SESSION__NOT_FOUND"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            pages = Page.objects.filter(session=session).order_by("created_at")
+            if not pages.exists():
+                return Response(
+                    {
+                        "session_id": str(session.id),
+                        "page_index": page_index,
+                        "image_base64": None,
+                        "translation_text": None,
+                        "audio_url": None,
+                    },
+                    status=status.HTTP_200_OK,
+                )
+
+            page = (
+                pages[page_index] if page_index < len(pages) else pages.first()
+            )
+
+            # 이미지 base64 변환
+            try:
+                with open(page.img_url, "rb") as f:
+                    encoded = base64.b64encode(f.read()).decode("utf-8")
+            except Exception:
+                encoded = None
+
+            return Response(
+                {
+                    "session_id": str(session.id),
+                    "page_index": page_index,
+                    "image_base64": encoded,
+                    "translation_text": page.translation_text,
+                    "audio_url": page.audio_url,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as e:
+            print("[DEBUG] Reload error:", e)
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
 class SessionReloadAllView(APIView):
     def get(self, request):
         user_id = request.query_params.get("user_id")
@@ -329,7 +424,7 @@ class SessionReloadAllView(APIView):
                 {"error": "Missing user_id or started_at"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
+        
         try:
             user = User.objects.get(device_info=user_id)
         except User.DoesNotExist:
@@ -345,7 +440,7 @@ class SessionReloadAllView(APIView):
                 {"error": "Invalid started_at format"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
+            
         try:
             session = Session.objects.filter(user=user, created_at=parsed_time).first()
             if not session:
@@ -385,5 +480,63 @@ class SessionReloadAllView(APIView):
             print("[DEBUG][ReloadAll]", e)
             return Response(
                 {"error": "Internal server error"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+class DiscardSessionView(APIView):
+    """
+    [POST] /session/discard
+    - 세션과 관련된 모든 데이터를 삭제 (Session, Pages, BBs, image files)
+
+    - Request (POST)
+        {
+            "session_id": "string"
+        }
+
+    - Response
+        Status: 200 OK
+        {
+            "message": "Session discarded successfully"
+        }
+    """
+
+    def post(self, request):
+        session_id = request.data.get("session_id")
+
+        if not session_id:
+            return Response(
+                {"error": "Missing session_id"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            session = Session.objects.get(id=session_id)
+
+            # Delete all associated image files
+            pages = session.pages.all()
+            for page in pages:
+                if page.img_url and os.path.exists(page.img_url):
+                    try:
+                        os.remove(page.img_url)
+                    except Exception as e:
+                        print(f"[DEBUG] Failed to delete image {page.img_url}: {e}")
+
+            # Delete session (CASCADE will delete Pages and BBs automatically)
+            session.delete()
+
+            return Response(
+                {"message": "Session discarded successfully"},
+                status=status.HTTP_200_OK,
+            )
+
+        except Session.DoesNotExist:
+            return Response(
+                {"error_code": 404, "message": "SESSION__NOT_FOUND"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            print("[DEBUG] Discard error:", e)
+            return Response(
+                {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

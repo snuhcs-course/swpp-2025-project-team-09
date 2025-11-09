@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.util.Base64
 import android.widget.Button
+import android.widget.GridLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import androidx.activity.enableEdgeToEdge
@@ -18,15 +19,27 @@ import com.example.storybridge_android.ui.setting.SettingActivity
 import com.example.storybridge_android.ui.session.StartSessionActivity
 import com.example.storybridge_android.ui.common.SessionCard
 import com.example.storybridge_android.ui.common.TopNavigationBar
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.lifecycle.lifecycleScope
-import com.example.storybridge_android.data.DefaultUserRepository
+import com.example.storybridge_android.data.UserRepositoryImpl
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.*
+
 
 class MainActivity : AppCompatActivity() {
     private val viewModel: MainViewModel by viewModels {
-        MainViewModelFactory(DefaultUserRepository())
+        MainViewModelFactory(UserRepositoryImpl())
+    }
+
+    private val settingsLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            recreate()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,33 +64,49 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun observeUserInfo() {
-        val container = findViewById<LinearLayout>(R.id.cardContainer)
+        val container = findViewById<com.google.android.flexbox.FlexboxLayout>(R.id.cardContainer)
         val emptyContainer = findViewById<LinearLayout>(R.id.emptyContainer)
 
         lifecycleScope.launch {
             viewModel.userInfo.collectLatest { response ->
                 if (response == null) return@collectLatest
                 if (response.isSuccessful) {
-                    val data = response.body()
+                    val sessions = response.body() ?: return@collectLatest
+                    container.removeAllViews()
 
-                    if (data == null || data.title.isNullOrEmpty() || data.started_at.isNullOrEmpty()) {
+                    if (sessions.isEmpty()) {
                         container.visibility = LinearLayout.GONE
                         emptyContainer.visibility = LinearLayout.VISIBLE
                         return@collectLatest
                     }
-                    container.removeAllViews()
-                    val sessionCard = SessionCard(this@MainActivity)
-                    sessionCard.setBookTitle(data.title)
-                    sessionCard.setBookProgress("Started: ${data.started_at}")
-                    sessionCard.setOnNextClickListener { navigateToLoadingSession() }
 
-                    if (!data.image_base64.isNullOrEmpty()) {
-                        val imageBytes = Base64.decode(data.image_base64, Base64.DEFAULT)
-                        val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-                        sessionCard.findViewById<ImageView>(R.id.bookImage).setImageBitmap(bitmap)
+                    for (data in sessions) {
+                        val sessionCard = SessionCard(this@MainActivity)
+                        sessionCard.setBookTitle(data.translated_title ?: "NULL")
+
+                        val raw = data.started_at.take(10)
+                        val parts = raw.split("-")
+                        if (parts.size >= 3) {
+                            val formatted = "${parts[1]}/${parts[2]}"
+                            sessionCard.setBookProgress(formatted)
+                        } else {
+                            sessionCard.setBookProgress(data.started_at)
+                        }
+
+                        if (!data.image_base64.isNullOrEmpty()) {
+                            val imageBytes = Base64.decode(data.image_base64, Base64.DEFAULT)
+                            val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                            sessionCard.findViewById<ImageView>(R.id.cardBookImage).setImageBitmap(bitmap)
+                        }
+
+                        sessionCard.setOnNextClickListener {
+                            val intent = Intent(this@MainActivity, LoadingActivity::class.java)
+                            intent.putExtra("started_at", data.started_at)
+                            startActivity(intent)
+                        }
+                        container.addView(sessionCard)
                     }
 
-                    container.addView(sessionCard)
                     container.visibility = LinearLayout.VISIBLE
                     emptyContainer.visibility = LinearLayout.GONE
                 } else {
@@ -90,16 +119,15 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupTopNavigationBar() {
         val topNav = findViewById<TopNavigationBar>(R.id.topNavigationBar)
-        topNav.setOnSettingsClickListener { navigateToSettings() }
+        topNav.setOnSettingsClickListener {
+            val intent = Intent(this, SettingActivity::class.java)
+            settingsLauncher.launch(intent)
+        }
     }
 
     private fun setupStartButton() {
         val startButton = findViewById<Button>(R.id.startNewReadingButton)
         startButton.setOnClickListener { navigateToStartSession() }
-    }
-
-    private fun navigateToSettings() {
-        startActivity(Intent(this, SettingActivity::class.java))
     }
 
     private fun navigateToStartSession() {

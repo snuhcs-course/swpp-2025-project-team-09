@@ -11,6 +11,9 @@
 local.properties
 .env
 
+# SSH Keys / Security
+*.pem
+
 # Django / Python
 __pycache__/
 *.pyc
@@ -43,5 +46,6 @@ venv/
 
 # 오디오 파일
 out_audio/
+.mp3
 
 .coverage
