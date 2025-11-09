@@ -439,7 +439,7 @@ class ReadingActivity : AppCompatActivity() {
     }
 
     private fun navigateToFinish() {
-        startActivity(Intent(this, FinishActivity::class.java).putExtra("session_id", sessionId))
+        startActivity(Intent(this, DecideSaveActivity::class.java).putExtra("session_id", sessionId))
         finish()
     }
 

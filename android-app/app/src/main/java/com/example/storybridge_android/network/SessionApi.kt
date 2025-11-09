@@ -54,6 +54,11 @@ interface SessionApi {
         @Query("started_at") startedAt: String
     ): Response<ReloadAllSessionResponse>
 
+    @POST("/session/discard")
+    suspend fun discardSession(
+        @Body request: DiscardSessionRequest
+    ): Response<DiscardSessionResponse>
+
 }
 
 // --------------------
@@ -158,5 +163,14 @@ data class ReloadedPage(
     val translation_text: String?,
     val audio_url: String?,
     val ocr_results: List<OcrBox>?
+)
+
+// 2-8. Discard Session
+data class DiscardSessionRequest(
+    val session_id: String
+)
+
+data class DiscardSessionResponse(
+    val message: String
 )
 

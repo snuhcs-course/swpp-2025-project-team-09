@@ -7,6 +7,7 @@ from apis.models.session_model import Session
 from apis.models.user_model import User
 from apis.models.page_model import Page
 import base64
+import os
 
 class StartSessionView(APIView):
     """
@@ -479,5 +480,63 @@ class SessionReloadAllView(APIView):
             print("[DEBUG][ReloadAll]", e)
             return Response(
                 {"error": "Internal server error"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+class DiscardSessionView(APIView):
+    """
+    [POST] /session/discard
+    - 세션과 관련된 모든 데이터를 삭제 (Session, Pages, BBs, image files)
+
+    - Request (POST)
+        {
+            "session_id": "string"
+        }
+
+    - Response
+        Status: 200 OK
+        {
+            "message": "Session discarded successfully"
+        }
+    """
+
+    def post(self, request):
+        session_id = request.data.get("session_id")
+
+        if not session_id:
+            return Response(
+                {"error": "Missing session_id"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            session = Session.objects.get(id=session_id)
+
+            # Delete all associated image files
+            pages = session.pages.all()
+            for page in pages:
+                if page.img_url and os.path.exists(page.img_url):
+                    try:
+                        os.remove(page.img_url)
+                    except Exception as e:
+                        print(f"[DEBUG] Failed to delete image {page.img_url}: {e}")
+
+            # Delete session (CASCADE will delete Pages and BBs automatically)
+            session.delete()
+
+            return Response(
+                {"message": "Session discarded successfully"},
+                status=status.HTTP_200_OK,
+            )
+
+        except Session.DoesNotExist:
+            return Response(
+                {"error_code": 404, "message": "SESSION__NOT_FOUND"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            print("[DEBUG] Discard error:", e)
+            return Response(
+                {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
