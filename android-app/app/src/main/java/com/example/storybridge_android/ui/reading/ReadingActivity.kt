@@ -280,8 +280,7 @@ class ReadingActivity : AppCompatActivity() {
             val boxView = TextView(this).apply {
                 text = box.text
                 setBackgroundResource(R.drawable.bbox_background)
-                setTextAppearance(R.style.text24pt)
-                setTextColor(getColor(R.color.black))
+                setTextAppearance(R.style.BBoxText)
                 gravity = Gravity.START or Gravity.TOP
                 setPadding(12, 12, 12, 12)
                 tag = "bbox"
@@ -311,7 +310,7 @@ class ReadingActivity : AppCompatActivity() {
 
     private fun createPlayButton(bboxIndex: Int, rect: RectF) {
         val playButton = ImageButton(this).apply {
-            setImageResource(android.R.drawable.ic_media_play)
+            setImageResource(R.drawable.ic_headphone)
             setBackgroundResource(R.drawable.circle_dark)
             tag = "play_button"
             alpha = 0.9f
@@ -384,19 +383,19 @@ class ReadingActivity : AppCompatActivity() {
 
     private fun updateButtonToPlaying(bboxIndex: Int) {
         playButtonsMap[bboxIndex]?.apply {
-            setImageResource(android.R.drawable.ic_media_pause)
+            setImageResource(R.drawable.ic_pause)
         }
     }
 
     private fun updateButtonToPaused(bboxIndex: Int) {
         playButtonsMap[bboxIndex]?.apply {
-            setImageResource(android.R.drawable.ic_media_play)
+            setImageResource(R.drawable.ic_headphone)
         }
     }
 
     private fun resetButtonState(bboxIndex: Int) {
         playButtonsMap[bboxIndex]?.apply {
-            setImageResource(android.R.drawable.ic_media_play)
+            setImageResource(R.drawable.ic_headphone)
             alpha = 0.9f
         }
     }
