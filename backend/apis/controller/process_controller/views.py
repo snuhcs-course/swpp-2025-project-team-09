@@ -122,14 +122,17 @@ class ProcessUploadView(APIView):
         # Run ALL paragraphs in parallel
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        translation_data = loop.run_until_complete(
-            asyncio.gather(
-                *[get_para_translation(i, para) for i, para in enumerate(ocr_result)]
+        try:
+            translation_data = loop.run_until_complete(
+                asyncio.gather(
+                    *[get_para_translation(i, para) for i, para in enumerate(ocr_result)]
+                )
             )
-        )
-        loop.close()
-
-        return translation_data
+            return translation_data
+        finally:
+            # Properly cleanup async resources before closing the loop
+            loop.run_until_complete(loop.shutdown_asyncgens())
+            loop.close()
 
     def _create_page_and_bbs(
         self,
@@ -184,7 +187,7 @@ class ProcessUploadView(APIView):
             print(f"[TTS Background] Starting TTS for page {page_index}")
 
             try:
-                for i, para in enumerate(ocr_result):
+                for i, _ in enumerate(ocr_result):
                     not_ok = (
                         i >= len(translation_data)
                         or translation_data[i]["status"] != "ok"
@@ -195,12 +198,16 @@ class ProcessUploadView(APIView):
                     # Run TTS with pre-computed translations
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
-                    audio_results = loop.run_until_complete(
-                        tts_module.run_tts_only(
-                            translation_data[i], session_id, page_index, i, para_voice
+                    try:
+                        audio_results = loop.run_until_complete(
+                            tts_module.run_tts_only(
+                                translation_data[i], session_id, page_index, i, para_voice
+                            )
                         )
-                    )
-                    loop.close()
+                    finally:
+                        # Properly cleanup async resources before closing the loop
+                        loop.run_until_complete(loop.shutdown_asyncgens())
+                        loop.close()
 
                     # Update BB with audio
                     if audio_results:
@@ -435,14 +442,17 @@ class ProcessUploadCoverView(APIView):
         # Run ALL paragraphs in parallel
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        translation_data = loop.run_until_complete(
-            asyncio.gather(
-                *[get_para_translation(i, para) for i, para in enumerate(ocr_result)]
+        try:
+            translation_data = loop.run_until_complete(
+                asyncio.gather(
+                    *[get_para_translation(i, para) for i, para in enumerate(ocr_result)]
+                )
             )
-        )
-        loop.close()
-
-        return translation_data
+            return translation_data
+        finally:
+            # Properly cleanup async resources before closing the loop
+            loop.run_until_complete(loop.shutdown_asyncgens())
+            loop.close()
 
     def _create_page_and_bbs(
         self,
