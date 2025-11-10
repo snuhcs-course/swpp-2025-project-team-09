@@ -58,7 +58,7 @@ class DecideSaveActivity : AppCompatActivity() {
         }
 
         binding.mainButton.setOnClickListener {
-            navigateToFinish()
+            navigateToMain()
         }
     }
 
@@ -105,14 +105,6 @@ class DecideSaveActivity : AppCompatActivity() {
     private fun showMainButton() {
         binding.mainButton.visibility = View.VISIBLE
         binding.mainButton.isEnabled = true
-    }
-
-    private fun navigateToFinish() {
-        val intent = Intent(this, FinishActivity::class.java).apply {
-            putExtra("session_id", sessionId)
-        }
-        startActivity(intent)
-        finish()
     }
 
     private fun navigateToMain() {
