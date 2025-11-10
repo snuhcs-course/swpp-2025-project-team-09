@@ -96,7 +96,6 @@ class VoiceSelectActivity : AppCompatActivity() {
             AppSettings.setVoice(this, MALE_VOICE)
             viewModel.selectVoice(sessionId!!, MALE_VOICE)
             playLocalAudio(R.raw.voice_man)
-            nextButton.isEnabled = true
             updateButtonState(manButton)
         }
 
@@ -104,7 +103,6 @@ class VoiceSelectActivity : AppCompatActivity() {
             AppSettings.setVoice(this, FEMALE_VOICE)
             viewModel.selectVoice(sessionId!!, FEMALE_VOICE)
             playLocalAudio(R.raw.voice_woman)
-            nextButton.isEnabled = true
             updateButtonState(womanButton)
         }
 
@@ -115,6 +113,7 @@ class VoiceSelectActivity : AppCompatActivity() {
         lifecycleScope.launchWhenStarted {
             viewModel.success.collectLatest {
                 Log.d("VoiceSelectActivity", "✓ Voice selection saved successfully")
+                // API 완료 후 Next 버튼 활성화
                 nextButton.isEnabled = true
             }
         }
