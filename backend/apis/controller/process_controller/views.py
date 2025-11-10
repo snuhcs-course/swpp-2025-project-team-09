@@ -366,7 +366,7 @@ class ProcessUploadCoverView(APIView):
 
         page_index = 0  # Cover page is always index 0
 
-        # Save cover image
+        # Save cover image (to a different path)
         image_path = self._save_image(image_base64, session_id, page_index)
 
         # Run OCR to get title
@@ -378,34 +378,23 @@ class ProcessUploadCoverView(APIView):
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
 
-        # Map language codes to full names for translation
+        # Map language codes to full names for TTS
         lang_map = {"en": "English", "zh": "Chinese"}
         target_lang = lang_map.get(lang, "English")
 
-        # Create OCR result structure for _get_all_translations
-        ocr_result = [{"text": title, "bbox": {}}]
-
-        # Run translation synchronously (without TTS)
-        tts_module = TTSModule(target_lang=target_lang)
-        translation_data = self._get_all_translations(
-            tts_module, ocr_result, session_id, page_index
+        # Run translation for title synchronously
+        translated_text, tts_male, tts_female = self._run_async(
+            TTSModule(target_lang=target_lang).translate_and_tts_cover(title, session_id, page_index)
         )
 
-        # Extract translated text
-        translated_text = ""
-        if translation_data and translation_data[0]["status"] == "ok":
-            sentences = translation_data[0]["sentences"]
-            translated_text = " ".join([s["translation"] for s in sentences])
-
-        # Create page and bounding boxes with translations
         page = self._create_page_and_bbs(
-            session, image_path, ocr_result, translation_data
+            session, image_path, [title], [translated_text]
         )
 
         # Update session
         session.title = title
         session.translated_title = translated_text
-        print(f'[DEBUG] Translated title: {session.translated_title}')
+        print(f'[debug]{session.translated_title}')
         session.totalPages += 1
         session.save()
 
@@ -417,8 +406,8 @@ class ProcessUploadCoverView(APIView):
                 "submitted_at": timezone.now().isoformat(),
                 "title": session.title,
                 "translated_title": session.translated_title,
-                "tts_male": None,
-                "tts_female": None,
+                "tts_male": tts_male,
+                "tts_female": tts_female,
             },
             status=status.HTTP_200_OK,
         )
@@ -442,17 +431,14 @@ class ProcessUploadCoverView(APIView):
         # Run ALL paragraphs in parallel
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        try:
-            translation_data = loop.run_until_complete(
-                asyncio.gather(
-                    *[get_para_translation(i, para) for i, para in enumerate(ocr_result)]
-                )
+        translation_data = loop.run_until_complete(
+            asyncio.gather(
+                *[get_para_translation(i, para) for i, para in enumerate(ocr_result)]
             )
-            return translation_data
-        finally:
-            # Properly cleanup async resources before closing the loop
-            loop.run_until_complete(loop.shutdown_asyncgens())
-            loop.close()
+        )
+        loop.close()
+
+        return translation_data
 
     def _create_page_and_bbs(
         self,
@@ -499,3 +485,18 @@ class ProcessUploadCoverView(APIView):
             f.write(image_bytes)
 
         return image_path
+
+    def _run_async(self, coroutine):
+        """Helper to run async code in sync context."""
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            result = loop.run_until_complete(coroutine)
+            loop.close()
+            return result
+        except Exception as e:
+            import traceback
+
+            traceback.print_exc()
+            return "", ""
+

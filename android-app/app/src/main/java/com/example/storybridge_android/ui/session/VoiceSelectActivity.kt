@@ -62,10 +62,10 @@ class VoiceSelectActivity : AppCompatActivity() {
             return
         }
 
-        // 백그라운드에서 cover 이미지 업로드 시작
-        if (imagePath != null && lang != null) {
-            viewModel.uploadCoverInBackground(sessionId!!, lang!!, imagePath!!)
-        }
+        // 백그라운드에서 cover 이미지 업로드 시작 -> 주석처리
+       // if (imagePath != null && lang != null) {
+        //    viewModel.uploadCoverInBackground(sessionId!!, lang!!, imagePath!!)
+        //}
 
         val manButton = findViewById<Button>(R.id.manButton)
         val womanButton = findViewById<Button>(R.id.womanButton)
@@ -115,6 +115,10 @@ class VoiceSelectActivity : AppCompatActivity() {
                 Log.d("VoiceSelectActivity", "✓ Voice selection saved successfully")
                 // API 완료 후 Next 버튼 활성화
                 nextButton.isEnabled = true
+                // 커버 이미지 업로드 이 때 실행
+                if (imagePath != null && lang != null) {
+                    viewModel.uploadCoverInBackground(sessionId!!, lang!!, imagePath!!)
+                }
             }
         }
 
