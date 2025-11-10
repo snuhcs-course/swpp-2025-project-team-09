@@ -243,7 +243,7 @@ class LoadingViewModel(
                     stopRamp()
                     _progress.value = 100
                     val totalPages = data.pages.size
-                    _navigateToReading.emit(SessionResumeResult(data.session_id, 0, totalPages))
+                    _navigateToReading.emit(SessionResumeResult(data.session_id, 1, totalPages))
                 },
                 onFailure = { e ->
                     stopRamp()
