@@ -174,6 +174,14 @@ class ReadingActivity : AppCompatActivity() {
                 state.error?.let { Toast.makeText(this@ReadingActivity, it, Toast.LENGTH_SHORT).show() }
             }
         }
+
+        // 썸네일 리스트 Flow 수집 (한 번만 실행)
+        lifecycleScope.launch {
+            viewModel.thumbnailList.collectLatest { list ->
+                val sortedList = list.sortedBy { it.pageIndex }
+                thumbnailAdapter.submitList(sortedList)
+            }
+        }
     }
 
     private fun fetchPage() {
@@ -439,18 +447,11 @@ class ReadingActivity : AppCompatActivity() {
     }
 
     private fun fetchAllThumbnails() {
-        // ViewModel에 썸네일 요청
-        for (i in 0 until totalPages) {
+        // ViewModel에 썸네일 요청 (커버 페이지 제외, 1부터 시작)
+        for (i in 1 until totalPages) {
             viewModel.fetchThumbnail(sessionId, i)
         }
-
-        // Flow 수집 → RecyclerView 갱신
-        lifecycleScope.launch {
-            viewModel.thumbnailList.collectLatest { list ->
-                val sortedList = list.sortedBy { it.pageIndex }
-                thumbnailAdapter.submitList(sortedList)
-            }
-        }
+        // Flow 수집은 observeViewModel()에서 한 번만 실행됨
     }
 
     private fun navigateToFinish() {

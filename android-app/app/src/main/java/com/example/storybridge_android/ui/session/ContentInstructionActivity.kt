@@ -65,7 +65,8 @@ class ContentInstructionActivity : AppCompatActivity() {
     private fun goToCamera(sessionId: String) {
         val intent = Intent(this, CameraSessionActivity::class.java).apply {
             putExtra("session_id", sessionId)
-            putExtra("page_index", 0)
+            // 본문 페이지 인덱스 1부터 시작
+            putExtra("page_index", 1)
         }
         startActivity(intent)
         finish()

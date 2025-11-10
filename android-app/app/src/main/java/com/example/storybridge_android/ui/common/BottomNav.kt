@@ -65,8 +65,8 @@ class BottomNav @JvmOverloads constructor(
     }
 
     fun updatePageStatus(currentPage: Int, totalPages: Int) {
-        val pageNum = currentPage + 1 // Convert 0-indexed to 1-indexed
-        statusText.text = "page $pageNum/$totalPages"
+        // currentPage를 그대로 사용 (1부터 시작), totalPages에서 1을 빼서 커버 제외
+        statusText.text = "page $currentPage/${totalPages - 1}"
 
         // Show/hide buttons based on current page
         prevButton.visibility = if (currentPage > 0) VISIBLE else INVISIBLE
