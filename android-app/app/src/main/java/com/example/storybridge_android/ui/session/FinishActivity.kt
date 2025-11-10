@@ -17,6 +17,8 @@ class FinishActivity : AppCompatActivity() {
     private val viewModel: FinishViewModel by viewModels {
         FinishViewModelFactory(SessionRepositoryImpl())
     }
+    private var isNewSession = true
+    private lateinit var sessionId: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,7 +26,9 @@ class FinishActivity : AppCompatActivity() {
         binding = ActivityFinishBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val sessionId = intent.getStringExtra("session_id") ?: ""
+        sessionId = intent.getStringExtra("session_id") ?: ""
+        isNewSession = intent.getBooleanExtra("is_new_session", true)
+
         viewModel.endSession(sessionId)
 
         viewModel.sessionStats.observe(this, Observer { stats ->
@@ -38,7 +42,16 @@ class FinishActivity : AppCompatActivity() {
         })
 
         binding.mainButton.setOnClickListener {
-            startActivity(Intent(this, MainActivity::class.java))
+            if (isNewSession) {
+                // New session: go to DecideSaveActivity to choose save/discard
+                val intent = Intent(this, DecideSaveActivity::class.java).apply {
+                    putExtra("session_id", sessionId)
+                }
+                startActivity(intent)
+            } else {
+                // Existing session: go directly to MainActivity
+                startActivity(Intent(this, MainActivity::class.java))
+            }
             finish()
         }
     }

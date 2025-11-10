@@ -19,6 +19,8 @@ import com.example.storybridge_android.data.UserRepositoryImpl
 import com.example.storybridge_android.ui.reading.ReadingActivity
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.AlertDialog
 
 class LoadingActivity : AppCompatActivity() {
 
@@ -125,13 +127,23 @@ class LoadingActivity : AppCompatActivity() {
                 }
             }
         }
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                Toast.makeText(this@LoadingActivity, getString(R.string.exit_loading), Toast.LENGTH_SHORT).show()
+            }
+        })
+
     }
 
     private fun navigateToReading(sessionId: String, pageIndex: Int, totalPages: Int = pageIndex + 1) {
+        // Check if this is a new session (no started_at) or existing session (has started_at)
+        val isNewSession = intent.getStringExtra("started_at") == null
+
         val intent = Intent(this, ReadingActivity::class.java).apply {
             putExtra("session_id", sessionId)
             putExtra("page_index", pageIndex)
             putExtra("total_pages", totalPages)
+            putExtra("is_new_session", isNewSession)
         }
         startActivity(intent)
         finish()

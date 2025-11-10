@@ -45,6 +45,7 @@ class ReadingActivity : AppCompatActivity() {
     private lateinit var sessionId: String
     private var pageIndex = 0
     private var totalPages = 0
+    private var isNewSession = true
     private lateinit var mainLayout: ConstraintLayout
     private lateinit var pageImage: ImageView
     private lateinit var topUi: TopNav
@@ -105,6 +106,7 @@ class ReadingActivity : AppCompatActivity() {
         sessionId = intent.getStringExtra("session_id") ?: ""
         pageIndex = intent.getIntExtra("page_index", 0)
         totalPages = intent.getIntExtra("total_pages", pageIndex + 1)
+        isNewSession = intent.getBooleanExtra("is_new_session", true)
 
         // Update page status on BottomNav
         updateBottomNavStatus()
@@ -452,7 +454,11 @@ class ReadingActivity : AppCompatActivity() {
     }
 
     private fun navigateToFinish() {
-        startActivity(Intent(this, DecideSaveActivity::class.java).putExtra("session_id", sessionId))
+        val intent = Intent(this, FinishActivity::class.java).apply {
+            putExtra("session_id", sessionId)
+            putExtra("is_new_session", isNewSession)
+        }
+        startActivity(intent)
         finish()
     }
 

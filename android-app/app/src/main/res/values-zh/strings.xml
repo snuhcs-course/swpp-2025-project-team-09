@@ -57,5 +57,6 @@
     <string name="exit_dialog_message">要离开阅读画面吗？</string>
     <string name="exit_dialog_confirm">离开</string>
     <string name="exit_dialog_cancel">取消</string>
+    <string name="exit_loading">请等待加载完成。</string>
 
 </resources>

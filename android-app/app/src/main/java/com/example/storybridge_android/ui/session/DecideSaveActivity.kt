@@ -11,6 +11,7 @@ import com.example.storybridge_android.data.SessionRepositoryImpl
 import com.example.storybridge_android.databinding.ActivityDecideSaveBinding
 import kotlinx.coroutines.launch
 import androidx.activity.enableEdgeToEdge
+import com.example.storybridge_android.ui.main.MainActivity
 
 class DecideSaveActivity : AppCompatActivity() {
 
@@ -57,7 +58,7 @@ class DecideSaveActivity : AppCompatActivity() {
         }
 
         binding.mainButton.setOnClickListener {
-            navigateToFinish()
+            navigateToMain()
         }
     }
 
@@ -104,14 +105,6 @@ class DecideSaveActivity : AppCompatActivity() {
     private fun showMainButton() {
         binding.mainButton.visibility = View.VISIBLE
         binding.mainButton.isEnabled = true
-    }
-
-    private fun navigateToFinish() {
-        val intent = Intent(this, FinishActivity::class.java).apply {
-            putExtra("session_id", sessionId)
-        }
-        startActivity(intent)
-        finish()
     }
 
     private fun navigateToMain() {

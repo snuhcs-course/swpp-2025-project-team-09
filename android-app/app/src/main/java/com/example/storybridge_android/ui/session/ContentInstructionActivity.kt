@@ -10,6 +10,8 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.storybridge_android.R
 import com.example.storybridge_android.ui.camera.CameraSessionActivity
+import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.AlertDialog
 
 class ContentInstructionActivity : AppCompatActivity() {
 
@@ -43,6 +45,21 @@ class ContentInstructionActivity : AppCompatActivity() {
         findViewById<android.widget.Button>(R.id.contentInstructionButton).setOnClickListener {
             viewModel.onStartClicked()
         }
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                AlertDialog.Builder(this@ContentInstructionActivity)
+                    .setTitle(getString(R.string.exit_dialog_title))
+                    .setMessage(getString(R.string.exit_dialog_message))
+                    .setPositiveButton(getString(R.string.exit_dialog_confirm)) { _, _ ->
+                        isEnabled = false
+                        onBackPressedDispatcher.onBackPressed()
+                    }
+                    .setNegativeButton(getString(R.string.exit_dialog_cancel), null)
+                    .show()
+            }
+        })
+
     }
 
     private fun goToCamera(sessionId: String) {
