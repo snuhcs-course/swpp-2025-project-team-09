@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.provider.Settings
 import android.util.Base64
 import android.widget.Button
-import android.widget.GridLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import androidx.activity.enableEdgeToEdge
@@ -25,7 +24,6 @@ import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.data.UserRepositoryImpl
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
 import java.util.*
 
 
@@ -99,7 +97,7 @@ class MainActivity : AppCompatActivity() {
                             sessionCard.findViewById<ImageView>(R.id.cardBookImage).setImageBitmap(bitmap)
                         }
 
-                        sessionCard.setOnNextClickListener {
+                        sessionCard.setOnImageClickListener {
                             val intent = Intent(this@MainActivity, LoadingActivity::class.java)
                             intent.putExtra("started_at", data.started_at)
                             startActivity(intent)
