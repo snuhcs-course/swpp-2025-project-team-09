@@ -21,6 +21,7 @@ import com.example.storybridge_android.ui.common.TopNavigationBar
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.lifecycle.lifecycleScope
+import com.example.storybridge_android.data.SessionRepositoryImpl
 import com.example.storybridge_android.data.UserRepositoryImpl
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -29,7 +30,7 @@ import java.util.*
 
 class MainActivity : AppCompatActivity() {
     private val viewModel: MainViewModel by viewModels {
-        MainViewModelFactory(UserRepositoryImpl())
+        MainViewModelFactory(UserRepositoryImpl(), SessionRepositoryImpl())
     }
 
     private val settingsLauncher = registerForActivityResult(
@@ -101,6 +102,11 @@ class MainActivity : AppCompatActivity() {
                             val intent = Intent(this@MainActivity, LoadingActivity::class.java)
                             intent.putExtra("started_at", data.started_at)
                             startActivity(intent)
+                        }
+                        sessionCard.setOnTrashClickListener {
+                            lifecycleScope.launch {
+                                viewModel.discardSession(data.session_id) // <-- 이 함수는 MainViewModel에 추가 필요
+                            }
                         }
                         container.addView(sessionCard)
                     }
