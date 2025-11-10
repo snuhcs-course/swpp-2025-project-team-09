@@ -20,8 +20,8 @@ class BottomNav @JvmOverloads constructor(
     private var onCaptureButtonClickListener: (() -> Unit)? = null
     private var onNextButtonClickListener: (() -> Unit)? = null
 
-    private val prevButton: ImageButton
-    private val nextButton: ImageButton
+    private val prevButton: Button
+    private val nextButton: Button
     private val statusText: TextView
 
     init {
