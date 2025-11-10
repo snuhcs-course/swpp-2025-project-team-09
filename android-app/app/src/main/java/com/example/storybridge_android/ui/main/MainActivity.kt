@@ -78,7 +78,7 @@ class MainActivity : AppCompatActivity() {
                         return@collectLatest
                     }
 
-                    for (data in sessions) {
+                    for (data in sessions.reversed()) {
                         val sessionCard = SessionCard(this@MainActivity)
                         sessionCard.setBookTitle(data.translated_title ?: "NULL")
 
