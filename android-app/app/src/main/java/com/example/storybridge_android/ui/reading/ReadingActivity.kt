@@ -39,6 +39,7 @@ import com.example.storybridge_android.ui.common.LeftOverlay
 import com.example.storybridge_android.ui.session.DecideSaveActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
+import kotlin.math.max
 
 class ReadingActivity : AppCompatActivity() {
 
@@ -77,6 +78,7 @@ class ReadingActivity : AppCompatActivity() {
     private val playButtonsMap: MutableMap<Int, ImageButton> = mutableMapOf()
     private val boundingBoxViewsMap: MutableMap<Int, TextView> = mutableMapOf()
     private var cachedBoundingBoxes: List<BoundingBox> = emptyList()
+    private val MIN_WIDTH = 500;
 
     private lateinit var thumbnailAdapter: ThumbnailAdapter
     private val thumbnailList = mutableListOf<PageThumbnail>()
@@ -207,7 +209,8 @@ class ReadingActivity : AppCompatActivity() {
     private fun handleOcr(data: GetOcrTranslationResponse) {
         val boxes = data.ocr_results.mapIndexed { i, ocrBox ->
             val box = ocrBox.bbox
-            BoundingBox(box.x, box.y, box.width, box.height, ocrBox.translation_txt, i)
+            val adjustedWidth = max(box.width, MIN_WIDTH)
+            BoundingBox(box.x, box.y, adjustedWidth, box.height, ocrBox.translation_txt, i)
         }
         cachedBoundingBoxes = boxes
         if (boxes.isNotEmpty()) pageImage.post { displayBB(boxes) }
