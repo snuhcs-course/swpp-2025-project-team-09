@@ -79,25 +79,13 @@ class ReadingViewModel(private val repository: PageRepository) : ViewModel() {
     private fun startTtsPolling(sessionId: String, pageIndex: Int) {
         pollingJob?.cancel()
         pollingJob = viewModelScope.launch {
-            // OCR 결과에서 총 bbox 개수 가져오기
-            val totalBboxes = _uiState.value.ocr?.ocr_results?.size ?: 0
-
-            if (totalBboxes == 0) {
-                Log.d("ReadingVM", "No bboxes, skipping TTS polling")
-                return@launch
-            }
-
             repeat(60) { // 최대 60회 시도 (2분)
                 repository.getTtsResults(sessionId, pageIndex)
                     .onSuccess { newData ->
                         _uiState.value = _uiState.value.copy(tts = newData)
-                        Log.d("ReadingVM", "TTS polling: ${newData.audio_results.size}/$totalBboxes bboxes ready")
+                        Log.d("ReadingVM", "TTS polling: fetched ${newData.audio_results.size} items")
 
-                        // 모든 bbox에 대한 TTS가 완료되면 polling 중단
-                        if (newData.audio_results.size >= totalBboxes) {
-                            Log.d("ReadingVM", "✓ All TTS completed, stopping polling")
-                            return@launch  // polling 종료
-                        }
+                        // 여기서는 BBox 개수와 비교하지 않고 그냥 계속 업데이트
                     }
                     .onFailure { e ->
                         Log.e("ReadingVM", "Polling error", e)
@@ -105,9 +93,10 @@ class ReadingViewModel(private val repository: PageRepository) : ViewModel() {
 
                 delay(pollInterval)
             }
-            Log.w("ReadingVM", "TTS polling timeout after 60 attempts")
+            Log.w("ReadingVM", "TTS polling finished (max attempts reached)")
         }
     }
+
 
     fun fetchThumbnail(sessionId: String, pageIndex: Int) {
         viewModelScope.launch {

@@ -20,8 +20,8 @@ class BottomNav @JvmOverloads constructor(
     private var onCaptureButtonClickListener: (() -> Unit)? = null
     private var onNextButtonClickListener: (() -> Unit)? = null
 
-    private val prevButton: ImageButton
-    private val nextButton: ImageButton
+    private val prevButton: Button
+    private val nextButton: Button
     private val statusText: TextView
 
     init {
@@ -69,7 +69,7 @@ class BottomNav @JvmOverloads constructor(
         statusText.text = "page $currentPage/${totalPages - 1}"
 
         // Show/hide buttons based on current page
-        prevButton.visibility = if (currentPage > 0) VISIBLE else INVISIBLE
+        prevButton.visibility = if (currentPage > 1) VISIBLE else INVISIBLE
         nextButton.visibility = if (currentPage < totalPages - 1) VISIBLE else INVISIBLE
     }
 }

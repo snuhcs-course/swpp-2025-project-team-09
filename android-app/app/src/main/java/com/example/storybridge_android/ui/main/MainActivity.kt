@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.provider.Settings
 import android.util.Base64
 import android.widget.Button
-import android.widget.GridLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import androidx.activity.enableEdgeToEdge
@@ -22,16 +21,16 @@ import com.example.storybridge_android.ui.common.TopNavigationBar
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.lifecycle.lifecycleScope
+import com.example.storybridge_android.data.SessionRepositoryImpl
 import com.example.storybridge_android.data.UserRepositoryImpl
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
 import java.util.*
 
 
 class MainActivity : AppCompatActivity() {
     private val viewModel: MainViewModel by viewModels {
-        MainViewModelFactory(UserRepositoryImpl())
+        MainViewModelFactory(UserRepositoryImpl(), SessionRepositoryImpl())
     }
 
     private val settingsLauncher = registerForActivityResult(
@@ -80,7 +79,7 @@ class MainActivity : AppCompatActivity() {
                         return@collectLatest
                     }
 
-                    for (data in sessions) {
+                    for (data in sessions.reversed()) {
                         val sessionCard = SessionCard(this@MainActivity)
                         sessionCard.setBookTitle(data.translated_title ?: "NULL")
 
@@ -99,10 +98,15 @@ class MainActivity : AppCompatActivity() {
                             sessionCard.findViewById<ImageView>(R.id.cardBookImage).setImageBitmap(bitmap)
                         }
 
-                        sessionCard.setOnNextClickListener {
+                        sessionCard.setOnImageClickListener {
                             val intent = Intent(this@MainActivity, LoadingActivity::class.java)
                             intent.putExtra("started_at", data.started_at)
                             startActivity(intent)
+                        }
+                        sessionCard.setOnTrashClickListener {
+                            lifecycleScope.launch {
+                                viewModel.discardSession(data.session_id) // <-- 이 함수는 MainViewModel에 추가 필요
+                            }
                         }
                         container.addView(sessionCard)
                     }
