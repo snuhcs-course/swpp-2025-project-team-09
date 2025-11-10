@@ -1,5 +1,6 @@
 package com.example.storybridge_android.ui.main
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.os.Bundle
@@ -104,9 +105,17 @@ class MainActivity : AppCompatActivity() {
                             startActivity(intent)
                         }
                         sessionCard.setOnTrashClickListener {
-                            lifecycleScope.launch {
-                                viewModel.discardSession(data.session_id) // <-- 이 함수는 MainViewModel에 추가 필요
-                            }
+                            AlertDialog.Builder(this@MainActivity)
+                                .setTitle("삭제 확인")
+                                .setMessage("정말로 삭제하시겠습니까?")
+                                .setPositiveButton("삭제") { _, _ ->
+                                    lifecycleScope.launch {
+                                        val deviceInfo = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+                                        viewModel.discardSession(data.session_id, deviceInfo) // session_id 사
+                                    }
+                                }
+                                .setNegativeButton("취소", null)
+                                .show()
                         }
                         container.addView(sessionCard)
                     }
