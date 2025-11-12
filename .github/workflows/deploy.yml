@@ -39,7 +39,7 @@ jobs:
           export DB_HOST=${{ secrets.DB_HOST }}
           export DB_PORT=${{ secrets.DB_PORT }}
           export PYTHONUNBUFFERED=1
-          cd /home/${{ secrets.EC2_USER }}/swpp-2025-project-team-09
+          cd /home/${{ secrets.EC2_USER }}/storybridge/swpp-2025-project-team-09
           sleep 2
           chmod +x deploy.sh
           ./deploy.sh
