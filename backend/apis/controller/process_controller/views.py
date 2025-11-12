@@ -49,6 +49,13 @@ class ProcessUploadView(APIView):
                 {"error_code": 422, "message": "PROCESS__UNABLE_TO_PROCESS_IMAGE"},
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
+        
+        # Count words from OCR and add to session.totalWords
+        total_words = sum(
+            len((para.get("text", "") or "").split()) for para in ocr_result
+        )
+        session.totalWords = session.totalWords + total_words
+        print(f"[DEBUG] OCR words in page {page_index}: {total_words}")
 
         # Map language codes to full names for TTS
         lang_map = {"en": "English", "zh": "Chinese"}
