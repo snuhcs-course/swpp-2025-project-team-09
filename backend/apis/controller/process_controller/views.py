@@ -397,7 +397,13 @@ class ProcessUploadCoverView(APIView):
         )
 
         page = self._create_page_and_bbs(
-            session, image_path, [title], [translated_text]
+            session,
+            image_path,
+            [{"text": title}],
+            [{
+                "status": "ok",
+                "sentences": [{"translation": translated_text}]
+            }]
         )
 
         # Update session
