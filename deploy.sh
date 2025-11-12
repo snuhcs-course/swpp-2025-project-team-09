@@ -30,19 +30,13 @@ if [ $? -ne 0 ]; then
 fi
 echo "--- 의존성 설치 완료 ---"
 
-# --- [3] DB 초기화 (형식 변경 대응) ---
-echo "--- ⚠️ DB 형식 변경 대응: 기존 DB 삭제 후 새로 생성 ---"
+# --- [3] DB Migration ---
+echo "--- DB Migration 시작 ---"
 
-if [ -f "$BACKEND_DIR/db.sqlite3" ]; then
-    rm -f "$BACKEND_DIR/db.sqlite3"
-    echo "SQLite DB 파일 삭제 완료 (형식 변경 대응)"
-fi
-
-# 새로운 스키마로 DB 재생성
 "$PYTHON_EXECUTABLE" "$BACKEND_DIR/manage.py" makemigrations --noinput
 "$PYTHON_EXECUTABLE" "$BACKEND_DIR/manage.py" migrate --noinput
 
-echo "--- 새 DB 스키마 생성 완료 ---"
+echo "--- DB Migration 완료 ---"
 
 
 
