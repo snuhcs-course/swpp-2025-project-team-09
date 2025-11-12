@@ -28,10 +28,15 @@ class MainViewModel(
         }
     }
 
-    fun discardSession(sessionId: String) {
+    fun discardSession(sessionId: String, deviceInfo: String) {
         viewModelScope.launch {
             val result = sessionRepository.discardSession(sessionId)
             _discardResult.value = result
+            if (result.isSuccess) {
+                // 삭제 성공 시 user info 다시 불러오기
+                val response = userRepository.getUserInfo(deviceInfo)
+                _userInfo.value = response
+            }
         }
     }
 }
