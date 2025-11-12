@@ -56,19 +56,17 @@ class LoadingViewModel(
     fun uploadImage(sessionId: String, pageIndex: Int, lang: String, path: String) {
         viewModelScope.launch {
             _status.value = "uploading"
-            startRampTo(80, 500L)
+
             val base64 = encodeBase64(path)
             if (base64 == null) {
-                stopRamp()
                 _error.value = "Failed to process image"
                 return@launch
             }
+            startRampTo(40, 2000L)
 
             val req = UploadImageRequest(sessionId, pageIndex, lang, base64)
             processRepo.uploadImage(req).fold(
                 onSuccess = {
-                    stopRamp()
-                    _progress.value = 80
                     pollOcr(sessionId, it.page_index)
                 },
                 onFailure = {
@@ -82,14 +80,13 @@ class LoadingViewModel(
     fun uploadCover(sessionId: String, lang: String, path: String) {
         viewModelScope.launch {
             _status.value = "uploading_cover"
-            startRampTo(80, 12000L)
 
             val base64 = encodeBase64(path)
             if (base64 == null) {
-                stopRamp()
                 _error.value = "Failed to process image"
                 return@launch
             }
+            startRampTo(40, 2000L)
 
             val req = UploadImageRequest(sessionId, 0, lang, base64)
             processRepo.uploadCoverImage(req).fold(
@@ -123,7 +120,7 @@ class LoadingViewModel(
             res.fold(
                 onSuccess = {
                     val p = it.progress
-                    _progress.value = 80 + (p * 20 / 100)
+                    _progress.value = 40 + (p * 60 / 100)
                     if (it.status == "ready") {
                         _progress.value = 100
                         _status.value = "ready"
@@ -230,7 +227,7 @@ class LoadingViewModel(
     fun reloadAllSession(startedAt: String, context: Context) {
         viewModelScope.launch {
             _status.value = "reloading"
-            startRampTo(100, 500L)
+            startRampTo(100, 1000L)
 
             val deviceInfo = Settings.Secure.getString(
                 context.contentResolver,
@@ -243,7 +240,7 @@ class LoadingViewModel(
                     stopRamp()
                     _progress.value = 100
                     val totalPages = data.pages.size
-                    _navigateToReading.emit(SessionResumeResult(data.session_id, 1, totalPages))
+                    _navigateToReading.emit(SessionResumeResult(data.session_id, 0, totalPages))
                 },
                 onFailure = { e ->
                     stopRamp()
