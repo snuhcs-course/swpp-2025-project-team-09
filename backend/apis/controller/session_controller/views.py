@@ -253,6 +253,7 @@ class GetSessionStatsView(APIView):
 
     def get(self, request):
         session_id = request.query_params.get("session_id")
+        print("[DEBUG] Fetching info for session_id:", session_id)
         if not session_id:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
@@ -266,11 +267,13 @@ class GetSessionStatsView(APIView):
                 {
                     "session_id": str(session.id),
                     "user_id": str(session.user.uid),
+                    "voice_style": session.voicePreference,
+                    "isOngoing": session.isOngoing,
                     "started_at": session.created_at,
                     "ended_at": session.ended_at,
                     "total_pages": session.totalPages,
-                    "total_time_spent": duration,
-                    "total_words_read": session.totalPages * 100,  # dummy metric
+                    "total_time_spent": ((session.ended_at or timezone.now()) - session.created_at).seconds,
+                    "total_words_read": session.totalWords
                 },
                 status=status.HTTP_200_OK,
             )
