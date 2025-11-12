@@ -15,8 +15,4 @@ class Migration(migrations.Migration):
             name="voicePreference",
             field=models.CharField(blank=True, default=None, max_length=50, null=True),
         ),
-        migrations.AlterModelTable(
-            name="user",
-            table="apis_user",
-        ),
     ]

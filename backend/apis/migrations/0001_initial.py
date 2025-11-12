@@ -68,7 +68,7 @@ class Migration(migrations.Migration):
                 ("updated_at", models.DateTimeField(auto_now=True)),
             ],
             options={
-                "db_table": "user",
+                "db_table": "apis_user",
             },
         ),
         migrations.CreateModel(
