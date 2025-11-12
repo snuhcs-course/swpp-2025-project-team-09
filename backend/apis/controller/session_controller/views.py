@@ -201,6 +201,7 @@ class GetSessionInfoView(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
         try:
+            print("[DEBUG] Fetching info for session_id:", session_id)
             session = Session.objects.get(id=session_id)
             return Response(
                 {
