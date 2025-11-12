@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("apis", "0005_merge_20251106_0251"),
+        ("apis", "0004_session_cover_tts_female_session_cover_tts_male_and_more"),
     ]
 
     operations = [
