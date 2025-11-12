@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("apis", "0003_add_tts_status"),
+        ("apis", "0003_session_translated_title"),
     ]
 
     operations = [
