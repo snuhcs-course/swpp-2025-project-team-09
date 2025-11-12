@@ -104,7 +104,8 @@ class SelectVoiceView(APIView):
             session = Session.objects.get(id=session_id)
             session.voicePreference = voice_style
             session.save()
-            print("[DEBUG] Voice style set to:", voice_style)
+            print("[DEBUG] Voice style set to:", session.voicePreference)
+            print("[DEBUG] Session ID:", session_id)
             return Response(
                 {"session_id": str(session.id), "voice_style": session.voicePreference},
                 status=status.HTTP_200_OK,
