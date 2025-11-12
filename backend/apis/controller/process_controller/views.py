@@ -71,7 +71,7 @@ class ProcessUploadView(APIView):
         page = self._create_page_and_bbs(
             session, image_path, ocr_result, translation_data
         )
-
+        print("[DEBUG] voice preference:", session.voicePreference)
         # Start background TTS
         self._start_background_tts(
             tts_module,
@@ -195,7 +195,7 @@ class ProcessUploadView(APIView):
 
         def run_tts():
             print(f"[TTS Background] Starting TTS for page {page_index}")
-
+            print(f"[TTS Background] Using voice preference: {para_voice}")
             try:
                 for i, _ in enumerate(ocr_result):
                     not_ok = (

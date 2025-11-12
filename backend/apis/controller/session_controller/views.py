@@ -170,7 +170,7 @@ class GetSessionInfoView(APIView):
     """
     [GET] /session/info
 
-    Endpoint: /session/stats
+    Endpoint: /session/info
 
     - Request (GET)
 
@@ -228,7 +228,7 @@ class GetSessionStatsView(APIView):
     """
     [GET] /session/stats
 
-    Endpoint: /session/info
+    Endpoint: /session/stats
 
     - Request (GET)
 
