@@ -9,6 +9,7 @@ from apis.models.page_model import Page
 import base64
 import os
 
+
 class StartSessionView(APIView):
     """
     [POST] /session/start
@@ -103,6 +104,8 @@ class SelectVoiceView(APIView):
             session = Session.objects.get(id=session_id)
             session.voicePreference = voice_style
             session.save()
+            print("[DEBUG] Voice style set to:", session.voicePreference)
+            print("[DEBUG] Session ID:", session_id)
             return Response(
                 {"session_id": str(session.id), "voice_style": session.voicePreference},
                 status=status.HTTP_200_OK,
@@ -168,7 +171,7 @@ class GetSessionInfoView(APIView):
     """
     [GET] /session/info
 
-    Endpoint: /session/stats
+    Endpoint: /session/info
 
     - Request (GET)
 
@@ -195,6 +198,7 @@ class GetSessionInfoView(APIView):
 
     def get(self, request):
         session_id = request.query_params.get("session_id")
+        print("[DEBUG] Fetching info for session_id:", session_id)
         if not session_id:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
@@ -209,6 +213,8 @@ class GetSessionInfoView(APIView):
                     "started_at": session.created_at,
                     "ended_at": session.ended_at,
                     "total_pages": session.totalPages,
+                    "total_time_spent": ((session.ended_at or timezone.now()) - session.created_at).seconds,
+                    "total_words_read": session.totalWords
                 },
                 status=status.HTTP_200_OK,
             )
@@ -223,7 +229,7 @@ class GetSessionStatsView(APIView):
     """
     [GET] /session/stats
 
-    Endpoint: /session/info
+    Endpoint: /session/stats
 
     - Request (GET)
 
@@ -248,6 +254,7 @@ class GetSessionStatsView(APIView):
 
     def get(self, request):
         session_id = request.query_params.get("session_id")
+        print("[DEBUG] Fetching info for session_id:", session_id)
         if not session_id:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
@@ -261,11 +268,13 @@ class GetSessionStatsView(APIView):
                 {
                     "session_id": str(session.id),
                     "user_id": str(session.user.uid),
+                    "voice_style": session.voicePreference,
+                    "isOngoing": session.isOngoing,
                     "started_at": session.created_at,
                     "ended_at": session.ended_at,
                     "total_pages": session.totalPages,
-                    "total_time_spent": duration,
-                    "total_words_read": session.totalPages * 100,  # dummy metric
+                    "total_time_spent": ((session.ended_at or timezone.now()) - session.created_at).seconds,
+                    "total_words_read": session.totalWords
                 },
                 status=status.HTTP_200_OK,
             )
@@ -317,6 +326,7 @@ class SessionReviewView(APIView):
             )
         except Session.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
+
 
 class SessionReloadView(APIView):
     """
@@ -385,9 +395,7 @@ class SessionReloadView(APIView):
                     status=status.HTTP_200_OK,
                 )
 
-            page = (
-                pages[page_index] if page_index < len(pages) else pages.first()
-            )
+            page = pages[page_index] if page_index < len(pages) else pages.first()
 
             # 이미지 base64 변환
             try:
@@ -414,6 +422,7 @@ class SessionReloadView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+
 class SessionReloadAllView(APIView):
     def get(self, request):
         user_id = request.query_params.get("user_id")
@@ -424,7 +433,7 @@ class SessionReloadAllView(APIView):
                 {"error": "Missing user_id or started_at"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        
+
         try:
             user = User.objects.get(device_info=user_id)
         except User.DoesNotExist:
@@ -440,7 +449,7 @@ class SessionReloadAllView(APIView):
                 {"error": "Invalid started_at format"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-            
+
         try:
             session = Session.objects.filter(user=user, created_at=parsed_time).first()
             if not session:
@@ -482,6 +491,7 @@ class SessionReloadAllView(APIView):
                 {"error": "Internal server error"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
 
 class DiscardSessionView(APIView):
     """

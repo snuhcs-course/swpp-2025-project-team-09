@@ -106,6 +106,7 @@ data class SessionStatsRequest(
 data class SessionStatsResponse(
     val session_id: String,
     val user_id: String,
+    val isOngoing: Boolean,
     val started_at: String,
     val ended_at: String,
     val total_pages: Int,

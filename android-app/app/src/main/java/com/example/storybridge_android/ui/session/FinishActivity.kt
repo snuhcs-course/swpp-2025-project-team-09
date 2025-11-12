@@ -32,10 +32,28 @@ class FinishActivity : AppCompatActivity() {
         viewModel.endSession(sessionId)
 
         viewModel.sessionStats.observe(this, Observer { stats ->
-            val minutes = stats.total_time_spent / 60
-            binding.sessionSummary.text = "You read ${stats.total_words_read} words and ${stats.total_pages} pages for $minutes minutes. Amazing!"
+            val totalSeconds = stats.total_time_spent
+            val minutes = totalSeconds / 60
+            val seconds = totalSeconds % 60
+
+            val minuteText = if (minutes > 0) {
+                "$minutes ${if (minutes == 1) "minute" else "minutes"}"
+            } else ""
+            val secondText = if (seconds > 0) {
+                "$seconds ${if (seconds == 1) "second" else "seconds"}"
+            } else ""
+            val timeText = when {
+                minuteText.isNotEmpty() && secondText.isNotEmpty() -> "$minuteText $secondText"
+                minuteText.isNotEmpty() -> minuteText
+                secondText.isNotEmpty() -> secondText
+                else -> "0 seconds"
+            }
+            val pageCount = stats.total_pages - 1
+            val pageText = if (pageCount == 1) "1 page" else "$pageCount pages"
+            binding.sessionSummary.text = "You read ${stats.total_words_read} words and $pageText\nfor $timeText. Amazing!"
             binding.sessionSummary.visibility = View.VISIBLE
         })
+
 
         viewModel.showMainButton.observe(this, Observer { show ->
             binding.mainButton.visibility = if (show) View.VISIBLE else View.INVISIBLE

@@ -6,20 +6,20 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('apis', '0005_merge_20251106_0251'),
+        ("apis", "0004_session_cover_tts_female_session_cover_tts_male_and_more"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='session',
-            name='cover_tts_female',
+            model_name="session",
+            name="cover_tts_female",
         ),
         migrations.RemoveField(
-            model_name='session',
-            name='cover_tts_male',
+            model_name="session",
+            name="cover_tts_male",
         ),
         migrations.RemoveField(
-            model_name='session',
-            name='cover_tts_status',
+            model_name="session",
+            name="cover_tts_status",
         ),
     ]

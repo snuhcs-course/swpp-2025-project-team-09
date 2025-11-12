@@ -49,6 +49,7 @@ class VoiceSelectViewModel(
                 _loading.value = false
             }
         }
+        Log.d("VoiceSelection", "Selecting voice=$voice for session=$sessionId")
     }
 
     fun uploadCoverInBackground(sessionId: String, lang: String, imagePath: String) {
