@@ -197,11 +197,11 @@ class GetSessionInfoView(APIView):
 
     def get(self, request):
         session_id = request.query_params.get("session_id")
+        print("[DEBUG] Fetching info for session_id:", session_id)
         if not session_id:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            print("[DEBUG] Fetching info for session_id:", session_id)
             session = Session.objects.get(id=session_id)
             return Response(
                 {
