@@ -6,9 +6,8 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('apis', '0003_session_translated_title'),
-        ('apis', '0004_session_cover_tts_female_session_cover_tts_male_and_more'),
+        ("apis", "0003_session_translated_title"),
+        ("apis", "0004_session_cover_tts_female_session_cover_tts_male_and_more"),
     ]
 
-    operations = [
-    ]
+    operations = []

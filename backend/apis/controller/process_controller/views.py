@@ -125,7 +125,10 @@ class ProcessUploadView(APIView):
         try:
             translation_data = loop.run_until_complete(
                 asyncio.gather(
-                    *[get_para_translation(i, para) for i, para in enumerate(ocr_result)]
+                    *[
+                        get_para_translation(i, para)
+                        for i, para in enumerate(ocr_result)
+                    ]
                 )
             )
             return translation_data
@@ -201,7 +204,11 @@ class ProcessUploadView(APIView):
                     try:
                         audio_results = loop.run_until_complete(
                             tts_module.run_tts_only(
-                                translation_data[i], session_id, page_index, i, para_voice
+                                translation_data[i],
+                                session_id,
+                                page_index,
+                                i,
+                                para_voice,
                             )
                         )
                     finally:
@@ -384,7 +391,9 @@ class ProcessUploadCoverView(APIView):
 
         # Run translation for title synchronously
         translated_text, tts_male, tts_female = self._run_async(
-            TTSModule(target_lang=target_lang).translate_and_tts_cover(title, session_id, page_index)
+            TTSModule(target_lang=target_lang).translate_and_tts_cover(
+                title, session_id, page_index
+            )
         )
 
         page = self._create_page_and_bbs(
@@ -394,7 +403,7 @@ class ProcessUploadCoverView(APIView):
         # Update session
         session.title = title
         session.translated_title = translated_text
-        print(f'[debug]{session.translated_title}')
+        print(f"[debug]{session.translated_title}")
         session.totalPages += 1
         session.save()
 
@@ -499,4 +508,3 @@ class ProcessUploadCoverView(APIView):
 
             traceback.print_exc()
             return "", ""
-
