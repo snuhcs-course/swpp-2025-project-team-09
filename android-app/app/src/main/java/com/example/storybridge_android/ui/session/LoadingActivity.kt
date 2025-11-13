@@ -80,7 +80,8 @@ class LoadingActivity : AppCompatActivity() {
             lifecycleScope.launchWhenStarted {
                 viewModel.navigateToReading.collectLatest { session ->
                     session?.let {
-                        navigateToReading(it.session_id, it.page_index, it.total_pages)
+                        val realStartIndex = if (it.page_index == 0) 1 else it.page_index
+                        navigateToReading(it.session_id, realStartIndex, it.total_pages)
                     }
                 }
             }
