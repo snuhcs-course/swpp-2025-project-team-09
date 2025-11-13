@@ -13,7 +13,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
-from kss import split_sentences
+import kss
 
 load_dotenv()
 
@@ -213,7 +213,7 @@ class TTSModule:
                 ]
             }
         """
-        sentences = split_sentences(page["text"].strip())
+        sentences = kss.split_sentences(page["text"].strip())
         if not sentences:
             return {"status": "no_sentences", "sentences": []}
 
@@ -491,7 +491,7 @@ class TTSModule:
         Legacy method - kept for backwards compatibility.
         """
         file_name = page["fileName"]
-        sentences = split_sentences(page["text"].strip())
+        sentences = kss.split_sentences(page["text"].strip())
         if not sentences:
             return {"status": "no_sentences"}
 
