@@ -61,7 +61,6 @@ class ReadingActivity : AppCompatActivity() {
     private val handler = Handler(Looper.getMainLooper())
     private var mediaPlayer: MediaPlayer? = null
     private var pageBitmap: Bitmap? = null
-    private var isTtsPolling = false
 
     private val viewModel: ReadingViewModel by viewModels {
         ReadingViewModelFactory(PageRepositoryImpl())
@@ -69,7 +68,6 @@ class ReadingActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "ReadingActivity"
-        private const val TTS_POLL_INTERVAL = 2000L
         private const val TOUCH_SLOP = 10f
     }
 
@@ -80,10 +78,9 @@ class ReadingActivity : AppCompatActivity() {
     private val boundingBoxViewsMap: MutableMap<Int, TextView> = mutableMapOf()
     private var cachedBoundingBoxes: List<BoundingBox> = emptyList()
     private val savedBoxTranslations: MutableMap<Int, Pair<Float, Float>> = mutableMapOf()
-    private val MIN_WIDTH = 500;
+    private val MIN_WIDTH = 500
 
     private lateinit var thumbnailAdapter: ThumbnailAdapter
-    private val thumbnailList = mutableListOf<PageThumbnail>()
 
     private val cameraLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -462,6 +459,12 @@ class ReadingActivity : AppCompatActivity() {
     }
 
     private fun loadPage(newIndex: Int) {
+        // Stop any playing audio and reset state
+        mediaPlayer?.release()
+        mediaPlayer = null
+        currentPlayingIndex = -1
+        currentAudioIndex = 0
+        // Clear page data
         pageIndex = newIndex
         audioResultsMap = emptyMap()
         cachedBoundingBoxes = emptyList()
@@ -470,6 +473,7 @@ class ReadingActivity : AppCompatActivity() {
         boundingBoxViewsMap.clear()
         savedBoxTranslations.clear()
         updateBottomNavStatus()
+        // Fetch new page
         fetchPage()
     }
 
