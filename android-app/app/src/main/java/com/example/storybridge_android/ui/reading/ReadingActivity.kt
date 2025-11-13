@@ -17,6 +17,7 @@ import android.view.View
 import android.widget.*
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.lifecycleScope
@@ -39,6 +40,7 @@ import com.example.storybridge_android.ui.common.LeftOverlay
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
 import kotlin.math.max
+
 
 class ReadingActivity : AppCompatActivity() {
 
@@ -82,6 +84,18 @@ class ReadingActivity : AppCompatActivity() {
 
     private lateinit var thumbnailAdapter: ThumbnailAdapter
     private val thumbnailList = mutableListOf<PageThumbnail>()
+
+    private val cameraLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val newPageAdded = result.data?.getBooleanExtra("page_added", false) ?: false
+            if (newPageAdded) {
+                totalPages++
+                fetchAllThumbnails()
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -485,8 +499,7 @@ class ReadingActivity : AppCompatActivity() {
             putExtra("session_id", sessionId)
             putExtra("page_index", totalPages)  // 새 페이지 인덱스
         }
-        startActivity(intent)
-        finish()
+        cameraLauncher.launch(intent)
     }
 
     override fun onDestroy() {

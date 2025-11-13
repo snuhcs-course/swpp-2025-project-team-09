@@ -40,6 +40,7 @@ class CameraSessionActivity : AppCompatActivity() {
         isCover = intent.getBooleanExtra("is_cover", false)
 
         if (sessionId == null) {
+            setResult(RESULT_CANCELED)
             finish()
             return
         }
@@ -57,9 +58,14 @@ class CameraSessionActivity : AppCompatActivity() {
                             navigateToLoading(state.imagePath)
                         }
                     }
-                    is SessionUiState.Cancelled -> finish()
+                    is SessionUiState.Cancelled -> {
+                        // User cancelled - return to previous activity (ReadingActivity)
+                        setResult(RESULT_CANCELED)
+                        finish()
+                    }
                     is SessionUiState.Error -> {
                         Log.e(TAG, state.message)
+                        setResult(RESULT_CANCELED)
                         finish()
                     }
                 }
@@ -78,6 +84,9 @@ class CameraSessionActivity : AppCompatActivity() {
         intent.putExtra("image_path", imagePath)
         intent.putExtra("lang", AppSettings.getLanguage(this))
         startActivity(intent)
+
+        // Signal success back to ReadingActivity
+        setResult(RESULT_OK, Intent().putExtra("page_added", true))
         finish()
     }
 
@@ -89,6 +98,9 @@ class CameraSessionActivity : AppCompatActivity() {
         intent.putExtra("is_cover", isCover)
         intent.putExtra("lang", AppSettings.getLanguage(this))  // 현재 언어 설정 전달
         startActivity(intent)
+
+        // Signal success back to ReadingActivity
+        setResult(RESULT_OK, Intent().putExtra("page_added", true))
         finish()
     }
 }
