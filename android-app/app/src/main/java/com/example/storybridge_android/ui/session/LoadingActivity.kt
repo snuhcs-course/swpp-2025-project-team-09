@@ -70,7 +70,6 @@ class LoadingActivity : AppCompatActivity() {
                     val sessions = response.body() ?: return@collectLatest
                     val match = sessions.find { it.started_at == startedAt }
                     if (match != null) {
-                        // viewModel.reloadSession(match.started_at, 0, this@LoadingActivity)
                         viewModel.reloadAllSession(match.started_at, this@LoadingActivity)
                     } else {
                         showError("Session not found")

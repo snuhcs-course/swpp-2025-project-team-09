@@ -82,7 +82,12 @@ class MainActivity : AppCompatActivity() {
 
                     for (data in sessions.reversed()) {
                         val sessionCard = SessionCard(this@MainActivity)
-                        sessionCard.setBookTitle(data.translated_title ?: "NULL")
+                        val title = data.translated_title ?: "NULL"
+                        val maxLen = 12
+                        val cropped =
+                            if (title.length > maxLen) title.substring(0, maxLen) + "…" else title
+
+                        sessionCard.setBookTitle(cropped)
 
                         val raw = data.started_at.take(10)
                         val parts = raw.split("-")
