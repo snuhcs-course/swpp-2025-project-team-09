@@ -30,107 +30,21 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- 오디오 재생 버튼 -->
-    <ImageButton
-        android:id="@+id/playButton"
-        android:layout_width="72dp"
-        android:layout_height="72dp"
-        android:backgroundTint="@color/white"
-        android:background="@drawable/rounded_button"
-        android:src="@android:drawable/ic_media_play"
-        app:layout_constraintBottom_toTopOf="@id/bottomUi"
-        app:layout_constraintEnd_toEndOf="parent"
-        />
-
     <!-- 상단 UI -->
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/topUi"
+    <com.example.storybridge_android.ui.common.TopNav
+        android:id = "@+id/topUi"
         android:layout_width="match_parent"
-        android:layout_height="120dp"
-        android:background="@color/gray_light"
-        android:padding= "16dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <ImageButton
-            android:id="@+id/menuButton"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:background="@drawable/ic_menu"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
-
-        <android.widget.Button
-            android:id="@+id/finishButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/finish_reading"
-            android:background="@drawable/rounded_button"
-            android:paddingStart = "16dp"
-            android:paddingEnd = "16dp"
-            style="@style/BoldText48"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <!-- 하단 UI (예시) -->
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/bottomUi"
+    <com.example.storybridge_android.ui.common.BottomNav
+        android:id = "@+id/bottomUi"
         android:layout_width="match_parent"
-        android:layout_height="160dp"
-        android:background="@color/gray_light"
-        android:padding="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
-        <!-- 원하는 버튼이나 텍스트 배치 가능 -->
-        <android.widget.Button
-            android:id="@+id/prevButton"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:text="←"
-            android:background="@drawable/rounded_button"
-            style="@style/BoldText48"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/startButton"
-            app:layout_constraintHorizontal_chainStyle="packed"/>
-
-        <android.widget.Button
-            android:id="@+id/startButton"
-            android:layout_width="wrap_content"
-            android:layout_height="64dp"
-            android:text="@string/capture_new_page"
-            android:background="@drawable/rounded_button"
-            style="@style/BoldText48"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@id/prevButton"
-            app:layout_constraintEnd_toStartOf="@id/nextButton" />
-
-        <android.widget.Button
-            android:id="@+id/nextButton"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:text="→"
-            android:background="@drawable/rounded_button"
-            style="@style/BoldText48"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@id/startButton"
-            app:layout_constraintEnd_toEndOf="parent" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- place holder for all the bounding boxes -->
 
 
     <!-- 반투명 배경 (처음에는 안 보임) -->
@@ -139,42 +53,21 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#80000000"
-        android:visibility="gone"/>
+        android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true"
+        android:elevation="10dp"/>
 
     <!-- 왼쪽에서 슬라이드 되는 오버레이 -->
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/sideOverlay"
-        android:layout_width="320dp"
+    <com.example.storybridge_android.ui.common.LeftOverlay
+        android:id= "@+id/leftPanel"
+        android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:background="@color/gray_light"
-        android:visibility="gone"
-        android:translationX="-320dp"
-        android:padding="24dp"
-        app:layout_constraintTop_toTopOf="parent"
+        android:clickable="true"
+        android:focusable="true"
+        android:elevation="11dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
-
-        <!-- 닫기 버튼 -->
-        <android.widget.Button
-            android:id="@+id/closeOverlayButton"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:background="@drawable/rounded_button"
-            android:text="X"
-            style="@style/BoldText48"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
-
-        <!-- Thumbnail RecyclerView -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/thumbnailRecyclerView"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_marginTop="80dp"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -6,8 +6,8 @@
 
     <!-- 메인 화면 -->
     <string name="start_new_reading">开始新的阅读</string>
-    <string name="previous_readings">之前的阅读</string>
-    <string name="no_previous_readings">没有找到之前的阅读。</string>
+    <string name="previous_readings">读过的故事</string>
+    <string name="no_previous_readings">这里没有你读过的故事哦。</string>
 
     <!-- 세팅 -->
     <string name="language_label">语言</string>
@@ -16,38 +16,47 @@
     <string name="save_settings">保存设置</string>
 
     <!-- 표지 촬영 -->
-    <string name="take_photo_instruction">拍摄书封面照片</string>
+    <string name="take_photo_instruction">拍下书本的封面</string>
     <string name="start">开始！</string>
+
+    <string name="take_content_instruction">现在我们来拍一下书页的照片吧</string>
 
     <!-- 로딩 -->
     <string name="loading_text">加载中...</string>
 
     <!-- 음성 선택 -->
-    <string name="preferred_voice_question">你想要哪种声音？</string>
-    <string name="male_voice">男声</string>
-    <string name="female_voice">女声</string>
+    <string name="preferred_voice_question">你喜欢哪种声音？</string>
+    <string name="male_voice">男生的声音</string>
+    <string name="female_voice">女生的声音</string>
     <string name="next">下一步</string>
-    <string name="session_error">会话错误。请重试。</string>
-    <string name="voice_preview_not_available">无法播放%1$s语音预览</string>
-    <string name="failed_audio_preview">播放语音预览失败</string>
+    <string name="session_error">出了点小问题，请再试一次吧！</string>
+    <string name="voice_preview_not_available">无法获取%1$s声音预览</string>
+    <string name="failed_audio_preview">播放声音预览失败</string>
 
     <!-- 읽기 -->
-    <string name="first_page">已经是第一页</string>
-    <string name="last_page">已经是最后一页</string>
+    <string name="first_page">这是第一页</string>
+    <string name="last_page">这是最后一页</string>
     <string name="current_page">当前页</string>
     <string name="loading_error">加载页面失败</string>
     <string name="audio_error">音频播放错误</string>
     <string name="finish_reading">完成阅读</string>
-    <string name="capture_new_page">捕获新页面</string>
+    <string name="capture_new_page">拍新的一页</string>
 
     <!-- 끝내기 -->
-    <string name="congratulations">恭喜！</string>
-    <string name="you_achieved">你完成了……</string>
+    <string name="congratulations">太棒了！</string>
+    <string name="you_achieved">你完成啦！</string>
 
     <!-- 저장 -->
-    <string name="save_session_question">是否要保存此会话？</string>
+    <string name="save_session_question">要保存这次阅读吗？</string>
     <string name="save">保存</string>
     <string name="discard">放弃</string>
-    <string name="go_back_to_main">返回主界面</string>
+    <string name="go_back_to_main">回到主页</string>
+
+    <!-- exit 팝업 -->
+    <string name="exit_dialog_title">离开</string>
+    <string name="exit_dialog_message">要离开阅读画面吗？</string>
+    <string name="exit_dialog_confirm">离开</string>
+    <string name="exit_dialog_cancel">取消</string>
+    <string name="exit_loading">请等待加载完成。</string>
 
 </resources>

@@ -178,7 +178,7 @@ class OCRModule:
             "file": open(image_path, "rb"),
             "message": (None, json.dumps(request_json), "application/json"),
         }
-        # 디버깅용
+        # 디버깅용...
         print(f"[DEBUG] Sending OCR request for {image_path}")
         start = time.time()
         response = requests.post(self.api_url, headers=headers, files=files)

@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">storybridge-android</string>
-    <string name="story_bridge">story bridge</string>
+    <string name="app_name">STORY BRIDGE</string>
+    <string name="story_bridge">STORY BRIDGE</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
 
     <!-- 메인 화면 -->
@@ -18,13 +18,16 @@
     <string name="take_photo_instruction">Take a photo of\nyour book cover</string>
     <string name="start">Start!</string>
 
+    <!-- 본문 촬영 -->
+    <string name="take_content_instruction">Now, take photos of\nthe book pages</string>
+
     <!-- 로딩 -->
     <string name="loading_text">Loading...</string>
 
     <!-- 음성 선택 -->
     <string name="preferred_voice_question">What is your&#10;preferred voice?</string>
-    <string name="male_voice">Echo</string>
-    <string name="female_voice">Shimmer</string>
+    <string name="male_voice">Man</string>
+    <string name="female_voice">Woman</string>
     <string name="next">Next</string>
     <string name="session_error">Session error. Please try again.</string>
     <string name="voice_preview_not_available">%1$s voice preview not available</string>
@@ -48,5 +51,13 @@
     <string name="save">Save</string>
     <string name="discard">Discard</string>
     <string name="go_back_to_main">Go back to Main</string>
+
+    <!--exit 다이얼로그 -->
+    <string name="exit_dialog_title">Exit</string>
+    <string name="exit_dialog_message">Do you want to leave the reading screen?</string>
+    <string name="exit_dialog_confirm">Exit</string>
+    <string name="exit_dialog_cancel">Cancel</string>
+    <string name="exit_loading">Please wait until loading is complete.</string>
+
 
 </resources>

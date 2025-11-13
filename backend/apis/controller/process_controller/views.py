@@ -49,6 +49,13 @@ class ProcessUploadView(APIView):
                 {"error_code": 422, "message": "PROCESS__UNABLE_TO_PROCESS_IMAGE"},
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
+        
+        # Count words from OCR and add to session.totalWords
+        total_words = sum(
+            len((para.get("text", "") or "").split()) for para in ocr_result
+        )
+        session.totalWords = session.totalWords + total_words
+        print(f"[DEBUG] OCR words in page {page_index}: {total_words}")
 
         # Map language codes to full names for TTS
         lang_map = {"en": "English", "zh": "Chinese"}
@@ -64,7 +71,7 @@ class ProcessUploadView(APIView):
         page = self._create_page_and_bbs(
             session, image_path, ocr_result, translation_data
         )
-
+        print("[DEBUG] voice preference:", session.voicePreference)
         # Start background TTS
         self._start_background_tts(
             tts_module,
@@ -122,14 +129,20 @@ class ProcessUploadView(APIView):
         # Run ALL paragraphs in parallel
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        translation_data = loop.run_until_complete(
-            asyncio.gather(
-                *[get_para_translation(i, para) for i, para in enumerate(ocr_result)]
+        try:
+            translation_data = loop.run_until_complete(
+                asyncio.gather(
+                    *[
+                        get_para_translation(i, para)
+                        for i, para in enumerate(ocr_result)
+                    ]
+                )
             )
-        )
-        loop.close()
-
-        return translation_data
+            return translation_data
+        finally:
+            # Properly cleanup async resources before closing the loop
+            loop.run_until_complete(loop.shutdown_asyncgens())
+            loop.close()
 
     def _create_page_and_bbs(
         self,
@@ -182,9 +195,9 @@ class ProcessUploadView(APIView):
 
         def run_tts():
             print(f"[TTS Background] Starting TTS for page {page_index}")
-
+            print(f"[TTS Background] Using voice preference: {para_voice}")
             try:
-                for i, para in enumerate(ocr_result):
+                for i, _ in enumerate(ocr_result):
                     not_ok = (
                         i >= len(translation_data)
                         or translation_data[i]["status"] != "ok"
@@ -195,12 +208,20 @@ class ProcessUploadView(APIView):
                     # Run TTS with pre-computed translations
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
-                    audio_results = loop.run_until_complete(
-                        tts_module.run_tts_only(
-                            translation_data[i], session_id, page_index, i, para_voice
+                    try:
+                        audio_results = loop.run_until_complete(
+                            tts_module.run_tts_only(
+                                translation_data[i],
+                                session_id,
+                                page_index,
+                                i,
+                                para_voice,
+                            )
                         )
-                    )
-                    loop.close()
+                    finally:
+                        # Properly cleanup async resources before closing the loop
+                        loop.run_until_complete(loop.shutdown_asyncgens())
+                        loop.close()
 
                     # Update BB with audio
                     if audio_results:
@@ -321,9 +342,9 @@ class ProcessUploadCoverView(APIView):
     """
     POST /process/upload_cover
 
-    Handles cover image upload, OCR, translation, and initiates background TTS.
+    Handles cover image upload, OCR, translation without TTS.
     Additionally, extracts the book title from the OCR result and saves it in the session.
-    Returns immediately after translation completes.
+    Creates a Page and BB with translated text only.
     """
 
     """
@@ -338,8 +359,9 @@ class ProcessUploadCoverView(APIView):
         - status (string): "ready"
         - submitted_at (string, ISO8601): submission timestamp
         - title (string): extracted book title
-        - tts_male (string): base64 audio of male voice (Echo)
-        - tts_female (string): base64 audio of female voice (Shimmer)
+        - translated_title (string): translated book title
+        - tts_male (string): null (no TTS for cover)
+        - tts_female (string): null (no TTS for cover)
     """
 
     def post(self, request):
@@ -376,13 +398,25 @@ class ProcessUploadCoverView(APIView):
 
         # Run translation for title synchronously
         translated_text, tts_male, tts_female = self._run_async(
-            TTSModule(target_lang=target_lang).translate_and_tts_cover(title, session_id, page_index)
+            TTSModule(target_lang=target_lang).translate_and_tts_cover(
+                title, session_id, page_index
+            )
+        )
+
+        page = self._create_page_and_bbs(
+            session,
+            image_path,
+            [{"text": title}],
+            [{
+                "status": "ok",
+                "sentences": [{"translation": translated_text}]
+            }]
         )
 
         # Update session
         session.title = title
         session.translated_title = translated_text
-        print(f'[debug]{session.translated_title}')
+        print(f"[debug]{session.translated_title}")
         session.totalPages += 1
         session.save()
 

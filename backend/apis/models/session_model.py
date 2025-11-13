@@ -19,6 +19,7 @@ class Session(models.Model):
     ended_at = models.DateTimeField(null=True, blank=True)
     isOngoing = models.BooleanField(default=True)
     totalPages = models.IntegerField(default=0)
+    totalWords = models.IntegerField(default=0)
     voicePreference = models.CharField(
         max_length=50, default=None, null=True, blank=True
     )

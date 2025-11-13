@@ -17,6 +17,7 @@ import android.view.View
 import android.widget.*
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.lifecycleScope
@@ -33,18 +34,25 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
-import kotlin.math.min
+import com.example.storybridge_android.ui.common.TopNav
+import com.example.storybridge_android.ui.common.BottomNav
+import com.example.storybridge_android.ui.common.LeftOverlay
+import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.AlertDialog
+import kotlin.math.max
+
 
 class ReadingActivity : AppCompatActivity() {
 
     private lateinit var sessionId: String
     private var pageIndex = 0
     private var totalPages = 0
+    private var isNewSession = true
     private lateinit var mainLayout: ConstraintLayout
     private lateinit var pageImage: ImageView
-    private lateinit var topUi: View
-    private lateinit var bottomUi: View
-    private lateinit var overlay: ConstraintLayout
+    private lateinit var topUi: TopNav
+    private lateinit var bottomUi: BottomNav
+    private lateinit var leftPanel: LeftOverlay
     private lateinit var dimBackground: View
     private lateinit var thumbnailRecyclerView: RecyclerView
 
@@ -53,7 +61,6 @@ class ReadingActivity : AppCompatActivity() {
     private val handler = Handler(Looper.getMainLooper())
     private var mediaPlayer: MediaPlayer? = null
     private var pageBitmap: Bitmap? = null
-    private var isTtsPolling = false
 
     private val viewModel: ReadingViewModel by viewModels {
         ReadingViewModelFactory(PageRepositoryImpl())
@@ -61,7 +68,6 @@ class ReadingActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "ReadingActivity"
-        private const val TTS_POLL_INTERVAL = 2000L
         private const val TOUCH_SLOP = 10f
     }
 
@@ -71,14 +77,40 @@ class ReadingActivity : AppCompatActivity() {
     private val playButtonsMap: MutableMap<Int, ImageButton> = mutableMapOf()
     private val boundingBoxViewsMap: MutableMap<Int, TextView> = mutableMapOf()
     private var cachedBoundingBoxes: List<BoundingBox> = emptyList()
+    private val savedBoxTranslations: MutableMap<Int, Pair<Float, Float>> = mutableMapOf()
+    private val MIN_WIDTH = 500
 
     private lateinit var thumbnailAdapter: ThumbnailAdapter
-    private val thumbnailList = mutableListOf<PageThumbnail>()
+
+    private val cameraLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val newPageAdded = result.data?.getBooleanExtra("page_added", false) ?: false
+            if (newPageAdded) {
+                totalPages++
+                fetchAllThumbnails()
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_reading)
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                AlertDialog.Builder(this@ReadingActivity)
+                    .setTitle(getString(R.string.exit_dialog_title))
+                    .setMessage(getString(R.string.exit_dialog_message))
+                    .setPositiveButton(getString(R.string.exit_dialog_confirm)) { _, _ ->
+                        navigateToFinish()
+                    }
+                    .setNegativeButton(getString(R.string.exit_dialog_cancel), null)
+                    .show()
+            }
+        })
 
         initViews()
         initUiState()
@@ -87,6 +119,10 @@ class ReadingActivity : AppCompatActivity() {
         sessionId = intent.getStringExtra("session_id") ?: ""
         pageIndex = intent.getIntExtra("page_index", 0)
         totalPages = intent.getIntExtra("total_pages", pageIndex + 1)
+        isNewSession = intent.getBooleanExtra("is_new_session", true)
+
+        // Update page status on BottomNav
+        updateBottomNavStatus()
 
         observeViewModel()
         fetchPage()
@@ -98,11 +134,11 @@ class ReadingActivity : AppCompatActivity() {
         pageImage = findViewById(R.id.pageImage)
         topUi = findViewById(R.id.topUi)
         bottomUi = findViewById(R.id.bottomUi)
-        overlay = findViewById(R.id.sideOverlay)
+        leftPanel = findViewById(R.id.leftPanel)
         dimBackground = findViewById(R.id.dimBackground)
-        thumbnailRecyclerView = findViewById(R.id.thumbnailRecyclerView)
 
-        findViewById<ImageButton>(R.id.playButton).visibility = View.GONE
+        // Get RecyclerView from LeftOverlay component
+        thumbnailRecyclerView = leftPanel.thumbnailRecyclerView
 
         thumbnailAdapter = ThumbnailAdapter { onThumbnailClick(it) }
         thumbnailRecyclerView.apply {
@@ -114,25 +150,31 @@ class ReadingActivity : AppCompatActivity() {
     private fun initUiState() {
         topUi.post { topUi.translationY = -topUi.height.toFloat() }
         bottomUi.post { bottomUi.translationY = bottomUi.height.toFloat() }
+
+        // Hide left panel initially
+        leftPanel.visibility = View.GONE
+        leftPanel.post { leftPanel.translationX = -leftPanel.width.toFloat() }
     }
 
     private fun initListeners() {
-        findViewById<Button>(R.id.startButton).setOnClickListener { navigateToCamera() }
-        findViewById<ImageButton>(R.id.menuButton).setOnClickListener { toggleOverlay(true) }
-        findViewById<Button>(R.id.closeOverlayButton).setOnClickListener { toggleOverlay(false) }
-        findViewById<Button>(R.id.finishButton).setOnClickListener { navigateToFinish() }
-        findViewById<View>(R.id.dimBackground).setOnClickListener { toggleOverlay(false) }
+        // TopNav listeners
+        topUi.setOnMenuButtonClickListener { toggleOverlay(true) }
+        topUi.setOnFinishButtonClickListener { navigateToFinish() }
 
-        findViewById<Button>(R.id.prevButton).setOnClickListener {
-            if (pageIndex > 0) loadPage(pageIndex - 1)
-            else Toast.makeText(this, "This is the first page", Toast.LENGTH_SHORT).show()
+        // BottomNav listeners
+        bottomUi.setOnPrevButtonClickListener {
+            loadPage(pageIndex - 1)
         }
-        findViewById<Button>(R.id.nextButton).setOnClickListener {
-            if (pageIndex + 1 >= totalPages)
-                Toast.makeText(this, "This is the last page", Toast.LENGTH_SHORT).show()
-            else loadPage(pageIndex + 1)
+        bottomUi.setOnCaptureButtonClickListener { navigateToCamera() }
+
+        bottomUi.setOnNextButtonClickListener {
+            loadPage(pageIndex + 1)
         }
 
+        // Dim background listener - closes overlay when clicking outside
+        dimBackground.setOnClickListener { toggleOverlay(false) }
+
+        // Main layout listener for toggling UI
         mainLayout.setOnClickListener { toggleUI() }
     }
 
@@ -143,6 +185,14 @@ class ReadingActivity : AppCompatActivity() {
                 state.ocr?.let { handleOcr(it) }
                 state.tts?.let { handleTts(it) }
                 state.error?.let { Toast.makeText(this@ReadingActivity, it, Toast.LENGTH_SHORT).show() }
+            }
+        }
+
+        // 썸네일 리스트 Flow 수집 (한 번만 실행)
+        lifecycleScope.launch {
+            viewModel.thumbnailList.collectLatest { list ->
+                val sortedList = list.sortedBy { it.pageIndex }
+                thumbnailAdapter.submitList(sortedList)
             }
         }
     }
@@ -170,7 +220,8 @@ class ReadingActivity : AppCompatActivity() {
     private fun handleOcr(data: GetOcrTranslationResponse) {
         val boxes = data.ocr_results.mapIndexed { i, ocrBox ->
             val box = ocrBox.bbox
-            BoundingBox(box.x, box.y, box.width, box.height, ocrBox.translation_txt, i)
+            val adjustedWidth = max(box.width, MIN_WIDTH)
+            BoundingBox(box.x, box.y, adjustedWidth, box.height, ocrBox.translation_txt, i)
         }
         cachedBoundingBoxes = boxes
         if (boxes.isNotEmpty()) pageImage.post { displayBB(boxes) }
@@ -194,16 +245,16 @@ class ReadingActivity : AppCompatActivity() {
 
     private fun toggleOverlay(show: Boolean) {
         if (show && !isOverlayVisible) {
-            overlay.visibility = View.VISIBLE
+            leftPanel.visibility = View.VISIBLE
             dimBackground.visibility = View.VISIBLE
-            overlay.animate().translationX(0f).setDuration(300).start()
+            leftPanel.animate().translationX(0f).setDuration(300).start()
             isOverlayVisible = true
         } else if (!show && isOverlayVisible) {
-            overlay.animate()
-                .translationX(-overlay.width.toFloat())
+            leftPanel.animate()
+                .translationX(-leftPanel.width.toFloat())
                 .setDuration(300)
                 .withEndAction {
-                    overlay.visibility = View.GONE
+                    leftPanel.visibility = View.GONE
                     dimBackground.visibility = View.GONE
                 }
                 .start()
@@ -242,6 +293,10 @@ class ReadingActivity : AppCompatActivity() {
                     true
                 }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    // Save the final position when user releases
+                    if (dragging) {
+                        savedBoxTranslations[boxIndex] = Pair(boxView.translationX, boxView.translationY)
+                    }
                     dragging = false; true
                 }
                 else -> false
@@ -268,16 +323,18 @@ class ReadingActivity : AppCompatActivity() {
 
             val boxView = TextView(this).apply {
                 text = box.text
-                setBackgroundColor(getColor(R.color.black_50))
-                setTextColor(getColor(R.color.white))
+                setBackgroundResource(R.drawable.bbox_background)
+                setTextAppearance(R.style.BBoxText)
+                setLineSpacing(0f, 0.8f)  // 줄 간격 설정 (multiplier = 0.8)
                 gravity = Gravity.START or Gravity.TOP
-                setPadding(8, 8, 8, 8)
+                setPadding(24, 16, 24, 16)
                 tag = "bbox"
             }
 
-            boxView.textSize = 16f
-
-            val params = ConstraintLayout.LayoutParams(rect.width().toInt(), rect.height().toInt())
+            val params = ConstraintLayout.LayoutParams(
+                rect.width().toInt(),  // 너비는 서버 데이터 고정
+                ConstraintLayout.LayoutParams.WRAP_CONTENT  // 높이는 텍스트에 맞춤
+            )
             params.startToStart = pageImage.id
             params.topToTop = pageImage.id
             boxView.layoutParams = params
@@ -290,6 +347,12 @@ class ReadingActivity : AppCompatActivity() {
 
             setupBoundingBoxTouchListener(boxView, box.index)
 
+            // Restore saved position if it exists
+            savedBoxTranslations[box.index]?.let { (savedX, savedY) ->
+                boxView.translationX = savedX
+                boxView.translationY = savedY
+            }
+
             if (audioResultsMap.containsKey(box.index)) {
                 createPlayButton(box.index, rect)
             }
@@ -297,20 +360,23 @@ class ReadingActivity : AppCompatActivity() {
     }
 
     private fun createPlayButton(bboxIndex: Int, rect: RectF) {
-        val playButton = ImageButton(this).apply {
-            setImageResource(android.R.drawable.ic_media_play)
-            setBackgroundResource(R.drawable.circle_dark)
+        val playButton = ImageButton(this, null, android.R.attr.borderlessButtonStyle).apply {
+            setImageResource(R.drawable.ic_headphone)
+            background = null
+            scaleType = ImageView.ScaleType.FIT_CENTER
             tag = "play_button"
-            alpha = 0.9f
-            setPadding(8, 8, 8, 8)
+            setPadding(0, 0, 0, 0)
         }
-        val size = (54 * resources.displayMetrics.density).toInt()
+        val size = (40 * resources.displayMetrics.density).toInt()
         val params = ConstraintLayout.LayoutParams(size, size)
         params.startToStart = pageImage.id
         params.topToTop = pageImage.id
         playButton.layoutParams = params
-        playButton.translationX = rect.right - size / 2
-        playButton.translationY = rect.bottom - size / 2
+        val boxView = boundingBoxViewsMap[bboxIndex]
+        val boxTranslationX = boxView?.translationX ?: rect.left
+        val boxTranslationY = boxView?.translationY ?: rect.top
+        playButton.translationX = boxTranslationX + rect.width() - size / 2
+        playButton.translationY = boxTranslationY + rect.height() - size / 2
         playButton.elevation = 8f
         playButton.setOnClickListener { playAudioForBox(bboxIndex) }
         mainLayout.addView(playButton)
@@ -371,20 +437,19 @@ class ReadingActivity : AppCompatActivity() {
 
     private fun updateButtonToPlaying(bboxIndex: Int) {
         playButtonsMap[bboxIndex]?.apply {
-            setImageResource(android.R.drawable.ic_media_pause)
+            setImageResource(R.drawable.ic_pause)
         }
     }
 
     private fun updateButtonToPaused(bboxIndex: Int) {
         playButtonsMap[bboxIndex]?.apply {
-            setImageResource(android.R.drawable.ic_media_play)
+            setImageResource(R.drawable.ic_headphone)
         }
     }
 
     private fun resetButtonState(bboxIndex: Int) {
         playButtonsMap[bboxIndex]?.apply {
-            setImageResource(android.R.drawable.ic_media_play)
-            alpha = 0.9f
+            setImageResource(R.drawable.ic_headphone)
         }
     }
 
@@ -394,32 +459,42 @@ class ReadingActivity : AppCompatActivity() {
     }
 
     private fun loadPage(newIndex: Int) {
+        // Stop any playing audio and reset state
+        mediaPlayer?.release()
+        mediaPlayer = null
+        currentPlayingIndex = -1
+        currentAudioIndex = 0
+        // Clear page data
         pageIndex = newIndex
         audioResultsMap = emptyMap()
         cachedBoundingBoxes = emptyList()
         pageImage.setImageDrawable(null)
         playButtonsMap.clear()
         boundingBoxViewsMap.clear()
+        savedBoxTranslations.clear()
+        updateBottomNavStatus()
+        // Fetch new page
         fetchPage()
     }
 
+    private fun updateBottomNavStatus() {
+        bottomUi.updatePageStatus(pageIndex, totalPages)
+    }
+
     private fun fetchAllThumbnails() {
-        // ViewModel에 썸네일 요청
-        for (i in 0 until totalPages) {
+        // ViewModel에 썸네일 요청 (커버 페이지 제외, 1부터 시작)
+        for (i in 1 until totalPages) {
             viewModel.fetchThumbnail(sessionId, i)
         }
-
-        // Flow 수집 → RecyclerView 갱신
-        lifecycleScope.launch {
-            viewModel.thumbnailList.collectLatest { list ->
-                val sortedList = list.sortedBy { it.pageIndex }
-                thumbnailAdapter.submitList(sortedList)
-            }
-        }
+        // Flow 수집은 observeViewModel()에서 한 번만 실행됨
     }
 
     private fun navigateToFinish() {
-        startActivity(Intent(this, FinishActivity::class.java).putExtra("session_id", sessionId))
+        val intent = Intent(this, FinishActivity::class.java).apply {
+            putExtra("session_id", sessionId)
+            putExtra("is_new_session", isNewSession)
+        }
+        startActivity(intent)
         finish()
     }
 
@@ -428,8 +503,7 @@ class ReadingActivity : AppCompatActivity() {
             putExtra("session_id", sessionId)
             putExtra("page_index", totalPages)  // 새 페이지 인덱스
         }
-        startActivity(intent)
-        finish()
+        cameraLauncher.launch(intent)
     }
 
     override fun onDestroy() {
@@ -439,5 +513,6 @@ class ReadingActivity : AppCompatActivity() {
         mediaPlayer = null
         playButtonsMap.clear()
         boundingBoxViewsMap.clear()
+        savedBoxTranslations.clear()
     }
 }
