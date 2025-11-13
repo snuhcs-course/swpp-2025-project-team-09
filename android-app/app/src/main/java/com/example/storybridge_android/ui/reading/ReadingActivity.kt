@@ -36,7 +36,6 @@ import java.io.FileOutputStream
 import com.example.storybridge_android.ui.common.TopNav
 import com.example.storybridge_android.ui.common.BottomNav
 import com.example.storybridge_android.ui.common.LeftOverlay
-import com.example.storybridge_android.ui.session.DecideSaveActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
 import kotlin.math.max
@@ -78,6 +77,7 @@ class ReadingActivity : AppCompatActivity() {
     private val playButtonsMap: MutableMap<Int, ImageButton> = mutableMapOf()
     private val boundingBoxViewsMap: MutableMap<Int, TextView> = mutableMapOf()
     private var cachedBoundingBoxes: List<BoundingBox> = emptyList()
+    private val savedBoxTranslations: MutableMap<Int, Pair<Float, Float>> = mutableMapOf()
     private val MIN_WIDTH = 500;
 
     private lateinit var thumbnailAdapter: ThumbnailAdapter
@@ -155,7 +155,7 @@ class ReadingActivity : AppCompatActivity() {
             loadPage(pageIndex - 1)
         }
         bottomUi.setOnCaptureButtonClickListener { navigateToCamera() }
-        
+
         bottomUi.setOnNextButtonClickListener {
             loadPage(pageIndex + 1)
         }
@@ -282,6 +282,10 @@ class ReadingActivity : AppCompatActivity() {
                     true
                 }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    // Save the final position when user releases
+                    if (dragging) {
+                        savedBoxTranslations[boxIndex] = Pair(boxView.translationX, boxView.translationY)
+                    }
                     dragging = false; true
                 }
                 else -> false
@@ -332,6 +336,12 @@ class ReadingActivity : AppCompatActivity() {
 
             setupBoundingBoxTouchListener(boxView, box.index)
 
+            // Restore saved position if it exists
+            savedBoxTranslations[box.index]?.let { (savedX, savedY) ->
+                boxView.translationX = savedX
+                boxView.translationY = savedY
+            }
+
             if (audioResultsMap.containsKey(box.index)) {
                 createPlayButton(box.index, rect)
             }
@@ -351,8 +361,11 @@ class ReadingActivity : AppCompatActivity() {
         params.startToStart = pageImage.id
         params.topToTop = pageImage.id
         playButton.layoutParams = params
-        playButton.translationX = rect.right - size / 2
-        playButton.translationY = rect.top - size / 2
+        val boxView = boundingBoxViewsMap[bboxIndex]
+        val boxTranslationX = boxView?.translationX ?: rect.left
+        val boxTranslationY = boxView?.translationY ?: rect.top
+        playButton.translationX = boxTranslationX + rect.width() - size / 2
+        playButton.translationY = boxTranslationY + rect.height() - size / 2
         playButton.elevation = 8f
         playButton.setOnClickListener { playAudioForBox(bboxIndex) }
         mainLayout.addView(playButton)
@@ -441,6 +454,7 @@ class ReadingActivity : AppCompatActivity() {
         pageImage.setImageDrawable(null)
         playButtonsMap.clear()
         boundingBoxViewsMap.clear()
+        savedBoxTranslations.clear()
         updateBottomNavStatus()
         fetchPage()
     }
@@ -482,5 +496,6 @@ class ReadingActivity : AppCompatActivity() {
         mediaPlayer = null
         playButtonsMap.clear()
         boundingBoxViewsMap.clear()
+        savedBoxTranslations.clear()
     }
 }
