@@ -112,6 +112,7 @@ class LoadingViewModel(
     }
 
     // ---------------- OCR Polling ----------------
+    /*
     private suspend fun pollOcr(sessionId: String, pageIndex: Int) {
         _status.value = "polling"
         repeat(60) {
@@ -132,6 +133,48 @@ class LoadingViewModel(
             if (done) return
             delay(1000)
         }
+        _error.value = "Timeout while waiting for OCR"
+    }
+     */
+    private suspend fun pollOcr(sessionId: String, pageIndex: Int) {
+        _status.value = "polling"
+
+        if (_progress.value < 41) _progress.value = 41
+
+        var ocrStarted = false
+
+        repeat(60) { i ->
+            val res = processRepo.checkOcrStatus(sessionId, pageIndex)
+            var done = false
+
+            res.fold(
+                onSuccess = {
+                    ocrStarted = true
+
+                    val p = it.progress
+                    val mapped = 40 + (p * 60 / 100)
+                    _progress.value = mapped.coerceIn(41, 99)
+
+                    if (it.status == "ready") {
+                        _progress.value = 100
+                        _status.value = "ready"
+                        done = true
+                    }
+                },
+                onFailure = {
+                    _error.value = it.message
+                }
+            )
+            if (done) return
+
+            if (!ocrStarted) {
+                val next = (_progress.value + 1).coerceAtMost(49)
+                _progress.value = next
+            }
+
+            delay(300)
+        }
+
         _error.value = "Timeout while waiting for OCR"
     }
 
@@ -192,38 +235,6 @@ class LoadingViewModel(
     }
 
     // ---------------- 이어보기 ----------------
-    fun reloadSession(startedAt: String, pageIndex: Int, context: Context) {
-        viewModelScope.launch {
-            try {
-                val deviceInfo = Settings.Secure.getString(
-                    context.contentResolver,
-                    Settings.Secure.ANDROID_ID
-                )
-
-                val userInfoResponse = userRepo.getUserInfo(deviceInfo)
-                val userId = userInfoResponse.body()?.firstOrNull()?.user_id ?: run {
-                    _error.emit("User not found")
-                    return@launch
-                }
-
-                val result = sessionRepo.reloadSession(userId, startedAt, pageIndex)
-                result.fold(
-                    onSuccess = { data ->
-                        _navigateToReading.emit(
-                            SessionResumeResult(data.session_id, data.page_index)
-                        )
-                    },
-                    onFailure = { e ->
-                        _error.emit("Reload failed: ${e.message}")
-                    }
-                )
-
-            } catch (e: Exception) {
-                _error.emit("Reload error: ${e.message}")
-            }
-        }
-    }
-
     fun reloadAllSession(startedAt: String, context: Context) {
         viewModelScope.launch {
             _status.value = "reloading"
