@@ -13,7 +13,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
-import kss
+from kss import split_sentences
 
 load_dotenv()
 
@@ -72,12 +72,18 @@ class TTSModule:
         self.sentiment_chain = self._create_sentiment_chain()
 
         # Reset directories
-        if self.OUT_DIR.exists():
-            shutil.rmtree(self.OUT_DIR)
-        if self.LOG_DIR.exists():
-            shutil.rmtree(self.LOG_DIR)
-        self.OUT_DIR.mkdir(parents=True)
-        self.LOG_DIR.mkdir(parents=True)
+        try:
+            if self.OUT_DIR.exists():
+                shutil.rmtree(self.OUT_DIR)
+        except Exception:
+            pass
+        try:
+            if self.LOG_DIR.exists():
+                shutil.rmtree(self.LOG_DIR)
+        except Exception:
+            pass
+        self.OUT_DIR.mkdir(parents=True, exist_ok=True)
+        self.LOG_DIR.mkdir(parents=True, exist_ok=True)
 
     def _create_translation_chain(self):
         prompt = ChatPromptTemplate.from_messages(
@@ -207,7 +213,7 @@ class TTSModule:
                 ]
             }
         """
-        sentences = kss.split_sentences(page["text"].strip())
+        sentences = split_sentences(page["text"].strip())
         if not sentences:
             return {"status": "no_sentences", "sentences": []}
 
@@ -485,7 +491,7 @@ class TTSModule:
         Legacy method - kept for backwards compatibility.
         """
         file_name = page["fileName"]
-        sentences = kss.split_sentences(page["text"].strip())
+        sentences = split_sentences(page["text"].strip())
         if not sentences:
             return {"status": "no_sentences"}
 
