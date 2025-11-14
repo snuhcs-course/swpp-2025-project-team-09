@@ -28,9 +28,6 @@ object AppSettings {
         }
     }
 
-    fun getVoice(context: Context, default: String = "MAN"): String =
-        prefs(context).getString(KEY_VOICE, default) ?: default
-
     fun clearAll(context: Context) {
         prefs(context).edit {
             clear()
