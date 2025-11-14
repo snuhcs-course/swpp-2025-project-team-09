@@ -263,7 +263,7 @@ class CameraViewModelTest {
         assertTrue(state.imagePath!!.contains("scan_"))
 
         // Extract timestamp from filename
-        val filename = state.imagePath!!.substringAfterLast("/")
+        val filename = File(state.imagePath!!).name
         assertTrue(filename.matches(Regex("scan_\\d+\\.jpg")))
     }
 
