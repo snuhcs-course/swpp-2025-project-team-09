@@ -112,7 +112,7 @@ class ReadingViewModel(private val repository: PageRepository) : ViewModel() {
         }
     }
 
-    override fun onCleared() {
+    public override fun onCleared() {
         super.onCleared()
         pollingJob?.cancel()
     }

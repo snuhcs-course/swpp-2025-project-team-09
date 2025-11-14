@@ -3,7 +3,8 @@ package com.example.storybridge_android.ui.session
 import android.content.Intent
 import android.media.MediaPlayer
 import android.os.Bundle
-import android.util.Base64
+import com.example.storybridge_android.data.MALE_VOICE
+import com.example.storybridge_android.data.FEMALE_VOICE
 import android.util.Log
 import android.widget.Button
 import android.widget.Toast
@@ -19,12 +20,7 @@ import com.example.storybridge_android.R
 import com.example.storybridge_android.data.SessionRepositoryImpl
 import com.example.storybridge_android.ui.setting.AppSettings
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
-import java.io.File
-import java.io.FileOutputStream
 
-const val MALE_VOICE = "onyx"
-const val FEMALE_VOICE = "shimmer"
 
 class VoiceSelectActivity : AppCompatActivity() {
 

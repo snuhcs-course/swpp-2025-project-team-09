@@ -47,7 +47,7 @@ class LandingViewModelTest {
         }
 
         override suspend fun getUserInfo(deviceInfo: String): Response<List<UserInfoResponse>> {
-            return Response.success(listOf(UserInfoResponse("uid", "title", "", "", "2025-01-01T00:00:00")))
+            return Response.success(listOf(UserInfoResponse("uid", "title", "", "", "", "2025-01-01T00:00:00")))
         }
 
         override suspend fun userLang(req: UserLangRequest): Response<UserLangResponse> {
