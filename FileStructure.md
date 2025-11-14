@@ -243,41 +243,7 @@ backend/
 └── 📂 media/                                  # 사용자 업로드 디렉토리
 ```
 
-### 백엔드 API 컨트롤러
-
-#### 1. User Controller (`/users/`)
-- 사용자 등록, 로그인, 인증
-- 사용자 환경설정 (언어, 목소리 선택)
-
-#### 2. Session Controller (`/sessions/`)
-- 세션 생성/조회/수정
-- 세션 메타데이터 (제목, 커버 이미지, TTS 상태)
-- 세션 완료 추적
-
-#### 3. Page Controller (`/pages/`)
-- 페이지 콘텐츠 조회
-- 페이지 번역 검색
-- 페이지 메타데이터
-
-#### 4. Process Controller (`/process/`)
-- OCR 처리 (이미지 → 텍스트 인식)
-- 번역 처리
-- TTS 오디오 생성
-
-### 백엔드 데이터 모델
-- **User**: 사용자 계정, 언어 환경설정, 목소리 환경설정
-- **Session**: TTS 오디오 링크가 포함된 독서 세션 기록
-- **Page**: 원문 및 번역된 콘텐츠가 있는 책 페이지
-- **BoundingBox**: OCR 텍스트 위치 데이터 (AR 오버레이용)
-
-### 백엔드 모듈
-- **ocr_processor.py**: Naver OCR API 연동
-- **tts_processor.py**: TTS 합성 엔진 (감정 인식 음성)
-
----
-
 ## ⚙️ ci (CI/CD 파이프라인)
-
 ```
 ci/
 ├── 📂 github-actions/                         # GitHub Actions 워크플로우
@@ -289,7 +255,6 @@ ci/
 ```
 
 ---
-
 ## 📊 data (언어 데이터 & 콘텐츠)
 
 ```
@@ -351,58 +316,4 @@ scripts/
 ├── .github/
 │   └── pull_request_template.md               # PR 템플릿
 ├── deploy.sh                                  # 배포 스크립트
-├── .claude/                                   # Claude Code 설정
 ├── .vscode/                                   # VS Code 설정
-└── .idea/                                     # IntelliJ IDEA 설정
-```
-
----
-
-## 🎯 프로젝트 주요 기능
-
-### 안드로이드 앱 기능
-1. **카메라/OCR 캡처** - 책 페이지 촬영하여 텍스트 인식
-2. **실시간 번역** - 사용자가 선호하는 언어로 텍스트 번역
-3. **감정 기반 TTS** - 감정 억양이 포함된 표현력 있는 텍스트 음성 변환
-4. **다국어 지원** - 한국어(primary), 영어, 중국어, 베트남어
-5. **세션 관리** - 독서 세션 및 진행 상황 추적
-6. **목소리 선택** - 내레이션용 남성/여성 목소리 선택
-7. **AR 오버레이** - 원문 위에 번역 표시
-
-### 백엔드 서비스
-1. **사용자 관리** - 등록, 인증, 환경설정
-2. **OCR 처리** - 텍스트 인식을 위한 Naver OCR
-3. **번역** - 다국어 번역을 위한 GPT-4o-mini
-4. **TTS 엔진** - 표현력 있는 오디오 내레이션 생성
-5. **세션 추적** - 독서 기록 저장 및 검색
-6. **데이터베이스** - 사용자 및 세션 데이터를 위한 SQLite
-
----
-
-## 🔧 기술 스택
-
-| 분류 | 기술 |
-|------|------|
-| **프론트엔드** | Kotlin, Android, MVVM 아키텍처, Retrofit |
-| **백엔드** | Django, Python, REST API |
-| **AI/ML** | Naver OCR, OpenAI GPT-4o-mini, TTS processors |
-| **데이터베이스** | SQLite |
-| **CI/CD** | GitHub Actions, Docker |
-
----
-
-## 📍 주요 파일 위치 매핑
-
-| 컴포넌트 | 경로 |
-|---------|------|
-| 랜딩 Activity (진입점) | [android-app/app/src/main/java/.../ui/landing/LandingActivity.kt](android-app/app/src/main/java/com/example/storybridge_android/ui/landing/LandingActivity.kt) |
-| 메인 Activity (세션 목록) | [android-app/app/src/main/java/.../ui/main/MainActivity.kt](android-app/app/src/main/java/com/example/storybridge_android/ui/main/MainActivity.kt) |
-| 카메라 Activity (OCR) | [android-app/app/src/main/java/.../ui/camera/CameraActivity.kt](android-app/app/src/main/java/com/example/storybridge_android/ui/camera/CameraActivity.kt) |
-| 독서 Activity | [android-app/app/src/main/java/.../ui/reading/ReadingActivity.kt](android-app/app/src/main/java/com/example/storybridge_android/ui/reading/ReadingActivity.kt) |
-| Session Controller API | [backend/apis/controller/session_controller/views.py](backend/apis/controller/session_controller/views.py) |
-| User Controller API | [backend/apis/controller/user_controller/views.py](backend/apis/controller/user_controller/views.py) |
-| OCR 모듈 | [backend/apis/modules/ocr_processor.py](backend/apis/modules/ocr_processor.py) |
-| TTS 모듈 | [backend/apis/modules/tts_processor.py](backend/apis/modules/tts_processor.py) |
-| 앱 매니페스트 | [android-app/app/src/main/AndroidManifest.xml](android-app/app/src/main/AndroidManifest.xml) |
-| 백엔드 설정 | [backend/app/settings.py](backend/app/settings.py) |
-| Django 모델 | [backend/apis/models/](backend/apis/models/) |
