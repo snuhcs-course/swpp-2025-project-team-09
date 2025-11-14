@@ -3,10 +3,12 @@ package com.example.storybridge_android.ui.session
 import android.util.Log
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.example.storybridge_android.data.SessionRepository
-import com.example.storybridge_android.network.SelectVoiceResponse
+import com.example.storybridge_android.data.ProcessRepository
+import com.example.storybridge_android.network.*
 import io.mockk.every
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -31,6 +33,8 @@ class VoiceSelectViewModelTest {
 
     @Mock
     private lateinit var mockSessionRepository: SessionRepository
+    @Mock
+    private lateinit var mockProcessRepository: ProcessRepository
 
     private lateinit var viewModel: VoiceSelectViewModel
     private lateinit var testImageFile: File
@@ -40,6 +44,8 @@ class VoiceSelectViewModelTest {
         MockitoAnnotations.openMocks(this)
 
         mockkStatic(Log::class)
+        mockkStatic(android.util.Base64::class)
+
         every { Log.d(any(), any()) } returns 0
         every { Log.i(any(), any()) } returns 0
         every { Log.w(any<String>(), any<String>()) } returns 0
@@ -49,7 +55,7 @@ class VoiceSelectViewModelTest {
 
         Dispatchers.setMain(testDispatcher)
 
-        viewModel = VoiceSelectViewModel(mockSessionRepository)
+        viewModel = VoiceSelectViewModel(mockSessionRepository, mockProcessRepository)
 
         // Create a test image file
         testImageFile = File.createTempFile("test_cover", ".jpg")
@@ -515,5 +521,140 @@ class VoiceSelectViewModelTest {
         // Then
         assertEquals(1, errorEmissions.size)
         assertTrue(errorEmissions[0].contains(errorMessage) || errorEmissions[0] == "Unexpected error")
+    }
+
+    @Test
+    fun `selectVoice failure with null message emits default`() = runTest {
+        whenever(mockSessionRepository.selectVoice("s", "v"))
+            .thenReturn(Result.failure(Exception(null as String?)))
+
+        val errors = mutableListOf<String>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.error.collect { errors.add(it) }
+        }
+
+        viewModel.selectVoice("s", "v")
+        advanceUntilIdle()
+
+        assertEquals(listOf("Voice selection failed"), errors)
+    }
+
+    @Test
+    fun `loading toggles false true false on success`() = runTest {
+        whenever(mockSessionRepository.selectVoice("s", "v"))
+            .thenReturn(Result.success(SelectVoiceResponse("s", "v")))
+
+        val states = mutableListOf<Boolean>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.loading.collect { states.add(it) }
+        }
+
+        viewModel.selectVoice("s", "v")
+        advanceUntilIdle()
+
+        assertEquals(listOf(false, true, false), states)
+    }
+
+    @Test
+    fun `uploadCoverInBackground read failure does not crash`() = runTest {
+        val sessionId = "s"
+        val lang = "en"
+
+        val file = File.createTempFile("prefix", ".jpg")
+        file.writeText("data")
+
+        val spyFile = spy(file)
+        whenever(spyFile.readBytes()).thenThrow(RuntimeException("read error"))
+
+        viewModel.uploadCoverInBackground(sessionId, lang, spyFile.absolutePath)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.loading.value)
+    }
+
+    @Test
+    fun `selectVoice throws exception with null message emits default unexpected error`() = runTest {
+        // Given
+        val sessionId = "s"
+        val voiceStyle = "v"
+        whenever(mockSessionRepository.selectVoice(sessionId, voiceStyle))
+            .thenThrow(RuntimeException(null as String?))
+
+        val errors = mutableListOf<String>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.error.collect { errors.add(it) }
+        }
+
+        // When
+        viewModel.selectVoice(sessionId, voiceStyle)
+        advanceUntilIdle()
+
+        // Then
+        assertEquals(listOf("Unexpected error"), errors)
+        assertFalse(viewModel.loading.value)
+    }
+
+    @Test
+    fun `uploadCoverInBackground with server failure logs error`() = runTest {
+        // Given
+        val sessionId = "s"
+        val lang = "en"
+        val errorMessage = "Upload server error"
+
+        every { android.util.Base64.encodeToString(any(), any()) } returns "base64encodedstring"
+
+        whenever(mockProcessRepository.uploadCoverImage(any()))
+            .thenReturn(Result.failure(Exception(errorMessage)))
+
+        // When
+        viewModel.uploadCoverInBackground(sessionId, lang, testImageFile.absolutePath)
+        advanceUntilIdle()
+
+        // Then
+        verify(exactly = 1) {
+            Log.e("VoiceSelectViewModel", "✗ Cover upload failed: $errorMessage")
+        }
+        verify(mockProcessRepository).uploadCoverImage(any())
+        assertFalse(viewModel.loading.value) // 백그라운드 작업이므로 loading에 영향 없음
+    }
+
+    @Test
+    fun `uploadCoverInBackground with server success logs title`() = runTest {
+        // Given
+        val sessionId = "s"
+        val lang = "en"
+        val title = "New Story Title"
+
+        val successResponse = UploadCoverResponse(
+            session_id = sessionId,
+            page_index = 0,
+            status = "complete",
+            submitted_at = "2025-01-01T00:00:00Z",
+            title = title, // 테스트에서 검증할 제목 필드
+            translated_title = "Translated Title",
+            tts_male = "url/male",
+            tts_female = "url/female"
+        )
+
+        mockkStatic(android.util.Base64::class)
+        every { android.util.Base64.encodeToString(any(), any()) } returns "base64encodedstring"
+
+        whenever(mockProcessRepository.uploadCoverImage(any<UploadImageRequest>()))
+            .thenReturn(Result.success(successResponse))
+
+        // When
+        viewModel.uploadCoverInBackground(sessionId, lang, testImageFile.absolutePath)
+        advanceUntilIdle()
+
+        // Then
+        verify(exactly = 1) {
+            Log.d("VoiceSelectViewModel", "✓ Cover uploaded successfully in background")
+        }
+        verify(exactly = 1) {
+            Log.d("VoiceSelectViewModel", "Title: $title")
+        }
+        verify(mockProcessRepository).uploadCoverImage(any())
+        unmockkStatic(android.util.Base64::class) // 반드시 unmockkStatic 해주어야 합니다.
+        assertFalse(viewModel.loading.value)
     }
 }
