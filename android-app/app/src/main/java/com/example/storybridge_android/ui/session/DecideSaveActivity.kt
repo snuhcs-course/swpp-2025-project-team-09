@@ -2,27 +2,27 @@ package com.example.storybridge_android.ui.session
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import com.example.storybridge_android.data.SessionRepositoryImpl
 import com.example.storybridge_android.databinding.ActivityDecideSaveBinding
-import kotlinx.coroutines.launch
-import androidx.activity.enableEdgeToEdge
+import com.example.storybridge_android.data.SessionRepositoryImpl
 import com.example.storybridge_android.ui.main.MainActivity
+import kotlinx.coroutines.flow.collectLatest
 
 class DecideSaveActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityDecideSaveBinding
-    private lateinit var sessionId: String
-    private val repository = SessionRepositoryImpl()
-    private var decisionMade = false
 
-    companion object {
-        private const val TAG = "DecideSaveActivity"
+    private val viewModel: DecideSaveActivityViewModel by viewModels {
+        DecideSaveActivityViewModelFactory(SessionRepositoryImpl())
     }
+
+    private lateinit var sessionId: String
+    private var decisionMade = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,72 +32,52 @@ class DecideSaveActivity : AppCompatActivity() {
 
         sessionId = intent.getStringExtra("session_id") ?: ""
 
-        if (sessionId.isEmpty()) {
-            Log.e(TAG, "No session_id provided")
-            Toast.makeText(this, "Error: No session ID", Toast.LENGTH_SHORT).show()
-            finish()
-            return
-        }
-
-        setupListeners()
+        initListener()
+        observeViewModel()
     }
 
-    private fun setupListeners() {
+    private fun initListener() {
         binding.btnSave.setOnClickListener {
             if (!decisionMade) {
-                setButtonSelected(binding.btnSave)
-                handleSave()
+                decisionMade = true
+                viewModel.saveSession()
             }
         }
 
         binding.btnDiscard.setOnClickListener {
             if (!decisionMade) {
-                setButtonSelected(binding.btnDiscard)
-                handleDiscard()
+                decisionMade = true
+                viewModel.discardSession(sessionId)
             }
         }
 
-        binding.mainButton.setOnClickListener {
-            navigateToMain()
-        }
+        binding.mainButton.setOnClickListener { navigateToMain() }
     }
 
-    private fun setButtonSelected(selectedButton: View) {
-        // Reset all buttons
-        binding.btnSave.isSelected = false
-        binding.btnDiscard.isSelected = false
+    private fun observeViewModel() {
+        lifecycleScope.launchWhenStarted {
+            viewModel.state.collectLatest { state ->
+                when (state) {
+                    is DecideSaveUiState.Idle -> Unit
 
-        // Set selected button
-        selectedButton.isSelected = true
-    }
+                    is DecideSaveUiState.Saved -> {
+                        Toast.makeText(this@DecideSaveActivity, "Session saved!", Toast.LENGTH_SHORT).show()
+                        showMainButton()
+                    }
 
-    private fun handleSave() {
-        decisionMade = true
-        Toast.makeText(this, "Session saved!", Toast.LENGTH_SHORT).show()
-        showMainButton()
-    }
+                    is DecideSaveUiState.Discarded -> {
+                        Toast.makeText(this@DecideSaveActivity, "Session discarded", Toast.LENGTH_SHORT).show()
+                        showMainButton()
+                    }
 
-    private fun handleDiscard() {
-        decisionMade = true
-        Log.d(TAG, "Attempting to discard session: $sessionId")
+                    is DecideSaveUiState.Error -> {
+                        Toast.makeText(this@DecideSaveActivity, "Failed: ${state.message}", Toast.LENGTH_LONG).show()
+                        decisionMade = false
+                    }
 
-        lifecycleScope.launch {
-            try {
-                val result = repository.discardSession(sessionId)
-                if (result.isSuccess) {
-                    Log.d(TAG, "Session discarded successfully")
-                    Toast.makeText(this@DecideSaveActivity, "Session discarded", Toast.LENGTH_SHORT).show()
-                    showMainButton()
-                } else {
-                    val error = result.exceptionOrNull()
-                    Log.e(TAG, "Failed to discard session: ${error?.message}", error)
-                    Toast.makeText(this@DecideSaveActivity, "Failed to discard session: ${error?.message}", Toast.LENGTH_LONG).show()
-                    decisionMade = false
+                    is DecideSaveUiState.Loading -> {
+                    }
                 }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error discarding session", e)
-                Toast.makeText(this@DecideSaveActivity, "Error: ${e.message}", Toast.LENGTH_LONG).show()
-                decisionMade = false
             }
         }
     }
@@ -108,8 +88,8 @@ class DecideSaveActivity : AppCompatActivity() {
     }
 
     private fun navigateToMain() {
-        val intent = Intent(this, MainActivity::class.java)
-        startActivity(intent)
+        startActivity(Intent(this, MainActivity::class.java))
         finish()
     }
 }
+
