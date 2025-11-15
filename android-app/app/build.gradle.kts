@@ -79,6 +79,7 @@ tasks.register<JacocoReport>("jacocoTestReport") {
         "**/*inlined*",
         "**/*special*",
         "**/*Function*",
+        "**/MainActivity*lambda*\$*"
     )
 
     val javaDebugTree = fileTree("${buildDir}/intermediates/javac/debug") {
@@ -142,7 +143,6 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.6")
     // lifecycleScope 같은 coroutine 사용 시
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
-
     // Test
     testImplementation(libs.junit)
     testImplementation("com.squareup.retrofit2:retrofit:2.9.0")
