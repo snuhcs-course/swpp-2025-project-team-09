@@ -63,7 +63,7 @@ class ReadingActivity : AppCompatActivity() {
     private var pageBitmap: Bitmap? = null
 
     private val viewModel: ReadingViewModel by viewModels {
-        ReadingViewModelFactory(PageRepositoryImpl())
+        ReadingViewModelFactory()
     }
 
     companion object {
