@@ -9,6 +9,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withId
 import com.example.storybridge_android.data.UserRepository
 import com.example.storybridge_android.network.*
 import com.example.storybridge_android.ui.landing.LandingActivity
+import io.mockk.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import okhttp3.MediaType.Companion.toMediaType
@@ -17,24 +18,19 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.kotlin.any
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.verify
-import org.mockito.kotlin.times
-import org.mockito.kotlin.whenever
 import retrofit2.Response
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
-class LandingActivityMockitoTest {
+class LandingActivityMockkTest {
 
     private lateinit var scenario: ActivityScenario<LandingActivity>
     private lateinit var mockUserRepository: UserRepository
 
     @Before
     fun setup() {
-        // Activity 실행 전에 Mock을 ServiceLocator에 주입
-        mockUserRepository = mock()
+        // MockK로 Mock 생성
+        mockUserRepository = mockk()
         ServiceLocator.userRepository = mockUserRepository
     }
 
@@ -42,6 +38,7 @@ class LandingActivityMockitoTest {
     fun teardown() {
         if (::scenario.isInitialized) scenario.close()
         ServiceLocator.reset()
+        clearAllMocks()
     }
 
     @Test
@@ -52,18 +49,22 @@ class LandingActivityMockitoTest {
             title = "title",
             translated_title = "",
             image_base64 = "",
-            started_at = "2025-10-29T00:00:00"
+            started_at = "2025-10-29T00:00:00",
+            session_id = "session_id"
         )
         val infoListResponse = listOf(info)
-        whenever(mockUserRepository.login(any()))
-            .thenReturn(Response.success(loginResponse))
-        whenever(mockUserRepository.getUserInfo(any()))
-            .thenReturn(Response.success(infoListResponse))
+
+        // MockK로 stub 설정
+        coEvery { mockUserRepository.login(any()) } returns Response.success(loginResponse)
+        coEvery { mockUserRepository.getUserInfo(any()) } returns Response.success(infoListResponse)
 
         scenario = ActivityScenario.launch(LandingActivity::class.java)
         Thread.sleep(3000)
+
         onView(withId(R.id.main)).check(matches(isDisplayed()))
-        verify(mockUserRepository, times(1)).login(any())
+
+        // MockK로 검증
+        coVerify(exactly = 1) { mockUserRepository.login(any()) }
     }
 
     @Test
@@ -75,12 +76,9 @@ class LandingActivityMockitoTest {
         )
         val registerResponse = UserRegisterResponse("test_user_mockito", "en")
 
-        // Mock 설정
-        whenever(mockUserRepository.login(any()))
-            .thenReturn(errorResponse)
-
-        whenever(mockUserRepository.register(any()))
-            .thenReturn(Response.success(registerResponse))
+        // MockK로 stub 설정
+        coEvery { mockUserRepository.login(any()) } returns errorResponse
+        coEvery { mockUserRepository.register(any()) } returns Response.success(registerResponse)
 
         // Activity 실행
         scenario = ActivityScenario.launch(LandingActivity::class.java)
@@ -91,8 +89,8 @@ class LandingActivityMockitoTest {
         // 언어 선택 화면 확인
         onView(withId(R.id.btnEnglish)).check(matches(isDisplayed()))
 
-        // 검증
-        verify(mockUserRepository, times(1)).login(any())
-        verify(mockUserRepository, times(1)).register(any())
+        // MockK로 검증
+        coVerify(exactly = 1) { mockUserRepository.login(any()) }
+        coVerify(exactly = 1) { mockUserRepository.register(any()) }
     }
 }

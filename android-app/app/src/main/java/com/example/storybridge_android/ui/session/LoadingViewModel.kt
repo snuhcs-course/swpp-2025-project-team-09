@@ -10,11 +10,14 @@ import androidx.lifecycle.viewModelScope
 import com.example.storybridge_android.data.*
 import com.example.storybridge_android.network.UploadImageRequest
 import com.example.storybridge_android.network.UserInfoResponse
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
 import java.io.ByteArrayOutputStream
 import java.io.File
 import kotlin.math.max
@@ -24,10 +27,12 @@ data class SessionResumeResult(val session_id: String, val page_index: Int, val 
 
 class LoadingViewModel(
     private val processRepo: ProcessRepository,
-    private val pageRepo: PageRepository,
     private val userRepo: UserRepository,
-    private val sessionRepo: SessionRepository
+    private val sessionRepo: SessionRepository,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.Main
 ) : ViewModel() {
+
+    private val scope = viewModelScope + dispatcher
 
     private val _progress = MutableStateFlow(0)
     val progress = _progress.asStateFlow()
@@ -54,7 +59,7 @@ class LoadingViewModel(
 
     // ---------------- 기존 업로드 ----------------
     fun uploadImage(sessionId: String, pageIndex: Int, lang: String, path: String) {
-        viewModelScope.launch {
+        scope.launch {
             _status.value = "uploading"
 
             val base64 = encodeBase64(path)
@@ -78,7 +83,7 @@ class LoadingViewModel(
     }
 
     fun uploadCover(sessionId: String, lang: String, path: String) {
-        viewModelScope.launch {
+        scope.launch {
             _status.value = "uploading_cover"
 
             val base64 = encodeBase64(path)
@@ -181,7 +186,7 @@ class LoadingViewModel(
     // ---------------- Progress ----------------
     private fun startRampTo(target: Int, durationMs: Long) {
         stopRamp()
-        rampJob = viewModelScope.launch {
+        rampJob = scope.launch {
             val start = _progress.value
             val diff = (target - start).coerceAtLeast(0)
             if (diff == 0) return@launch
@@ -228,7 +233,7 @@ class LoadingViewModel(
 
     // ---------------- 사용자 정보 ----------------
     fun loadUserInfo(deviceInfo: String) {
-        viewModelScope.launch {
+        scope.launch {
             val response = userRepo.getUserInfo(deviceInfo)
             _userInfo.value = response
         }
@@ -236,7 +241,7 @@ class LoadingViewModel(
 
     // ---------------- 이어보기 ----------------
     fun reloadAllSession(startedAt: String, context: Context) {
-        viewModelScope.launch {
+        scope.launch {
             _status.value = "reloading"
             startRampTo(100, 1000L)
 

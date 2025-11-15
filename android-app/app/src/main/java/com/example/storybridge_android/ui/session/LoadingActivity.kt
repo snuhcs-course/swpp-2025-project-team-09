@@ -29,7 +29,6 @@ class LoadingActivity : AppCompatActivity() {
     private val viewModel: LoadingViewModel by viewModels {
         LoadingViewModelFactory(
             ProcessRepositoryImpl(),
-            PageRepositoryImpl(),
             UserRepositoryImpl(),
             SessionRepositoryImpl()
         )
