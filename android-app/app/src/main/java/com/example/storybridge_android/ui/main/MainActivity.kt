@@ -22,8 +22,6 @@ import com.example.storybridge_android.ui.common.TopNavigationBar
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.lifecycle.lifecycleScope
-import com.example.storybridge_android.data.SessionRepositoryImpl
-import com.example.storybridge_android.data.UserRepositoryImpl
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.util.*
@@ -31,7 +29,7 @@ import java.util.*
 
 class MainActivity : AppCompatActivity() {
     private val viewModel: MainViewModel by viewModels {
-        MainViewModelFactory(UserRepositoryImpl(), SessionRepositoryImpl())
+        MainViewModelFactory()
     }
 
     private val settingsLauncher = registerForActivityResult(
