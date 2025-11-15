@@ -66,7 +66,19 @@ tasks.register<JacocoReport>("jacocoTestReport") {
         "**/Manifest*.*",
         "**/*Test*.*",
         "**/Hilt_*.*",
-        "**/dagger/**"
+        "**/dagger/**",
+
+        "**/databinding/**",
+        "**/*Binding.class",
+        "**/BR.class",
+        "**/DataBinderMapperImpl*",
+        "**/DataBindingUtil*",
+        "**/ViewDataBinding*",
+        "**/ImageUtil.*",
+        "**/*\$*",
+        "**/*inlined*",
+        "**/*special*",
+        "**/*Function*",
     )
 
     val javaDebugTree = fileTree("${buildDir}/intermediates/javac/debug") {
