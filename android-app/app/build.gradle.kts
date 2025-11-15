@@ -40,6 +40,12 @@ android {
         viewBinding = true       // View Binding 활성화
         dataBinding = false     // Data Binding 필요 시 true
     }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1,LICENSE*.md,NOTICE*.md}"
+        }
+    }
 }
 
 val camerax_version = "1.2.0"
@@ -85,9 +91,11 @@ dependencies {
     testImplementation("com.squareup.retrofit2:converter-gson:2.9.0")
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
     testImplementation("org.jetbrains.kotlin:kotlin-test:1.9.23")
-
+    testImplementation("io.mockk:mockk:1.13.8")
+    testImplementation("androidx.arch.core:core-testing:2.2.0")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
 
     // Android Test
     androidTestImplementation(libs.androidx.junit)
@@ -98,9 +106,11 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-intents:3.5.1")
     androidTestImplementation("androidx.test:rules:1.5.0")
 
-    androidTestImplementation("org.mockito:mockito-core:5.3.1")
-    androidTestImplementation("org.mockito:mockito-android:5.3.1")
-    androidTestImplementation("org.mockito.kotlin:mockito-kotlin:5.1.0")
+    // androidTestImplementation("org.mockito:mockito-core:5.3.1")
+    // androidTestImplementation("org.mockito:mockito-android:5.3.1")
+    androidTestImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
+    androidTestImplementation("io.mockk:mockk-android:1.13.8")
+
 
     androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
 
