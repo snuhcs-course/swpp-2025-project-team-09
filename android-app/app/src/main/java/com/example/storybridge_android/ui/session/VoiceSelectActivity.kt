@@ -5,6 +5,7 @@ import android.media.MediaPlayer
 import android.os.Bundle
 import android.util.Base64
 import android.util.Log
+import android.view.View
 import android.widget.Button
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -22,7 +23,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
-
+import android.widget.FrameLayout
 const val MALE_VOICE = "onyx"
 const val FEMALE_VOICE = "shimmer"
 
@@ -41,6 +42,7 @@ class VoiceSelectActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_voice_select)
+
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -61,6 +63,10 @@ class VoiceSelectActivity : AppCompatActivity() {
             finish()
             return
         }
+
+        val exitPanel = findViewById<FrameLayout>(R.id.exitPanelInclude)
+        val exitConfirm = findViewById<Button>(R.id.exitConfirmBtn)
+        val exitCancel = findViewById<Button>(R.id.exitCancelBtn)
 
         // 백그라운드에서 cover 이미지 업로드 시작
         if (imagePath != null && lang != null) {
@@ -125,17 +131,26 @@ class VoiceSelectActivity : AppCompatActivity() {
         }
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                AlertDialog.Builder(this@VoiceSelectActivity)
-                    .setTitle(getString(R.string.exit_dialog_title))
-                    .setMessage(getString(R.string.exit_dialog_message))
-                    .setPositiveButton(getString(R.string.exit_dialog_confirm)) { _, _ ->
-                        isEnabled = false
-                        onBackPressedDispatcher.onBackPressed()
-                    }
-                    .setNegativeButton(getString(R.string.exit_dialog_cancel), null)
-                    .show()
+                exitPanel.visibility = View.VISIBLE
             }
         })
+        exitConfirm.setOnClickListener {
+            val id = sessionId ?: return@setOnClickListener
+
+            lifecycleScope.launch {
+                val result = SessionRepositoryImpl().discardSession(id)
+                result.onSuccess {
+                    finish()
+                }.onFailure {
+                    Toast.makeText(this@VoiceSelectActivity, "Failed to discard session", Toast.LENGTH_SHORT).show()
+                    finish()
+                }
+            }
+        }
+        exitCancel.setOnClickListener {
+            exitPanel.visibility = View.GONE
+        }
+
     }
 
     private fun playLocalAudio(audioResId: Int) {
