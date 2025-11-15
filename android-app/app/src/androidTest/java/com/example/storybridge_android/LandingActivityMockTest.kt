@@ -20,7 +20,7 @@ import retrofit2.Response
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
-class LandingActivityMockkTest {
+class LandingActivityMockTest {
 
     private lateinit var scenario: ActivityScenario<LandingActivity>
     private lateinit var mockUserRepository: UserRepository

@@ -1,7 +1,6 @@
 package com.example.storybridge_android.ui.setting
 
 import android.provider.Settings
-import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
@@ -25,7 +24,7 @@ import retrofit2.Response
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
-class SettingActivityMockkTest {
+class SettingActivityMockTest {
 
     private lateinit var scenario: ActivityScenario<SettingActivity>
     private lateinit var mockUserRepository: UserRepository

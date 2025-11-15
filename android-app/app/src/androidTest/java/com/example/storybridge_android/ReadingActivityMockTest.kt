@@ -22,7 +22,7 @@ import android.view.View
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
-class ReadingActivityMockkTest {
+class ReadingActivityMockTest {
 
     private lateinit var scenario: ActivityScenario<ReadingActivity>
     private lateinit var mockPageRepository: PageRepository
