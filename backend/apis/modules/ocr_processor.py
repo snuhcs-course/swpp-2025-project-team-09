@@ -190,7 +190,7 @@ class OCRModule:
 
         return paragraphs
 
-    def process_cover_page(self, image_path: str) -> str:  # Or Optional[str]
+    def process_cover_page(self, image_path: str) -> str:  
         request_json = {
             "images": [{"format": "png", "name": Path(image_path).stem}],
             "requestId": str(uuid.uuid4()),
@@ -209,12 +209,13 @@ class OCRModule:
         result = response.json()
 
         filtered_json = self._filter_low_confidence(result)
-        fs = self._font_size(filtered_json)
         images_f = filtered_json.get("images", [])
         if not images_f:
             print("[DEBUG] OCR parse: no images field in response.")
             return []
+
         fields = images_f[0].get("fields", [])
+
         tokens = []
         for field in fields:
             text = field.get("inferText", "")
@@ -224,28 +225,44 @@ class OCRModule:
             if xs and ys:
                 tokens.append(
                     {
-                        "text": text,
+                        "field": field, 
                         "x": float(np.mean(xs)),
                         "y": float(np.mean(ys)),
                         "xs": xs,
                         "ys": ys,
                     }
                 )
+
         if not tokens:
             print(f"[DEBUG] OCR parse: no tokens extracted. Field count: {len(fields)}")
             return []
 
-        heights = [max(t["ys"]) - min(t["ys"]) for t in tokens if t["ys"]]
-        max_height = max(heights) if heights else 0
-        tokens = [
-            t for t in tokens if (max(t["ys"]) - min(t["ys"])) >= 0.33 * max_height
+        heights = [max(t["ys"]) - min(t["ys"]) for t in tokens]
+        max_height = max(heights)
+
+        filtered_tokens = [
+            t for t in tokens
+            if (max(t["ys"]) - min(t["ys"])) >= 0.33 * max_height
         ]
 
-        if not tokens:
-            print(f"[DEBUG] OCR parse: no tokens extracted. Field count: {len(fields)}")
+        if not filtered_tokens:
+            print(f"[DEBUG] OCR parse: no tokens extracted after height filtering.")
             return []
 
-        # Paragraph clustering (2D DBSCAN on x, y)
+        filtered_fields = [t["field"] for t in filtered_tokens]
+
+        filtered_json_for_fs = {
+            "images": [
+                {
+                    "fields": filtered_fields
+                }
+            ]
+        }
+
+        fs = self._font_size(filtered_json_for_fs)
+
+        tokens = filtered_tokens
+
         X = np.array([[t["x"], t["y"]] for t in tokens])
         para_eps = max(fs * 6.0, 15.0)
         para_db = DBSCAN(eps=para_eps, min_samples=1)
@@ -257,13 +274,12 @@ class OCRModule:
         paragraphs: List[List[Dict[str, Any]]] = []
         for lbl in sorted(set(para_labels)):
             if lbl == -1:
-                continue  # skip noise cluster
+                continue
             paragraph_tokens = [t for t in tokens if t["para_label"] == lbl]
             paragraphs.append(paragraph_tokens)
 
         results: List[Dict[str, Any]] = []
 
-        # For each paragraph, cluster lines by Y and sort words by X, build paragraph text
         for para in paragraphs:
             if not para:
                 continue
@@ -288,7 +304,6 @@ class OCRModule:
             lines_sorted = sorted(lines, key=lambda l: l["y"])
             paragraph_text = "\n".join(l["text"] for l in lines_sorted)
 
-            # Calculate height for sorting
             all_ys = []
             for l in lines_sorted:
                 all_ys.extend(l["ys"])
@@ -296,8 +311,6 @@ class OCRModule:
 
             results.append({"text": paragraph_text.strip(), "height": height})
 
-        # Sort paragraphs by height (largest first)
         results.sort(key=lambda r: r["height"], reverse=True)
-
-        # Return just the largest text as a string, or None if no results
         return results[0]["text"] if results else None
+
