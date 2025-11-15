@@ -24,7 +24,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.storybridge_android.R
-import com.example.storybridge_android.data.PageRepositoryImpl
 import com.example.storybridge_android.network.GetImageResponse
 import com.example.storybridge_android.network.GetOcrTranslationResponse
 import com.example.storybridge_android.network.GetTtsResponse
