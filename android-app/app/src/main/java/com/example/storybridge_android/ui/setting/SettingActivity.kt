@@ -19,11 +19,10 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class SettingActivity : AppCompatActivity() {
-    private lateinit var languageGroup: RadioGroup
-
     private val viewModel: SettingViewModel by viewModels {
-        SettingViewModelFactory(UserRepositoryImpl())
+        SettingViewModelFactory()
     }
+    private lateinit var languageGroup: RadioGroup
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
