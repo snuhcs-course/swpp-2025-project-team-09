@@ -20,7 +20,6 @@ import kotlinx.coroutines.launch
 
 class SettingActivity : AppCompatActivity() {
     private lateinit var languageGroup: RadioGroup
-    private lateinit var voiceGroup: RadioGroup
 
     private val viewModel: SettingViewModel by viewModels {
         SettingViewModelFactory(UserRepositoryImpl())
@@ -83,7 +82,6 @@ class SettingActivity : AppCompatActivity() {
                         else -> "en"
                     }
 
-                    // ✅ 서버 성공 시 무조건 저장 + 적용
                     AppSettings.setLanguage(this@SettingActivity, selectedLang)
                     StoryBridgeApplication.applyLanguage(this@SettingActivity)
                     setResult(RESULT_OK)
