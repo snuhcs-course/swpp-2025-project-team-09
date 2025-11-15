@@ -225,6 +225,7 @@ class OCRModule:
             if xs and ys:
                 tokens.append(
                     {
+                        "text": text,
                         "field": field, 
                         "x": float(np.mean(xs)),
                         "y": float(np.mean(ys)),
