@@ -517,4 +517,4 @@ class ProcessUploadCoverView(APIView):
             import traceback
 
             traceback.print_exc()
-            return "", ""
+            return "", "", ""

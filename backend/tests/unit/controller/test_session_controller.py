@@ -377,6 +377,7 @@ class TestGetSessionStatsView(TestCase):
         mock_session.user = mock_user
         mock_session.voicePreference = "female"
         mock_session.isOngoing = False
+        mock_session.started_at = timezone.now() - timedelta(seconds=3600)  # Fixed: use started_at
         mock_session.created_at = timezone.now() - timedelta(seconds=3600)
         mock_session.ended_at = timezone.now()
         mock_session.totalPages = 8
@@ -429,6 +430,7 @@ class TestSessionReviewView(TestCase):
         mock_session = Mock()
         mock_session.id = uuid.uuid4()
         mock_session.user = mock_user
+        mock_session.started_at = timezone.now() - timedelta(hours=2)  # Fixed: add started_at
         mock_session.created_at = timezone.now() - timedelta(hours=2)
         mock_session.ended_at = timezone.now()
         mock_session.totalPages = 12
