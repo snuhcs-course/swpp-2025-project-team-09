@@ -185,4 +185,55 @@ class SessionResponseParsingTest {
             assertTrue(e.message?.contains("For input string") == true)
         }
     }
+
+    // 10. ReloadSessionResponse — verify nullable media fields are null when missing
+    @Test
+    fun reloadSessionResponse_mediaFieldsMissing() {
+        val json = """
+        {
+            "session_id": "S_RELOAD_01",
+            "page_index": 2
+            // image_base64, translation_text, audio_url 필드 누락
+        }
+    """.trimIndent()
+
+        val response = gson.fromJson(json, ReloadSessionResponse::class.java)
+
+        assertEquals(2, response.page_index)
+        assertNull(response.image_base64)
+        assertNull(response.translation_text)
+        assertNull(response.audio_url)
+    }
+
+    // 11. SessionStatsResponse — verify isOngoing field parsing (Boolean type)
+    @Test
+    fun sessionStatsResponse_isOngoingBooleanParsing() {
+        // Case 1: isOngoing = true
+        var json = """
+        {
+            "session_id": "S_ONGOING",
+            "user_id": "user_stats_2",
+            "isOngoing": true,
+            "total_pages": 0,
+            "total_time_spent": 0,
+            "total_words_read": 0
+        }
+    """.trimIndent()
+        var response = gson.fromJson(json, SessionStatsResponse::class.java)
+        assertTrue("isOngoing should be true", response.isOngoing)
+
+        // Case 2: isOngoing = false
+        json = """
+        {
+            "session_id": "S_ENDED",
+            "user_id": "user_stats_3",
+            "isOngoing": false,
+            "total_pages": 5,
+            "total_time_spent": 100,
+            "total_words_read": 500
+        }
+    """.trimIndent()
+        response = gson.fromJson(json, SessionStatsResponse::class.java)
+        assertFalse("isOngoing should be false", response.isOngoing)
+    }
 }
