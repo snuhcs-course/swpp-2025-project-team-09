@@ -17,7 +17,7 @@ class SessionCard @JvmOverloads constructor(
     private val bookImage: ImageView
     private val bookTitle: TextView
     private val bookProgress: TextView
-    private val nextButton: ImageView
+    private val trashButton: ImageView
 
     init {
         LayoutInflater.from(context).inflate(R.layout.card_item, this, true)
@@ -26,7 +26,7 @@ class SessionCard @JvmOverloads constructor(
         bookImage = findViewById(R.id.cardBookImage)
         bookTitle = findViewById(R.id.cardBookTitle)
         bookProgress = findViewById(R.id.cardBookDate)
-        nextButton = findViewById(R.id.cardPlayButton)
+        trashButton = findViewById(R.id.cardTrashButton)
     }
 
     fun setBookImage(resId: Int) {
@@ -41,7 +41,11 @@ class SessionCard @JvmOverloads constructor(
         bookProgress.text = progress
     }
 
-    fun setOnNextClickListener(listener: () -> Unit) {
-        nextButton.setOnClickListener { listener() }
+    fun setOnImageClickListener(listener: () -> Unit) {
+        bookImage.setOnClickListener { listener() }
+    }
+
+    fun setOnTrashClickListener(listener: () -> Unit) {
+        trashButton.setOnClickListener { listener() }
     }
 }

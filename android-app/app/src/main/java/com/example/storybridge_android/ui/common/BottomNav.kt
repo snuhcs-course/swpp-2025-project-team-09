@@ -5,6 +5,7 @@ import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.Button
 import android.widget.ImageButton
+import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.example.storybridge_android.R
 
@@ -19,15 +20,26 @@ class BottomNav @JvmOverloads constructor(
     private var onCaptureButtonClickListener: (() -> Unit)? = null
     private var onNextButtonClickListener: (() -> Unit)? = null
 
+    private val prevButton: Button
+    private val nextButton: Button
+    private val statusText: TextView
+
     init {
         LayoutInflater.from(context).inflate(R.layout.bottom_nav, this, true)
+
+        prevButton = findViewById(R.id.prevButton)
+        nextButton = findViewById(R.id.nextButton)
+        statusText = findViewById(R.id.statusText)
+
         setupClickListeners()
-        findViewById<ImageButton>(R.id.prevButton).visibility = INVISIBLE
-        findViewById<ImageButton>(R.id.nextButton).visibility = INVISIBLE
+
+        // Initially hide buttons
+        prevButton.visibility = INVISIBLE
+        nextButton.visibility = INVISIBLE
     }
 
     private fun setupClickListeners() {
-        findViewById<ImageButton>(R.id.prevButton).setOnClickListener {
+        prevButton.setOnClickListener {
             onPrevButtonClickListener?.invoke()
         }
 
@@ -35,7 +47,7 @@ class BottomNav @JvmOverloads constructor(
             onCaptureButtonClickListener?.invoke()
         }
 
-        findViewById<ImageButton>(R.id.nextButton).setOnClickListener {
+        nextButton.setOnClickListener {
             onNextButtonClickListener?.invoke()
         }
     }
@@ -52,8 +64,12 @@ class BottomNav @JvmOverloads constructor(
         onNextButtonClickListener = listener
     }
 
-    fun configure(hasPrevious: Boolean, hasNext: Boolean) {
-        findViewById<ImageButton>(R.id.prevButton).visibility = if (hasPrevious) VISIBLE else INVISIBLE
-        findViewById<ImageButton>(R.id.nextButton).visibility = if (hasNext) VISIBLE else INVISIBLE
+    fun updatePageStatus(currentPage: Int, totalPages: Int) {
+        // currentPage를 그대로 사용 (1부터 시작), totalPages에서 1을 빼서 커버 제외
+        statusText.text = "page $currentPage/${totalPages - 1}"
+
+        // Show/hide buttons based on current page
+        prevButton.visibility = if (currentPage > 1) VISIBLE else INVISIBLE
+        nextButton.visibility = if (currentPage < totalPages - 1) VISIBLE else INVISIBLE
     }
 }

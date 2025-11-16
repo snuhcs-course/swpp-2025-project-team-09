@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/exitPanel"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#80000000"
+    android:visibility="gone"
+    android:clickable="true"
+    android:focusable="true"
+    android:elevation="20dp">
+
+    <LinearLayout
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:gravity="center"
+        android:layout_gravity="center"
+        android:elevation="8dp"
+        android:background="@drawable/panel_shape">
+
+        <TextView
+            android:id="@+id/exitTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/exit_title"
+            style="@style/text40pt"
+            android:layout_marginBottom="24dp" />
+
+        <Button
+            android:id="@+id/exitConfirmBtn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/text24pt"
+            android:text="@string/exit_confirm"
+            android:backgroundTint="@color/white" />
+
+        <Button
+            android:id="@+id/exitCancelBtn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/text24pt"
+            android:text="@string/exit_cancel"
+            android:backgroundTint="@color/white"
+            android:layout_marginTop="12dp" />
+
+    </LinearLayout>
+</FrameLayout>

@@ -36,11 +36,6 @@ interface SessionApi {
         @Query("session_id") session_id: String
     ): Call<SessionInfoResponse>
 
-    @GET("/session/review")
-    fun getSessionReview(
-        @Query("session_id") session_id: String
-    ): Call<SessionReviewResponse>
-
     @GET("/session/reload")
     suspend fun reloadSession(
         @Query("user_id") userId: String,
@@ -53,6 +48,11 @@ interface SessionApi {
         @Query("user_id") userId: String,
         @Query("started_at") startedAt: String
     ): Response<ReloadAllSessionResponse>
+
+    @POST("/session/discard")
+    suspend fun discardSession(
+        @Body request: DiscardSessionRequest
+    ): Response<DiscardSessionResponse>
 
 }
 
@@ -101,6 +101,7 @@ data class SessionStatsRequest(
 data class SessionStatsResponse(
     val session_id: String,
     val user_id: String,
+    val isOngoing: Boolean,
     val started_at: String,
     val ended_at: String,
     val total_pages: Int,
@@ -158,5 +159,14 @@ data class ReloadedPage(
     val translation_text: String?,
     val audio_url: String?,
     val ocr_results: List<OcrBox>?
+)
+
+// 2-8. Discard Session
+data class DiscardSessionRequest(
+    val session_id: String
+)
+
+data class DiscardSessionResponse(
+    val message: String
 )
 

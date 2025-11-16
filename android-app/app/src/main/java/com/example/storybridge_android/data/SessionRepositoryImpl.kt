@@ -90,4 +90,17 @@ class SessionRepositoryImpl : SessionRepository {
                 Result.failure(e)
             }
         }
+
+    override suspend fun discardSession(sessionId: String): Result<DiscardSessionResponse> =
+        withContext(Dispatchers.IO) {
+            try {
+                val res = RetrofitClient.sessionApi.discardSession(DiscardSessionRequest(sessionId))
+                if (res.isSuccessful && res.body() != null)
+                    Result.success(res.body()!!)
+                else
+                    Result.failure(Exception("Discard session failed: ${res.code()}"))
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
 }

@@ -4,9 +4,19 @@ Django Test Runner with interactive menu and CLI options.
 Shows colored output, per-test results with Expected/Actual.
 
 Usage:
-    python run_tests.py          # Interactive menu
-    python run_tests.py --unit   # Run all unit tests
-    python run_tests.py --all    # Run all tests
+    python run_tests.py                     # Interactive menu
+    python run_tests.py --all               # Run all tests
+    python run_tests.py --unit              # Run all unit tests
+    python run_tests.py --integration       # Run all integration tests
+    python run_tests.py --unit-controllers  # Run all unit controller tests
+    python run_tests.py --unit-models       # Run all unit model tests
+    python run_tests.py --unit-modules      # Run all unit module tests
+    python run_tests.py --user              # Run user controller tests
+    python run_tests.py --session           # Run session controller tests
+    python run_tests.py --process           # Run process controller tests
+    python run_tests.py --page              # Run page controller tests
+    python run_tests.py --ocr-module        # Run OCR module tests
+    python run_tests.py --tts-module        # Run TTS module tests
 """
 
 import sys
@@ -29,31 +39,63 @@ class C:
 
 
 # --- Test Paths ---
+# Unit - Controllers
 USER = "tests.unit.controller.test_user_controller"
 SESSION = "tests.unit.controller.test_session_controller"
 PROCESS = "tests.unit.controller.test_process_controller"
 PAGE = "tests.unit.controller.test_page_controller"
+
+# Unit - Models
 USER_MODEL = "tests.unit.models.test_user_model"
 SESSION_MODEL = "tests.unit.models.test_session_model"
 PAGE_MODEL = "tests.unit.models.test_page_model"
-BB_MODEL = "tests.unit.models.test_BB_model"
+BB_MODEL = "tests.unit.models.test_bb_model"
+
+# Unit - Modules
+OCR_MODULE = "tests.unit.modules.test_ocr_processor"
+TTS_MODULE = "tests.unit.modules.test_tts_processor"
+
+# Integration tests
+INTEGRATION = "tests.integration"
+INTEGRATION_CONTROLLERS = "tests.integration.controller"
+INTEGRATION_MODELS = "tests.integration.models"
+PAGE_BB_INTEGRATION = "tests.integration.models.test_page_bb_integration"
+USER_SESSION_INTEGRATION = "tests.integration.models.test_user_session_integration"
+SESSION_PAGE_INTEGRATION = "tests.integration.models.test_session_page_integration"
 
 TESTS = {
     "1": ("All tests", "tests"),
-    "2": ("Unit tests", "tests.unit"),
-    "3": ("User controller", USER),
-    "4": ("Session controller", SESSION),
-    "5": ("Process controller", PROCESS),
-    "6": ("Page controller", PAGE),
-    "7": ("User model", USER_MODEL),
-    "8": ("Session model", SESSION_MODEL),
-    "9": ("Page model", PAGE_MODEL),
-    "10": ("BB model", BB_MODEL),
+    "2": ("Unit tests (all)", "tests.unit"),
+    "3": ("Integration tests (all)", INTEGRATION),
+    "4": ("Unit - Controllers (all)", "tests.unit.controller"),
+    "5": ("Unit - Models (all)", "tests.unit.models"),
+    "6": ("Unit - Modules (all)", "tests.unit.modules"),
+    "7": ("User controller", USER),
+    "8": ("Session controller", SESSION),
+    "9": ("Process controller", PROCESS),
+    "10": ("Page controller", PAGE),
+    "11": ("User model", USER_MODEL),
+    "12": ("Session model", SESSION_MODEL),
+    "13": ("Page model", PAGE_MODEL),
+    "14": ("BB model", BB_MODEL),
+    "15": ("OCR module", OCR_MODULE),
+    "16": ("TTS module", TTS_MODULE),
+    "17": ("Integration - Controllers (all)", INTEGRATION_CONTROLLERS),
+    "18": ("Integration - Models (all)", INTEGRATION_MODELS),
+    "19": ("Page-BB integration", PAGE_BB_INTEGRATION),
+    "20": ("User-Session integration", USER_SESSION_INTEGRATION),
+    "21": ("Session-Page integration", SESSION_PAGE_INTEGRATION),
 }
 
 CLI_ARGS = {
     "--all": "tests",
     "--unit": "tests.unit",
+    "--integration": INTEGRATION,
+    "--unit-controllers": "tests.unit.controller",
+    "--unit-models": "tests.unit.models",
+    "--unit-modules": "tests.unit.modules",
+    "--integration-controllers": INTEGRATION_CONTROLLERS,
+    "--integration-models": INTEGRATION_MODELS,
     "--user": USER,
     "--session": SESSION,
     "--process": PROCESS,
@@ -62,6 +104,11 @@ CLI_ARGS = {
     "--session-model": SESSION_MODEL,
     "--page-model": PAGE_MODEL,
     "--bb-model": BB_MODEL,
+    "--ocr-module": OCR_MODULE,
+    "--tts-module": TTS_MODULE,
+    "--page-bb-integration": PAGE_BB_INTEGRATION,
+    "--user-session-integration": USER_SESSION_INTEGRATION,
+    "--session-page-integration": SESSION_PAGE_INTEGRATION,
 }
 
 

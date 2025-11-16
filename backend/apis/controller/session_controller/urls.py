@@ -7,7 +7,8 @@ from .views import (
     GetSessionStatsView,
     SessionReviewView,
     SessionReloadView,
-    SessionReloadAllView
+    SessionReloadAllView,
+    DiscardSessionView,
 )
 
 urlpatterns = [
@@ -19,4 +20,5 @@ urlpatterns = [
     path("review", SessionReviewView.as_view()),
     path("reload", SessionReloadView.as_view()),
     path("reload_all", SessionReloadAllView.as_view()),
+    path("discard", DiscardSessionView.as_view()),
 ]

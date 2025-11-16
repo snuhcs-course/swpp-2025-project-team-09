@@ -5,32 +5,34 @@ import android.media.MediaPlayer
 import android.os.Bundle
 import android.util.Base64
 import android.util.Log
+import android.view.View
 import android.widget.Button
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.R
 import com.example.storybridge_android.data.SessionRepositoryImpl
-import com.example.storybridge_android.ui.camera.CameraSessionActivity
 import com.example.storybridge_android.ui.setting.AppSettings
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
-
+import android.widget.FrameLayout
 const val MALE_VOICE = "onyx"
 const val FEMALE_VOICE = "shimmer"
 
 class VoiceSelectActivity : AppCompatActivity() {
 
     private var sessionId: String? = null
-    private var maleTts: String? = null
-    private var femaleTts: String? = null
-    private var bookTitle: String? = null
+    private var imagePath: String? = null
+    private var lang: String? = null
+    private var mediaPlayer: MediaPlayer? = null
 
     private val viewModel: VoiceSelectViewModel by viewModels {
         VoiceSelectViewModelFactory(SessionRepositoryImpl())
@@ -41,6 +43,7 @@ class VoiceSelectActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_voice_select)
 
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
@@ -48,18 +51,26 @@ class VoiceSelectActivity : AppCompatActivity() {
         }
 
         sessionId = intent.getStringExtra("session_id")
-        bookTitle = intent.getStringExtra("book_title") ?: "Unknown Book"
-        maleTts = intent.getStringExtra("male_tts")
-        femaleTts = intent.getStringExtra("female_tts")
+        imagePath = intent.getStringExtra("image_path")
+        lang = intent.getStringExtra("lang")
 
         Log.d("VoiceSelectActivity", "session_id=$sessionId")
-        Log.d("VoiceSelectActivity", "book_title=$bookTitle")
-        Log.d("VoiceSelectActivity", "male_tts=${maleTts?.length}, female_tts=${femaleTts?.length}")
+        Log.d("VoiceSelectActivity", "image_path=$imagePath")
+        Log.d("VoiceSelectActivity", "lang=$lang")
 
         if (sessionId == null) {
             Toast.makeText(this, "Session error. Please try again.", Toast.LENGTH_LONG).show()
             finish()
             return
+        }
+
+        val exitPanel = findViewById<FrameLayout>(R.id.exitPanelInclude)
+        val exitConfirm = findViewById<Button>(R.id.exitConfirmBtn)
+        val exitCancel = findViewById<Button>(R.id.exitCancelBtn)
+
+        // 백그라운드에서 cover 이미지 업로드 시작
+        if (imagePath != null && lang != null) {
+            viewModel.uploadCoverInBackground(sessionId!!, lang!!, imagePath!!)
         }
 
         val manButton = findViewById<Button>(R.id.manButton)
@@ -90,26 +101,25 @@ class VoiceSelectActivity : AppCompatActivity() {
         manButton.setOnClickListener {
             AppSettings.setVoice(this, MALE_VOICE)
             viewModel.selectVoice(sessionId!!, MALE_VOICE)
-            playTts(maleTts, MALE_VOICE)
-            nextButton.isEnabled = true
+            playLocalAudio(R.raw.voice_man)
             updateButtonState(manButton)
         }
 
         womanButton.setOnClickListener {
             AppSettings.setVoice(this, FEMALE_VOICE)
             viewModel.selectVoice(sessionId!!, FEMALE_VOICE)
-            playTts(femaleTts, FEMALE_VOICE)
-            nextButton.isEnabled = true
+            playLocalAudio(R.raw.voice_woman)
             updateButtonState(womanButton)
         }
 
         nextButton.setOnClickListener {
-            goToCamera()
+            goToContentInstruction()
         }
 
         lifecycleScope.launchWhenStarted {
             viewModel.success.collectLatest {
                 Log.d("VoiceSelectActivity", "✓ Voice selection saved successfully")
+                // API 완료 후 Next 버튼 활성화
                 nextButton.isEnabled = true
             }
         }
@@ -119,41 +129,60 @@ class VoiceSelectActivity : AppCompatActivity() {
                 Toast.makeText(this@VoiceSelectActivity, msg, Toast.LENGTH_SHORT).show()
             }
         }
-    }
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                exitPanel.visibility = View.VISIBLE
+            }
+        })
+        exitConfirm.setOnClickListener {
+            val id = sessionId ?: return@setOnClickListener
 
-    private fun playTts(ttsBase64: String?, voice: String) {
-        if (ttsBase64.isNullOrEmpty()) {
-            Log.w("VoiceSelectActivity", "No TTS data for $voice, skipping playback.")
-            Toast.makeText(this, "$voice voice preview not available", Toast.LENGTH_SHORT).show()
-            return
+            lifecycleScope.launch {
+                val result = SessionRepositoryImpl().discardSession(id)
+                result.onSuccess {
+                    finish()
+                }.onFailure {
+                    Toast.makeText(this@VoiceSelectActivity, "Failed to discard session", Toast.LENGTH_SHORT).show()
+                    finish()
+                }
+            }
+        }
+        exitCancel.setOnClickListener {
+            exitPanel.visibility = View.GONE
         }
 
+    }
+
+    private fun playLocalAudio(audioResId: Int) {
         try {
-            val audioBytes = Base64.decode(ttsBase64, Base64.DEFAULT)
-            val tempFile = File.createTempFile("tts_preview", ".mp3", cacheDir)
-            FileOutputStream(tempFile).use { it.write(audioBytes) }
+            // Release any existing player
+            mediaPlayer?.release()
 
-            val player = MediaPlayer()
-            player.setDataSource(tempFile.absolutePath)
-            player.prepare()
-            player.start()
-            Log.d("VoiceSelectActivity", "▶ Playing $voice voice preview")
+            // Create new MediaPlayer with local resource
+            mediaPlayer = MediaPlayer.create(this, audioResId)
+            mediaPlayer?.start()
+            Log.d("VoiceSelectActivity", "▶ Playing local voice preview")
 
-            player.setOnCompletionListener {
-                player.release()
-                tempFile.delete()
+            mediaPlayer?.setOnCompletionListener {
+                it.release()
+                mediaPlayer = null
                 Log.d("VoiceSelectActivity", "✓ Playback finished")
             }
         } catch (e: Exception) {
-            Log.e("VoiceSelectActivity", "✗ Error playing TTS: ${e.message}", e)
+            Log.e("VoiceSelectActivity", "✗ Error playing audio: ${e.message}", e)
             Toast.makeText(this, "Failed to play audio preview", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private fun goToCamera() {
-        val intent = Intent(this, CameraSessionActivity::class.java).apply {
+    override fun onDestroy() {
+        super.onDestroy()
+        mediaPlayer?.release()
+        mediaPlayer = null
+    }
+
+    private fun goToContentInstruction() {
+        val intent = Intent(this, ContentInstructionActivity::class.java).apply {
             putExtra("session_id", sessionId)
-            putExtra("page_index", 0)  // first page
         }
         startActivity(intent)
         finish()

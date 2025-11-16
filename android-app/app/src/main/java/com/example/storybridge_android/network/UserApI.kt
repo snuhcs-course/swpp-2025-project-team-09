@@ -76,6 +76,7 @@ data class UserInfoRequest(
 
 data class UserInfoResponse(
     val user_id: String,
+    val session_id: String,
     val title: String,
     val translated_title: String,
     val image_base64: String,

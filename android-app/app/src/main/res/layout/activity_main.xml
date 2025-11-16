@@ -11,23 +11,20 @@
 
     <com.example.storybridge_android.ui.common.TopNavigationBar
         android:id="@+id/topNavigationBar"
-        android:layout_width="0dp"
-        android:layout_height="120dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@id/topNavigationBar"
-        android:paddingStart="36dp"
-        android:paddingEnd="36dp">
+        app:layout_constraintTop_toBottomOf="@id/topNavigationBar">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingBottom="400dp">
 
             <TextView
                 android:id="@+id/previousReadingTitle"
@@ -38,21 +35,23 @@
                 android:layout_gravity="center"
                 android:layout_marginTop="32dp"/>
 
-            <GridLayout
+            <com.google.android.flexbox.FlexboxLayout
                 android:id="@+id/cardContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:visibility="gone"
                 tools:visibility="visible"
-                android:columnCount="3"
-                android:orientation="horizontal"
-                android:alignmentMode="alignMargins"
-                android:useDefaultMargins="true"
-                android:gravity="center"
-                android:columnOrderPreserved="false"
-                android:paddingHorizontal="12dp"
-                android:paddingBottom="24dp" />
+                app:flexWrap="wrap"
+                app:justifyContent="center"
+                app:alignItems="flex_start"
+                android:paddingStart="24dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="24dp"
+                app:dividerDrawable="@drawable/spacing_divider"
+                app:showDivider="middle"
+                app:showDividerHorizontal="middle"
+                app:showDividerVertical="middle" />
 
             <LinearLayout
                 android:id="@+id/emptyContainer"

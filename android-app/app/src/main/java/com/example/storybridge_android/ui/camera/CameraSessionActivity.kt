@@ -3,11 +3,13 @@ package com.example.storybridge_android.ui.camera
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.ui.session.LoadingActivity
+import com.example.storybridge_android.ui.session.VoiceSelectActivity
 import com.example.storybridge_android.ui.setting.AppSettings
 import kotlinx.coroutines.flow.collectLatest
 
@@ -31,6 +33,7 @@ class CameraSessionActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
 
         sessionId = intent.getStringExtra("session_id")
         pageIndex = intent.getIntExtra("page_index", 0)
@@ -46,7 +49,13 @@ class CameraSessionActivity : AppCompatActivity() {
                 when (state) {
                     is SessionUiState.Idle -> startCamera()
                     is SessionUiState.Success -> {
-                        navigateToLoading(state.imagePath)
+                        if (isCover) {
+                            // Cover 촬영 시 바로 VoiceSelectActivity로 이동
+                            navigateToVoiceSelect(state.imagePath)
+                        } else {
+                            // 일반 페이지는 기존대로 LoadingActivity로
+                            navigateToLoading(state.imagePath)
+                        }
                     }
                     is SessionUiState.Cancelled -> finish()
                     is SessionUiState.Error -> {
@@ -61,6 +70,15 @@ class CameraSessionActivity : AppCompatActivity() {
     private fun startCamera() {
         val intent = Intent(this, CameraActivity::class.java)
         cameraLauncher.launch(intent)
+    }
+
+    private fun navigateToVoiceSelect(imagePath: String) {
+        val intent = Intent(this, VoiceSelectActivity::class.java)
+        intent.putExtra("session_id", sessionId)
+        intent.putExtra("image_path", imagePath)
+        intent.putExtra("lang", AppSettings.getLanguage(this))
+        startActivity(intent)
+        finish()
     }
 
     private fun navigateToLoading(imagePath: String) {

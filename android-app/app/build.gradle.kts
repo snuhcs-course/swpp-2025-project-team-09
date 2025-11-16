@@ -69,6 +69,9 @@ dependencies {
     implementation("com.google.android.gms:play-services-mlkit-document-scanner:16.0.0")
     implementation("com.google.android.gms:play-services-base:18.5.0")
 
+    //Flexible layout
+    implementation("com.google.android.flexbox:flexbox:3.0.0")
+
     // ViewModel + Coroutine 지원
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.6")
     // LiveData 사용 시

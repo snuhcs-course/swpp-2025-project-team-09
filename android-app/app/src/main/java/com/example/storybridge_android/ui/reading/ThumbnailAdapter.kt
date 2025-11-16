@@ -29,7 +29,8 @@ class ThumbnailAdapter(
 
         @SuppressLint("SetTextI18n")
         fun bind(thumbnail: PageThumbnail) {
-            pageNumber.text = "Page ${thumbnail.pageIndex + 1}"
+            // 커버 페이지(0)는 표시하지 않으므로, pageIndex를 그대로 사용
+            pageNumber.text = "Page ${thumbnail.pageIndex}"
 
             // Decode and display image
             if (thumbnail.imageBase64 != null) {

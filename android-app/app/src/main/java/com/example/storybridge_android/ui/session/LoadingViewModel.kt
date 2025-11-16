@@ -56,7 +56,7 @@ class LoadingViewModel(
     fun uploadImage(sessionId: String, pageIndex: Int, lang: String, path: String) {
         viewModelScope.launch {
             _status.value = "uploading"
-            startRampTo(80, 12000L)
+            startRampTo(80, 500L)
             val base64 = encodeBase64(path)
             if (base64 == null) {
                 stopRamp()
@@ -230,7 +230,7 @@ class LoadingViewModel(
     fun reloadAllSession(startedAt: String, context: Context) {
         viewModelScope.launch {
             _status.value = "reloading"
-            startRampTo(100, 1000L)
+            startRampTo(100, 500L)
 
             val deviceInfo = Settings.Secure.getString(
                 context.contentResolver,
@@ -243,7 +243,7 @@ class LoadingViewModel(
                     stopRamp()
                     _progress.value = 100
                     val totalPages = data.pages.size
-                    _navigateToReading.emit(SessionResumeResult(data.session_id, 0, totalPages))
+                    _navigateToReading.emit(SessionResumeResult(data.session_id, 1, totalPages))
                 },
                 onFailure = { e ->
                     stopRamp()

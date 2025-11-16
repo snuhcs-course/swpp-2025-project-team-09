@@ -13,14 +13,14 @@
     app:layout_constraintEnd_toEndOf="parent">
 
     <!-- Previous page button -->
-    <ImageButton
+    <android.widget.Button
         android:id="@+id/prevButton"
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:background="@drawable/ic_background"
+        android:drawableTop="@drawable/ic_left_arrow"
         android:elevation="8dp"
         android:translationZ="8dp"
-        android:src="@drawable/ic_left_arrow"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@id/statusText"
         app:layout_constraintStart_toStartOf="parent"
@@ -46,14 +46,14 @@
         app:layout_constraintEnd_toStartOf="@id/nextButton" />
 
     <!-- Next page button -->
-    <ImageButton
+    <android.widget.Button
         android:id="@+id/nextButton"
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:background="@drawable/ic_background"
+        android:drawableTop="@drawable/ic_right_arrow"
         android:elevation="8dp"
         android:translationZ="8dp"
-        android:src="@drawable/ic_right_arrow"
         app:layout_constraintTop_toTopOf="@id/startButton"
         app:layout_constraintBottom_toBottomOf="@id/startButton"
         app:layout_constraintStart_toEndOf="@id/startButton"
@@ -65,7 +65,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="page 1/2"
-        android:textColor="@color/gray_dark"
+        android:textColor="@android:color/black"
         style="@style/text40pt"
         app:layout_constraintTop_toBottomOf="@id/startButton"
         app:layout_constraintBottom_toBottomOf="parent"
