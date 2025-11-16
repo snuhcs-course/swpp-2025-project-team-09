@@ -71,7 +71,11 @@ class ProcessUploadView(APIView):
         page = self._create_page_and_bbs(
             session, image_path, ocr_result, translation_data
         )
-        print("[DEBUG] voice preference:", session.voicePreference)
+
+        # Get voice preference with fallback to default
+        para_voice = session.voicePreference if session.voicePreference else "shimmer"
+        print("[DEBUG] voice preference:", session.voicePreference, "→ using:", para_voice)
+
         # Start background TTS
         self._start_background_tts(
             tts_module,
@@ -80,12 +84,12 @@ class ProcessUploadView(APIView):
             page,
             session_id,
             page_index,
-            para_voice=session.voicePreference,
+            para_voice=para_voice,
         )
 
-        # Update session
+        # Update session (only update specific fields to avoid race condition)
         session.totalPages += 1
-        session.save()
+        session.save(update_fields=['totalPages', 'totalWords'])
         print("[DEBUG] Page index after upload:", page_index)
         return Response(
             {
@@ -413,12 +417,12 @@ class ProcessUploadCoverView(APIView):
             }]
         )
 
-        # Update session
+        # Update session (only update specific fields to avoid overwriting voicePreference)
         session.title = title
         session.translated_title = translated_text
         print(f"[debug]{session.translated_title}")
         session.totalPages += 1
-        session.save()
+        session.save(update_fields=['title', 'translated_title', 'totalPages'])
 
         return Response(
             {
