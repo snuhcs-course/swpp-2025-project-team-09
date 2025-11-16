@@ -3,6 +3,7 @@ package com.example.storybridge_android
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withId
@@ -27,7 +28,6 @@ class LandingActivityMockTest {
 
     @Before
     fun setup() {
-        // MockK로 Mock 생성
         mockUserRepository = mockk()
         ServiceLocator.userRepository = mockUserRepository
     }
@@ -52,7 +52,6 @@ class LandingActivityMockTest {
         )
         val infoListResponse = listOf(info)
 
-        // MockK로 stub 설정
         coEvery { mockUserRepository.login(any()) } returns Response.success(loginResponse)
         coEvery { mockUserRepository.getUserInfo(any()) } returns Response.success(infoListResponse)
 
@@ -61,34 +60,48 @@ class LandingActivityMockTest {
 
         onView(withId(R.id.main)).check(matches(isDisplayed()))
 
-        // MockK로 검증
         coVerify(exactly = 1) { mockUserRepository.login(any()) }
     }
 
     @Test
     fun whenServerReturns400_ShowsLanguageSelection() = runTest {
-        // 400 에러 응답
         val errorResponse = Response.error<UserLoginResponse>(
             400,
             """{"error":"USER__INVALID_REQUEST_BODY"}""".toResponseBody("application/json".toMediaType())
         )
         val registerResponse = UserRegisterResponse("test_user_mockito", "en")
 
-        // MockK로 stub 설정
         coEvery { mockUserRepository.login(any()) } returns errorResponse
         coEvery { mockUserRepository.register(any()) } returns Response.success(registerResponse)
 
-        // Activity 실행
         scenario = ActivityScenario.launch(LandingActivity::class.java)
 
-        // 대기
         Thread.sleep(3000)
 
-        // 언어 선택 화면 확인
         onView(withId(R.id.btnEnglish)).check(matches(isDisplayed()))
 
-        // MockK로 검증
         coVerify(exactly = 1) { mockUserRepository.login(any()) }
+        coVerify(exactly = 1) { mockUserRepository.register(any()) }
+    }
+
+    @Test
+    fun clickingLanguageButton_callsRegister() = runTest {
+        val errorResponse = Response.error<UserLoginResponse>(
+            400,
+            """{"error":"USER__INVALID_REQUEST_BODY"}""".toResponseBody("application/json".toMediaType())
+        )
+
+        val registerResponse = UserRegisterResponse("mock_uid", "en")
+
+        coEvery { mockUserRepository.login(any()) } returns errorResponse
+        coEvery { mockUserRepository.register(any()) } returns Response.success(registerResponse)
+
+        scenario = ActivityScenario.launch(LandingActivity::class.java)
+        Thread.sleep(1500)
+
+        onView(withId(R.id.btnEnglish)).perform(click())
+        Thread.sleep(1000)
+
         coVerify(exactly = 1) { mockUserRepository.register(any()) }
     }
 }
