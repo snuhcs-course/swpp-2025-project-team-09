@@ -5,10 +5,10 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import com.example.storybridge_android.data.SessionRepositoryImpl
+import com.example.storybridge_android.data.SessionRepository
 
 class DecideSaveActivityViewModel(
-    private val repository: SessionRepositoryImpl
+    private val repository: SessionRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<DecideSaveUiState>(DecideSaveUiState.Idle)
@@ -26,7 +26,9 @@ class DecideSaveActivityViewModel(
             if (result.isSuccess) {
                 _state.value = DecideSaveUiState.Discarded
             } else {
-                _state.value = DecideSaveUiState.Error(result.exceptionOrNull()?.message ?: "Unknown error")
+                _state.value = DecideSaveUiState.Error(
+                    result.exceptionOrNull()?.message ?: "Unknown error"
+                )
             }
         }
     }

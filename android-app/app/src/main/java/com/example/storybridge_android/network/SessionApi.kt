@@ -41,13 +41,6 @@ interface SessionApi {
         @Query("session_id") session_id: String
     ): Call<SessionReviewResponse>
 
-    @GET("/session/reload")
-    suspend fun reloadSession(
-        @Query("user_id") userId: String,
-        @Query("started_at") startedAt: String,
-        @Query("page_index") pageIndex: Int
-    ): Response<ReloadSessionResponse>
-
     @GET("/session/reload_all")
     suspend fun reloadAllSession(
         @Query("user_id") userId: String,
@@ -116,10 +109,6 @@ data class SessionStatsResponse(
 )
 
 // 2-5. Get Session Info
-data class SessionInfoRequest(
-    val session_id: String
-)
-
 data class SessionInfoResponse(
     val session_id: String,
     val user_id: String,
@@ -131,10 +120,6 @@ data class SessionInfoResponse(
 )
 
 // 2-6. Review
-data class SessionReviewRequest(
-    val session_id: String
-)
-
 data class SessionReviewResponse(
     val session_id: String,
     val user_id: String,

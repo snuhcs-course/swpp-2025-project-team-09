@@ -9,19 +9,18 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.databinding.ActivityDecideSaveBinding
-import com.example.storybridge_android.data.SessionRepositoryImpl
 import com.example.storybridge_android.ui.main.MainActivity
 import kotlinx.coroutines.flow.collectLatest
 
 class DecideSaveActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityDecideSaveBinding
+    private lateinit var sessionId: String
 
     private val viewModel: DecideSaveActivityViewModel by viewModels {
-        DecideSaveActivityViewModelFactory(SessionRepositoryImpl())
+        DecideSaveActivityViewModelFactory()
     }
 
-    private lateinit var sessionId: String
     private var decisionMade = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -82,6 +81,22 @@ class DecideSaveActivity : AppCompatActivity() {
         }
     }
 
+    private fun setButtonSelected(selected: View) {
+        binding.btnSave.isSelected = false
+        binding.btnDiscard.isSelected = false
+        selected.isSelected = true
+    }
+
+    private fun disableButtons() {
+        binding.btnSave.isEnabled = false
+        binding.btnDiscard.isEnabled = false
+    }
+
+    private fun enableButtons() {
+        binding.btnSave.isEnabled = true
+        binding.btnDiscard.isEnabled = true
+    }
+
     private fun showMainButton() {
         binding.mainButton.visibility = View.VISIBLE
         binding.mainButton.isEnabled = true
@@ -92,4 +107,3 @@ class DecideSaveActivity : AppCompatActivity() {
         finish()
     }
 }
-
