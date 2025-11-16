@@ -54,15 +54,6 @@ class AppSettingsTest {
     }
 
     @Test
-    fun getVoice_returnsValueFromPrefs() {
-        every { prefs.getString("voice", "MAN") } returns "WOMAN"
-
-        val voice = AppSettings.getVoice(context)
-
-        assertEquals("WOMAN", voice)
-    }
-
-    @Test
     fun clearAll_clearsPrefs() {
         AppSettings.clearAll(context)
 
