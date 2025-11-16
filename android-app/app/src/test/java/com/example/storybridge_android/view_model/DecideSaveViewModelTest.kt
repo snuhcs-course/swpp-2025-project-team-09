@@ -15,17 +15,17 @@ import org.junit.Before
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class DecideSaveViewModelTest {
+class DecideSaveActivityViewModelTest {
 
     private lateinit var repo: SessionRepository
-    private lateinit var viewModel: DecideSaveViewModel
+    private lateinit var viewModel: DecideSaveActivityViewModel
     private val dispatcher = StandardTestDispatcher()
 
     @Before
     fun setup() {
         Dispatchers.setMain(dispatcher)
         repo = mockk()
-        viewModel = DecideSaveViewModel(repo)
+        viewModel = DecideSaveActivityViewModel(repo)
     }
 
     @Test
@@ -34,9 +34,9 @@ class DecideSaveViewModelTest {
     }
 
     @Test
-    fun save_sets_state_to_success() = runTest {
-        viewModel.save()
-        assertEquals(DecideSaveUiState.SaveSuccess, viewModel.state.value)
+    fun save_sets_state_to_saved() = runTest {
+        viewModel.saveSession()
+        assertEquals(DecideSaveUiState.Saved, viewModel.state.value)
     }
 
     @Test
@@ -44,23 +44,22 @@ class DecideSaveViewModelTest {
         val res = DiscardSessionResponse("s1")
         coEvery { repo.discardSession("s1") } returns Result.success(res)
 
-        viewModel.discard("s1")
+        viewModel.discardSession("s1")
         advanceUntilIdle()
 
-        assertEquals(DecideSaveUiState.DiscardSuccess, viewModel.state.value)
+        assertEquals(DecideSaveUiState.Discarded, viewModel.state.value)
     }
 
     @Test
     fun discard_failure_updates_state_with_error() = runTest {
         coEvery { repo.discardSession("s1") } returns Result.failure(Exception("fail"))
 
-        viewModel.discard("s1")
+        viewModel.discardSession("s1")
         advanceUntilIdle()
 
         assertEquals(
-            DecideSaveUiState.DiscardError("fail"),
+            DecideSaveUiState.Error("fail"),
             viewModel.state.value
         )
     }
-
 }

@@ -9,19 +9,18 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.databinding.ActivityDecideSaveBinding
-import com.example.storybridge_android.data.SessionRepositoryImpl
 import com.example.storybridge_android.ui.main.MainActivity
 import kotlinx.coroutines.flow.collectLatest
 
 class DecideSaveActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityDecideSaveBinding
+    private lateinit var sessionId: String
 
     private val viewModel: DecideSaveActivityViewModel by viewModels {
-        DecideSaveActivityViewModelFactory(SessionRepositoryImpl())
+        DecideSaveActivityViewModelFactory()
     }
 
-    private lateinit var sessionId: String
     private var decisionMade = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
