@@ -1,5 +1,7 @@
 package com.example.storybridge_android.ui.main
 
+import android.app.Activity.RESULT_OK
+import android.app.Instrumentation
 import android.content.Intent
 import android.provider.Settings
 import androidx.test.core.app.ActivityScenario
@@ -118,5 +120,37 @@ class MainActivityMockTest {
         Thread.sleep(800)
 
         onView(withId(R.id.emptyContainer)).check(matches(isDisplayed()))
+    }
+
+    @Test
+    fun settingsLauncher_receivesResultOk() = runTest {
+        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns retrofit2.Response.success(emptyList())
+
+        val intent = Intent(ApplicationProvider.getApplicationContext(), MainActivity::class.java)
+        val scenario = ActivityScenario.launch<MainActivity>(intent)
+
+        Thread.sleep(500)
+
+        Intents.intending(
+            IntentMatchers.hasComponent("com.example.storybridge_android.ui.setting.SettingActivity")
+        ).respondWith(
+            Instrumentation.ActivityResult(RESULT_OK, Intent())
+        )
+
+        // WHEN: Settings 버튼 클릭
+        onView(withId(R.id.navbarSettingsButton)).perform(click())
+
+        Thread.sleep(1000)
+
+        // THEN: SettingActivity가 실행되었는지 확인
+        Intents.intended(
+            IntentMatchers.hasComponent("com.example.storybridge_android.ui.setting.SettingActivity")
+        )
+
+        scenario.onActivity { activity ->
+            assert(!activity.isFinishing) { "MainActivity should still be running" }
+        }
+
+        scenario.close()
     }
 }

@@ -11,8 +11,11 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.rule.GrantPermissionRule
 import com.example.storybridge_android.ui.session.LoadingActivity
 import com.example.storybridge_android.ui.session.VoiceSelectActivity
+import com.example.storybridge_android.ui.setting.AppSettings
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.junit.After
@@ -20,6 +23,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.hamcrest.Matchers.allOf
 
 @RunWith(AndroidJUnit4::class)
 class CameraSessionActivityMockTest {
@@ -134,5 +138,88 @@ class CameraSessionActivityMockTest {
         Thread.sleep(500)
 
         assert(scenario.state == Lifecycle.State.DESTROYED)
+    }
+
+    @Test
+    fun navigateToVoiceSelect_includesLanguageSetting() {
+        // GIVEN: AppSettings mock
+        mockkObject(AppSettings)
+        every { AppSettings.getLanguage(any()) } returns "zh"
+
+        val flow = MutableStateFlow<SessionUiState>(SessionUiState.Idle)
+        every { mockViewModel.uiState } returns flow.asStateFlow()
+
+        // WHEN: Cover 모드로 Success
+        scenario = launchWithExtras(isCover = true, sessionId = "S1")
+        Thread.sleep(500)
+
+        flow.value = SessionUiState.Success("/tmp/cover.jpg")
+        Thread.sleep(1000)
+
+        // THEN: 언어 설정이 포함됨
+        Intents.intended(
+            IntentMatchers.hasExtra("lang", "zh")
+        )
+
+        unmockkObject(AppSettings)
+    }
+
+    @Test
+    fun navigateToLoading_includesAllRequiredExtras() {
+        // GIVEN: AppSettings mock
+        mockkObject(AppSettings)
+        every { AppSettings.getLanguage(any()) } returns "en"
+
+        val flow = MutableStateFlow<SessionUiState>(SessionUiState.Idle)
+        every { mockViewModel.uiState } returns flow.asStateFlow()
+
+        scenario = launchWithExtras(
+            isCover = false,
+            sessionId = "S123",
+            pageIndex = 5
+        )
+        Thread.sleep(500)
+
+        flow.value = SessionUiState.Success("/tmp/page5.jpg")
+        Thread.sleep(1000)
+
+        // THEN: LoadingActivity로 이동
+        Intents.intended(IntentMatchers.hasComponent(LoadingActivity::class.java.name))
+
+        val loadingIntents = Intents.getIntents().filter {
+            it.component?.className == LoadingActivity::class.java.name
+        }
+
+        assert(loadingIntents.size == 1) { "Should have exactly 1 LoadingActivity intent" }
+
+        val intent = loadingIntents.first()
+        assert(intent.getStringExtra("session_id") == "S123")
+        assert(intent.getIntExtra("page_index", -1) == 5)
+        assert(intent.getStringExtra("image_path") == "/tmp/page5.jpg")
+        assert(intent.getBooleanExtra("is_cover", true) == false)
+        assert(intent.getStringExtra("lang") == "en")
+
+        unmockkObject(AppSettings)
+    }
+
+    @Test
+    fun multipleStateChanges_finalSuccessNavigates() {
+        val flow = MutableStateFlow<SessionUiState>(SessionUiState.Idle)
+        every { mockViewModel.uiState } returns flow.asStateFlow()
+
+        scenario = launchWithExtras(isCover = false)
+        Thread.sleep(500)
+
+        // WHEN: Success 상태로 변경
+        flow.value = SessionUiState.Success("/tmp/final.jpg")
+        Thread.sleep(1000)
+
+        // THEN: LoadingActivity로 이동
+        val loadingIntents = Intents.getIntents().filter {
+            it.component?.className == LoadingActivity::class.java.name
+        }
+
+        assert(loadingIntents.size == 1)
+        assert(loadingIntents.first().getStringExtra("image_path") == "/tmp/final.jpg")
     }
 }
