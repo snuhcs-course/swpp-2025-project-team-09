@@ -38,22 +38,36 @@ SESSION_MODEL = "tests.unit.models.test_session_model"
 PAGE_MODEL = "tests.unit.models.test_page_model"
 BB_MODEL = "tests.unit.models.test_BB_model"
 
+# Integration tests
+INTEGRATION = "tests.integration"
+INTEGRATION_MODELS = "tests.integration.models"
+PAGE_BB_INTEGRATION = "tests.integration.models.test_page_bb_integration"
+USER_SESSION_INTEGRATION = "tests.integration.models.test_user_session_integration"
+SESSION_PAGE_INTEGRATION = "tests.integration.models.test_session_page_integration"
+
 TESTS = {
     "1": ("All tests", "tests"),
     "2": ("Unit tests", "tests.unit"),
-    "3": ("User controller", USER),
-    "4": ("Session controller", SESSION),
-    "5": ("Process controller", PROCESS),
-    "6": ("Page controller", PAGE),
-    "7": ("User model", USER_MODEL),
-    "8": ("Session model", SESSION_MODEL),
-    "9": ("Page model", PAGE_MODEL),
-    "10": ("BB model", BB_MODEL),
+    "3": ("Integration tests", INTEGRATION),
+    "4": ("User controller", USER),
+    "5": ("Session controller", SESSION),
+    "6": ("Process controller", PROCESS),
+    "7": ("Page controller", PAGE),
+    "8": ("User model", USER_MODEL),
+    "9": ("Session model", SESSION_MODEL),
+    "10": ("Page model", PAGE_MODEL),
+    "11": ("BB model", BB_MODEL),
+    "12": ("Integration models (all)", INTEGRATION_MODELS),
+    "13": ("Page-BB integration", PAGE_BB_INTEGRATION),
+    "14": ("User-Session integration", USER_SESSION_INTEGRATION),
+    "15": ("Session-Page integration", SESSION_PAGE_INTEGRATION),
 }
 
 CLI_ARGS = {
     "--all": "tests",
     "--unit": "tests.unit",
+    "--integration": INTEGRATION,
+    "--integration-models": INTEGRATION_MODELS,
     "--user": USER,
     "--session": SESSION,
     "--process": PROCESS,
@@ -62,6 +76,9 @@ CLI_ARGS = {
     "--session-model": SESSION_MODEL,
     "--page-model": PAGE_MODEL,
     "--bb-model": BB_MODEL,
+    "--page-bb-integration": PAGE_BB_INTEGRATION,
+    "--user-session-integration": USER_SESSION_INTEGRATION,
+    "--session-page-integration": SESSION_PAGE_INTEGRATION,
 }
 
 

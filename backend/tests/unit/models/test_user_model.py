@@ -72,9 +72,7 @@ class TestUserModel(TestCase):
     def test_07_device_info_with_unicode_characters(self):
         """07: Test device_info supports international characters"""
         unicode_device = "デバイス-기기-设备"
-        user = User.objects.create(
-            device_info=unicode_device, language_preference="ja"
-        )
+        user = User.objects.create(device_info=unicode_device, language_preference="ja")
 
         self.assertEqual(user.device_info, unicode_device)
 

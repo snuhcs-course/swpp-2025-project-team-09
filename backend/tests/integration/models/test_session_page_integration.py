@@ -157,8 +157,7 @@ class TestSessionPageIntegration(TestCase):
     def test_13_bulk_page_creation(self):
         """13: Bulk creating pages works and associates them with the correct session"""
         pages_to_create = [
-            Page(session=self.test_session, img_url=f"p{i}.jpg")
-            for i in range(10)
+            Page(session=self.test_session, img_url=f"p{i}.jpg") for i in range(10)
         ]
         Page.objects.bulk_create(pages_to_create)
 

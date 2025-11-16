@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('apis', '0005_remove_session_cover_tts_female_and_more'),
+        ("apis", "0005_remove_session_cover_tts_female_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='session',
-            name='totalWords',
+            model_name="session",
+            name="totalWords",
             field=models.IntegerField(default=0),
         ),
     ]

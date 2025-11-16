@@ -65,8 +65,17 @@ class TestPageBBIntegration(TestCase):
     def test_03_add_bb_single_box(self):
         """Add a single BB using addBB helper"""
         bbox_list = [
-            {"text": "Once when I was six years old", "x1": 50, "y1": 100, "x2": 250, "y2": 120, 
-             "x3": 250, "y3": 120, "x4": 50, "y4": 120}
+            {
+                "text": "Once when I was six years old",
+                "x1": 50,
+                "y1": 100,
+                "x2": 250,
+                "y2": 120,
+                "x3": 250,
+                "y3": 120,
+                "x4": 50,
+                "y4": 120,
+            }
         ]
         translated_list = ["내가 여섯 살이었을 때"]
         audio_list = ["audio_base64_data_1"]
@@ -81,12 +90,39 @@ class TestPageBBIntegration(TestCase):
     def test_04_add_bb_multiple_boxes(self):
         """Add multiple BBs at once and verify page reference"""
         bbox_list = [
-            {"text": "I saw a magnificent picture", "x1": 10, "y1": 10, "x2": 100, "y2": 30, 
-             "x3": 100, "y3": 30, "x4": 10, "y4": 30},
-            {"text": "in a book called", "x1": 10, "y1": 40, "x2": 100, "y2": 60, 
-             "x3": 100, "y3": 60, "x4": 10, "y4": 60},
-            {"text": "True Stories from Nature", "x1": 10, "y1": 70, "x2": 100, "y2": 90, 
-             "x3": 100, "y3": 90, "x4": 10, "y4": 90},
+            {
+                "text": "I saw a magnificent picture",
+                "x1": 10,
+                "y1": 10,
+                "x2": 100,
+                "y2": 30,
+                "x3": 100,
+                "y3": 30,
+                "x4": 10,
+                "y4": 30,
+            },
+            {
+                "text": "in a book called",
+                "x1": 10,
+                "y1": 40,
+                "x2": 100,
+                "y2": 60,
+                "x3": 100,
+                "y3": 60,
+                "x4": 10,
+                "y4": 60,
+            },
+            {
+                "text": "True Stories from Nature",
+                "x1": 10,
+                "y1": 70,
+                "x2": 100,
+                "y2": 90,
+                "x3": 100,
+                "y3": 90,
+                "x4": 10,
+                "y4": 90,
+            },
         ]
         translated_list = ["멋진 그림을 보았다", "책에서", "자연의 진실한 이야기"]
         audio_list = ["audio1", "audio2", "audio3"]
@@ -100,8 +136,28 @@ class TestPageBBIntegration(TestCase):
     def test_05_add_bb_with_missing_translations(self):
         """Add BBs with fewer translations than boxes"""
         bbox_list = [
-            {"text": "Text 1", "x1": 0, "y1": 0, "x2": 10, "y2": 20, "x3": 10, "y3": 20, "x4": 0, "y4": 20},
-            {"text": "Text 2", "x1": 20, "y1": 0, "x2": 30, "y2": 20, "x3": 30, "y3": 20, "x4": 20, "y4": 20},
+            {
+                "text": "Text 1",
+                "x1": 0,
+                "y1": 0,
+                "x2": 10,
+                "y2": 20,
+                "x3": 10,
+                "y3": 20,
+                "x4": 0,
+                "y4": 20,
+            },
+            {
+                "text": "Text 2",
+                "x1": 20,
+                "y1": 0,
+                "x2": 30,
+                "y2": 20,
+                "x3": 30,
+                "y3": 20,
+                "x4": 20,
+                "y4": 20,
+            },
         ]
         translated_list = ["Translation 1"]  # only one translation
         audio_list = []
@@ -117,8 +173,28 @@ class TestPageBBIntegration(TestCase):
     def test_06_add_bb_with_missing_audio(self):
         """Add BBs with fewer audio entries than boxes"""
         bbox_list = [
-            {"text": "Hello", "x1": 0, "y1": 0, "x2": 10, "y2": 20, "x3": 10, "y3": 20, "x4": 0, "y4": 20},
-            {"text": "World", "x1": 20, "y1": 0, "x2": 30, "y2": 20, "x3": 30, "y3": 20, "x4": 20, "y4": 20},
+            {
+                "text": "Hello",
+                "x1": 0,
+                "y1": 0,
+                "x2": 10,
+                "y2": 20,
+                "x3": 10,
+                "y3": 20,
+                "x4": 0,
+                "y4": 20,
+            },
+            {
+                "text": "World",
+                "x1": 20,
+                "y1": 0,
+                "x2": 30,
+                "y2": 20,
+                "x3": 30,
+                "y3": 20,
+                "x4": 20,
+                "y4": 20,
+            },
         ]
         translated_list = ["안녕", "세상"]
         audio_list = ["audio1"]
@@ -134,14 +210,18 @@ class TestPageBBIntegration(TestCase):
 
     def test_07_bb_page_relationship(self):
         """BB correctly references its page"""
-        bb = BB.objects.create(page=self.test_page, original_text="Relationship test", coordinates={})
+        bb = BB.objects.create(
+            page=self.test_page, original_text="Relationship test", coordinates={}
+        )
         self.assertEqual(bb.page, self.test_page)
         self.assertIn(bb, self.test_page.bbs.all())
 
     def test_08_cascade_delete_page_deletes_bbs(self):
         """Deleting a page cascades to its BBs"""
         for i in range(3):
-            BB.objects.create(page=self.test_page, original_text=f"BB {i}", coordinates={})
+            BB.objects.create(
+                page=self.test_page, original_text=f"BB {i}", coordinates={}
+            )
 
         page_id = self.test_page.id
         self.test_page.delete()
@@ -161,12 +241,57 @@ class TestPageBBIntegration(TestCase):
         page2 = Page.objects.create(session=session2, img_url="pages/1984_page1.jpg")
 
         # Add BBs to each page
-        self.test_page.addBB([{"text": "Page1 BB1", "x1":0,"y1":0,"x2":10,"y2":10,"x3":10,"y3":10,"x4":0,"y4":10}],
-                             ["Translation1"], ["audio1"])
-        self.test_page.addBB([{"text": "Page1 BB2", "x1":0,"y1":0,"x2":10,"y2":10,"x3":10,"y3":10,"x4":0,"y4":10}],
-                             ["Translation2"], ["audio2"])
-        page2.addBB([{"text": "Page2 BB1", "x1":0,"y1":0,"x2":10,"y2":10,"x3":10,"y3":10,"x4":0,"y4":10}],
-                    ["Translation3"], ["audio3"])
+        self.test_page.addBB(
+            [
+                {
+                    "text": "Page1 BB1",
+                    "x1": 0,
+                    "y1": 0,
+                    "x2": 10,
+                    "y2": 10,
+                    "x3": 10,
+                    "y3": 10,
+                    "x4": 0,
+                    "y4": 10,
+                }
+            ],
+            ["Translation1"],
+            ["audio1"],
+        )
+        self.test_page.addBB(
+            [
+                {
+                    "text": "Page1 BB2",
+                    "x1": 0,
+                    "y1": 0,
+                    "x2": 10,
+                    "y2": 10,
+                    "x3": 10,
+                    "y3": 10,
+                    "x4": 0,
+                    "y4": 10,
+                }
+            ],
+            ["Translation2"],
+            ["audio2"],
+        )
+        page2.addBB(
+            [
+                {
+                    "text": "Page2 BB1",
+                    "x1": 0,
+                    "y1": 0,
+                    "x2": 10,
+                    "y2": 10,
+                    "x3": 10,
+                    "y3": 10,
+                    "x4": 0,
+                    "y4": 10,
+                }
+            ],
+            ["Translation3"],
+            ["audio3"],
+        )
 
         self.assertEqual(self.test_page.getBBs().count(), 2)
         self.assertEqual(page2.getBBs().count(), 1)
@@ -175,7 +300,9 @@ class TestPageBBIntegration(TestCase):
         """Query BBs filtered by page"""
         user3 = User.objects.create(device_info="test-user3", language_preference="en")
         session3 = Session.objects.create(user=user3, title="Other Book")
-        other_page = Page.objects.create(session=session3, img_url="pages/other_page.jpg")
+        other_page = Page.objects.create(
+            session=session3, img_url="pages/other_page.jpg"
+        )
 
         BB.objects.create(page=self.test_page, original_text="Main BB1", coordinates={})
         BB.objects.create(page=self.test_page, original_text="Main BB2", coordinates={})

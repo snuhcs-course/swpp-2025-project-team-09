@@ -41,7 +41,9 @@ class TestPageModel(TestCase):
             page.translation_text,
             "Mr. and Mrs. Dursley, of number four, Privet Drive...",
         )
-        self.assertEqual(page.bbox_json, {"boxes": [{"x": 10, "y": 20, "w": 100, "h": 50}]})
+        self.assertEqual(
+            page.bbox_json, {"boxes": [{"x": 10, "y": 20, "w": 100, "h": 50}]}
+        )
         self.assertIsNotNone(page.created_at)
 
     def test_02_create_page_with_minimal_fields(self):
