@@ -391,6 +391,7 @@ class SessionReloadView(APIView):
                     status=status.HTTP_404_NOT_FOUND,
                 )
             session.started_at = timezone.now()
+            session.save(update_fields=["started_at"])
             pages = Page.objects.filter(session=session).order_by("created_at")
             if not pages.exists():
                 return Response(
@@ -467,6 +468,7 @@ class SessionReloadAllView(APIView):
                     status=status.HTTP_404_NOT_FOUND,
                 )
             session.started_at = timezone.now()
+            session.save(update_fields=["started_at"])
             pages_data = []
             for page in session.pages.all().order_by("id"):
                 page_info = {
