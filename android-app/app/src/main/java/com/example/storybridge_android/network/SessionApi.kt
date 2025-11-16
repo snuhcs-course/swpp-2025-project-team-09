@@ -40,6 +40,13 @@ interface SessionApi {
     fun getSessionReview(
         @Query("session_id") session_id: String
     ): Call<SessionReviewResponse>
+    
+    @GET("/session/reload")
+    suspend fun reloadSession(
+        @Query("user_id") userId: String,
+        @Query("started_at") startedAt: String,
+        @Query("page_index") pageIndex: Int
+    ): Response<ReloadSessionResponse>
 
     @GET("/session/reload_all")
     suspend fun reloadAllSession(

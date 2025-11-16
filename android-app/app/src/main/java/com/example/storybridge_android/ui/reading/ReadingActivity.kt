@@ -43,6 +43,10 @@ import kotlin.math.max
 
 class ReadingActivity : AppCompatActivity() {
 
+    private lateinit var exitPanel: View
+    private lateinit var exitConfirmBtn: Button
+    private lateinit var exitCancelBtn: Button
+
     private lateinit var sessionId: String
     private var pageIndex = 0
     private var totalPages = 0
@@ -98,22 +102,16 @@ class ReadingActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_reading)
 
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                AlertDialog.Builder(this@ReadingActivity)
-                    .setTitle(getString(R.string.exit_dialog_title))
-                    .setMessage(getString(R.string.exit_dialog_message))
-                    .setPositiveButton(getString(R.string.exit_dialog_confirm)) { _, _ ->
-                        navigateToFinish()
-                    }
-                    .setNegativeButton(getString(R.string.exit_dialog_cancel), null)
-                    .show()
-            }
-        })
 
         initViews()
         initUiState()
         initListeners()
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                exitPanel.visibility = View.VISIBLE
+            }
+        })
 
         sessionId = intent.getStringExtra("session_id") ?: ""
         pageIndex = intent.getIntExtra("page_index", 0)
@@ -144,6 +142,9 @@ class ReadingActivity : AppCompatActivity() {
             layoutManager = LinearLayoutManager(this@ReadingActivity)
             adapter = thumbnailAdapter
         }
+        exitPanel = findViewById(R.id.exitPanelInclude)
+        exitConfirmBtn = findViewById(R.id.exitConfirmBtn)
+        exitCancelBtn = findViewById(R.id.exitCancelBtn)
     }
 
     private fun initUiState() {
@@ -175,6 +176,15 @@ class ReadingActivity : AppCompatActivity() {
 
         // Main layout listener for toggling UI
         mainLayout.setOnClickListener { toggleUI() }
+
+        exitConfirmBtn.setOnClickListener {
+            navigateToFinish()
+        }
+
+        exitCancelBtn.setOnClickListener {
+            exitPanel.visibility = View.GONE
+        }
+
     }
 
     private fun observeViewModel() {

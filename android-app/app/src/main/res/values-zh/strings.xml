@@ -59,4 +59,19 @@
     <string name="exit_dialog_cancel">取消</string>
     <string name="exit_loading">请等待加载完成。</string>
 
+    <!-- 단위 -->
+    <string name="unit_minute">分钟</string>
+    <string name="unit_minutes">分钟</string>
+    <string name="unit_second">秒</string>
+    <string name="unit_seconds">秒</string>
+    <string name="unit_page">页</string>
+    <string name="unit_pages">页</string>
+
+    <!-- 문장 구성 -->
+    <string name="summary_text">你阅读了 %1$d 个单词和 %2$s，花费了 %3$s。太棒了！</string>
+
+    <!-- Exit dialog text (Chinese) -->
+    <string name="exit_title">你确定要退出吗？</string>
+    <string name="exit_confirm">退出</string>
+    <string name="exit_cancel">取消</string>
 </resources>

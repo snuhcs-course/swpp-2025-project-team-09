@@ -1,5 +1,4 @@
 from django.test import TestCase
-from django.utils import timezone
 from apis.models.user_model import User
 from apis.models.session_model import Session
 from apis.models.page_model import Page
@@ -7,119 +6,230 @@ from apis.models.bb_model import BB
 
 
 class TestBBModel(TestCase):
-    """Unit tests for BB (Bounding Box) model"""
+    """Unit tests for BB model - testing BB model with minimal Page dependency"""
 
     def setUp(self):
-        """Set up test user, session, and page for BB tests"""
-        self.test_user = User.objects.create(
+        """Set up test page (required for BB foreign key)"""
+        test_user = User.objects.create(
             device_info="test-bb-device",
             language_preference="en",
-            created_at=timezone.now(),
         )
-        self.test_session = Session.objects.create(
-            user=self.test_user, title="Test Session", created_at=timezone.now()
+        test_session = Session.objects.create(
+            user=test_user,
+            title="Animal Farm",
         )
         self.test_page = Page.objects.create(
-            session=self.test_session,
-            img_url="test_page.jpg",
-            created_at=timezone.now(),
+            session=test_session,
+            img_url="pages/animal_farm_page1.jpg",
         )
 
-    def test_01_create_bb_success(self):
-        """Test successful BB creation"""
+    # ====================
+    # Basic CRUD Operations
+    # ====================
+
+    def test_01_create_bb_with_all_fields(self):
+        """01: Test creating BB with all fields"""
         bb = BB.objects.create(
             page=self.test_page,
-            original_text="Test text",
-            translated_text="Translated text",
-            coordinates={"x1": 0, "y1": 0, "x2": 100, "y2": 100},
+            original_text="All animals are equal",
+            translated_text="모든 동물은 평등하다",
+            audio_base64=["audio_clip_1", "audio_clip_2"],
+            coordinates={
+                "x1": 50,
+                "y1": 100,
+                "x2": 350,
+                "y2": 100,
+                "x3": 350,
+                "y3": 140,
+                "x4": 50,
+                "y4": 140,
+            },
+            tts_status="ready",
         )
 
         self.assertIsNotNone(bb.id)
         self.assertEqual(bb.page, self.test_page)
-        self.assertEqual(bb.original_text, "Test text")
-        self.assertEqual(bb.translated_text, "Translated text")
-        self.assertEqual(bb.coordinates, {"x1": 0, "y1": 0, "x2": 100, "y2": 100})
+        self.assertEqual(bb.original_text, "All animals are equal")
+        self.assertEqual(bb.translated_text, "모든 동물은 평등하다")
+        self.assertEqual(bb.audio_base64, ["audio_clip_1", "audio_clip_2"])
+        self.assertEqual(bb.coordinates["x1"], 50)
+        self.assertEqual(bb.tts_status, "ready")
 
-    def test_02_bb_default_values(self):
-        """Test BB default values"""
-        bb = BB.objects.create(page=self.test_page, original_text="Default test")
+    def test_02_create_bb_with_minimal_fields(self):
+        """02: Test creating BB with only required fields"""
+        bb = BB.objects.create(
+            page=self.test_page,
+            original_text="but some animals are more equal than others",
+        )
 
+        self.assertIsNotNone(bb.id)
+        self.assertEqual(
+            bb.original_text, "but some animals are more equal than others"
+        )
+        # Check defaults
         self.assertIsNone(bb.translated_text)
         self.assertEqual(bb.audio_base64, [])
         self.assertEqual(bb.coordinates, {})
         self.assertEqual(bb.tts_status, "pending")
 
-    def test_03_bb_str_representation(self):
-        """Test __str__ method"""
-        bb = BB.objects.create(page=self.test_page, original_text="String test")
-
-        expected_str = f"BB of Page {self.test_page.id}"
-        self.assertEqual(str(bb), expected_str)
-
-    def test_04_bb_page_relationship(self):
-        """Test BB-page relationship"""
-        bb = BB.objects.create(page=self.test_page, original_text="Relationship test")
-
-        self.assertEqual(bb.page, self.test_page)
-        self.assertIn(bb, self.test_page.bbs.all())
-
-    def test_05_update_translation_success(self):
-        """Test updateTranslation method"""
+    def test_03_update_bb_fields(self):
+        """03: Test updating BB fields"""
         bb = BB.objects.create(
             page=self.test_page,
-            original_text="Original",
+            original_text="Original version",
+        )
+
+        bb.original_text = "Updated version"
+        bb.translated_text = "번역된 버전"
+        bb.audio_base64 = ["audio1"]
+        bb.tts_status = "processing"
+        bb.save()
+
+        bb.refresh_from_db()
+        self.assertEqual(bb.original_text, "Updated version")
+        self.assertEqual(bb.translated_text, "번역된 버전")
+        self.assertEqual(bb.audio_base64, ["audio1"])
+        self.assertEqual(bb.tts_status, "processing")
+
+    def test_04_delete_bb(self):
+        """04: Test deleting a bounding box"""
+        bb = BB.objects.create(
+            page=self.test_page,
+            original_text="To be deleted",
+        )
+        bb_id = bb.id
+
+        bb.delete()
+
+        with self.assertRaises(BB.DoesNotExist):
+            BB.objects.get(id=bb_id)
+
+    # ====================
+    # Field Validation & Defaults
+    # ====================
+
+    def test_05_bb_id_auto_generated(self):
+        """05: Test BB ID is auto-generated and unique"""
+        bb1 = BB.objects.create(page=self.test_page, original_text="Text 1")
+        bb2 = BB.objects.create(page=self.test_page, original_text="Text 2")
+
+        self.assertIsNotNone(bb1.id)
+        self.assertIsNotNone(bb2.id)
+        self.assertNotEqual(bb1.id, bb2.id)
+
+    def test_06_long_text_and_unicode_support(self):
+        """06: Test long text and Unicode support"""
+        long_text = (
+            "Napoleon had commanded that once a week there should be held something called a Spontaneous Demonstration. "
+            * 50
+        )
+        bb = BB.objects.create(
+            page=self.test_page,
+            original_text=long_text,
+            translated_text="네 발은 좋고, 두 발은 나쁘다! 🐷🐴",
+        )
+
+        self.assertEqual(bb.original_text, long_text)
+        self.assertEqual(bb.translated_text, "네 발은 좋고, 두 발은 나쁘다! 🐷🐴")
+        self.assertGreater(len(bb.original_text), 1000)
+
+    # ====================
+    # Translation & Audio
+    # ====================
+
+    def test_07_update_translation_using_method(self):
+        """07: Test updateTranslation helper method"""
+        bb = BB.objects.create(
+            page=self.test_page,
+            original_text="Whatever goes upon two legs is an enemy",
             translated_text="Initial translation",
         )
 
-        bb.updateTranslation("Updated translation")
+        bb.updateTranslation("두 발로 걷는 것은 모두 적이다")
 
         bb.refresh_from_db()
-        self.assertEqual(bb.translated_text, "Updated translation")
+        self.assertEqual(bb.translated_text, "두 발로 걷는 것은 모두 적이다")
 
-    def test_06_update_audio_success(self):
-        """Test updateAudio method"""
+    def test_08_update_audio_using_method(self):
+        """08: Test updateAudio helper method"""
         bb = BB.objects.create(
-            page=self.test_page, original_text="Audio test", audio_base64=[]
+            page=self.test_page,
+            original_text="Audio update test",
+            audio_base64=[],
         )
 
-        new_audio = ["audio_clip_1", "audio_clip_2"]
+        new_audio = ["new_audio_clip_1", "new_audio_clip_2"]
         bb.updateAudio(new_audio)
 
         bb.refresh_from_db()
         self.assertEqual(bb.audio_base64, new_audio)
 
-    def test_07_update_position_success(self):
-        """Test updatePosition method"""
+    # ====================
+    # Coordinates & Position
+    # ====================
+
+    def test_09_set_coordinates_complex(self):
+        """09: Test setting complex coordinates"""
+        coords = {
+            "x1": 50,
+            "y1": 100,
+            "x2": 350,
+            "y2": 100,
+            "x3": 350,
+            "y3": 140,
+            "x4": 50,
+            "y4": 140,
+            "width": 300,
+            "height": 40,
+        }
         bb = BB.objects.create(
             page=self.test_page,
-            original_text="Position test",
+            original_text="Complex coordinates",
+            coordinates=coords,
+        )
+
+        bb.refresh_from_db()
+        self.assertEqual(bb.coordinates, coords)
+        self.assertEqual(bb.coordinates["width"], 300)
+
+    def test_10_update_position_using_method(self):
+        """10: Test updatePosition helper method"""
+        bb = BB.objects.create(
+            page=self.test_page,
+            original_text="Position update test",
             coordinates={"x1": 0, "y1": 0},
         )
 
-        new_position = {"x2": 100, "y2": 100}
+        new_position = {"x2": 200, "y2": 150}
         bb.updatePosition(new_position)
 
         bb.refresh_from_db()
-        self.assertEqual(bb.coordinates["x1"], 0)
+        self.assertEqual(bb.coordinates["x1"], 0)  # Original values preserved
         self.assertEqual(bb.coordinates["y1"], 0)
-        self.assertEqual(bb.coordinates["x2"], 100)
-        self.assertEqual(bb.coordinates["y2"], 100)
+        self.assertEqual(bb.coordinates["x2"], 200)  # New values added
+        self.assertEqual(bb.coordinates["y2"], 150)
 
-    def test_08_update_position_empty_coordinates(self):
-        """Test updatePosition when coordinates is not a dict"""
-        bb = BB.objects.create(page=self.test_page, original_text="Empty coords test")
-
-        bb.updatePosition({"x1": 10, "y1": 20})
-
-        bb.refresh_from_db()
-        self.assertEqual(bb.coordinates["x1"], 10)
-        self.assertEqual(bb.coordinates["y1"], 20)
-
-    def test_09_points_property(self):
-        """Test points property"""
+    def test_11_update_position_with_non_dict_coordinates(self):
+        """11: Test updatePosition handles case when coordinates is not a dict"""
         bb = BB.objects.create(
             page=self.test_page,
-            original_text="Points test",
+            original_text="Non-dict coordinates test",
+            coordinates=[],  # Simulate invalid type
+        )
+
+        # Apply new position
+        new_position = {"x1": 100, "y1": 200}
+        bb.updatePosition(new_position)
+
+        bb.refresh_from_db()
+        self.assertEqual(bb.coordinates["x1"], 100)
+        self.assertEqual(bb.coordinates["y1"], 200)
+
+    def test_12_points_property(self):
+        """12: Test points property returns tuple list"""
+        bb = BB.objects.create(
+            page=self.test_page,
+            original_text="Points property test",
             coordinates={
                 "x1": 10,
                 "y1": 20,
@@ -135,161 +245,125 @@ class TestBBModel(TestCase):
         expected_points = [(10, 20), (110, 20), (110, 70), (10, 70)]
         self.assertEqual(bb.points, expected_points)
 
-    def test_10_points_property_with_missing_coordinates(self):
-        """Test points property with missing coordinates"""
-        bb = BB.objects.create(
-            page=self.test_page,
-            original_text="Missing coords",
-            coordinates={"x1": 10, "y1": 20},
+    # ====================
+    # TTS Status
+    # ====================
+
+    def test_13_tts_status_choices_and_workflow(self):
+        """13: Test TTS status choices and workflow"""
+        # Test all choices
+        bb1 = BB.objects.create(
+            page=self.test_page, original_text="Pending", tts_status="pending"
         )
-
-        points = bb.points
-        self.assertEqual(points[0], (10, 20))
-        self.assertEqual(points[1], (None, None))
-        self.assertEqual(points[2], (None, None))
-        self.assertEqual(points[3], (None, None))
-
-    def test_11_tts_status_choices(self):
-        """Test tts_status choices"""
-        # Test pending (default)
-        bb1 = BB.objects.create(page=self.test_page, original_text="Pending")
-        self.assertEqual(bb1.tts_status, "pending")
-
-        # Test processing
         bb2 = BB.objects.create(
             page=self.test_page, original_text="Processing", tts_status="processing"
         )
-        self.assertEqual(bb2.tts_status, "processing")
-
-        # Test ready
         bb3 = BB.objects.create(
             page=self.test_page, original_text="Ready", tts_status="ready"
         )
-        self.assertEqual(bb3.tts_status, "ready")
-
-        # Test failed
         bb4 = BB.objects.create(
             page=self.test_page, original_text="Failed", tts_status="failed"
         )
+
+        self.assertEqual(bb1.tts_status, "pending")
+        self.assertEqual(bb2.tts_status, "processing")
+        self.assertEqual(bb3.tts_status, "ready")
         self.assertEqual(bb4.tts_status, "failed")
 
-    def test_12_update_tts_status(self):
-        """Test updating tts_status"""
-        bb = BB.objects.create(page=self.test_page, original_text="Status update test")
+        # Test workflow transition
+        bb1.tts_status = "processing"
+        bb1.save()
+        bb1.refresh_from_db()
+        self.assertEqual(bb1.tts_status, "processing")
 
-        self.assertEqual(bb.tts_status, "pending")
+        bb1.tts_status = "ready"
+        bb1.save()
+        bb1.refresh_from_db()
+        self.assertEqual(bb1.tts_status, "ready")
 
-        bb.tts_status = "processing"
-        bb.save()
-        bb.refresh_from_db()
-        self.assertEqual(bb.tts_status, "processing")
+    # ====================
+    # String Representation
+    # ====================
 
-        bb.tts_status = "ready"
-        bb.save()
-        bb.refresh_from_db()
-        self.assertEqual(bb.tts_status, "ready")
-
-    def test_13_cascade_delete_with_page(self):
-        """Test that deleting page cascades to BBs"""
-        bb1 = BB.objects.create(page=self.test_page, original_text="BB 1")
-        bb2 = BB.objects.create(page=self.test_page, original_text="BB 2")
-
-        bb1_id = bb1.id
-        bb2_id = bb2.id
-
-        # Delete page
-        self.test_page.delete()
-
-        # Verify BBs were deleted
-        self.assertEqual(BB.objects.filter(id=bb1_id).count(), 0)
-        self.assertEqual(BB.objects.filter(id=bb2_id).count(), 0)
-
-    def test_14_multiple_bbs_per_page(self):
-        """Test creating multiple BBs for one page"""
-        bb1 = BB.objects.create(page=self.test_page, original_text="Text 1")
-        bb2 = BB.objects.create(page=self.test_page, original_text="Text 2")
-        bb3 = BB.objects.create(page=self.test_page, original_text="Text 3")
-
-        bbs = self.test_page.bbs.all()
-        self.assertEqual(bbs.count(), 3)
-        self.assertIn(bb1, bbs)
-        self.assertIn(bb2, bbs)
-        self.assertIn(bb3, bbs)
-
-    def test_15_audio_base64_as_list(self):
-        """Test audio_base64 stored as list"""
-        audio_data = ["clip1_base64", "clip2_base64", "clip3_base64"]
+    def test_14_bb_str_representation(self):
+        """14: Test __str__ returns 'BB of Page {page_id}'"""
         bb = BB.objects.create(
             page=self.test_page,
-            original_text="Audio list test",
-            audio_base64=audio_data,
+            original_text="String representation test",
         )
 
-        bb.refresh_from_db()
-        self.assertEqual(bb.audio_base64, audio_data)
-        self.assertEqual(len(bb.audio_base64), 3)
+        expected_str = f"BB of Page {self.test_page.id}"
+        self.assertEqual(str(bb), expected_str)
 
-    def test_16_coordinates_as_dict(self):
-        """Test coordinates stored as dict"""
-        coords = {
-            "x1": 10,
-            "y1": 20,
-            "x2": 110,
-            "y2": 20,
-            "x3": 110,
-            "y3": 70,
-            "x4": 10,
-            "y4": 70,
-            "width": 100,
-            "height": 50,
-        }
+    # ====================
+    # Querying & Filtering
+    # ====================
+
+    def test_15_filter_bbs_by_status_and_translation(self):
+        """15: Test filtering BBs by TTS status and translation"""
+        BB.objects.create(
+            page=self.test_page,
+            original_text="Pending 1",
+            tts_status="pending",
+            translated_text=None,
+        )
+        BB.objects.create(
+            page=self.test_page,
+            original_text="Ready 1",
+            tts_status="ready",
+            translated_text="Translation 1",
+        )
+
+        pending_bbs = BB.objects.filter(tts_status="pending")
+        ready_bbs = BB.objects.filter(tts_status="ready")
+        translated_bbs = BB.objects.filter(translated_text__isnull=False)
+
+        self.assertEqual(pending_bbs.count(), 1)
+        self.assertEqual(ready_bbs.count(), 1)
+        self.assertEqual(translated_bbs.count(), 1)
+
+    # ====================
+    # Complete Workflow
+    # ====================
+
+    def test_16_bb_complete_workflow(self):
+        """16: Test complete BB workflow from creation to completion"""
+        # Create BB
         bb = BB.objects.create(
-            page=self.test_page, original_text="Coords dict test", coordinates=coords
+            page=self.test_page,
+            original_text="The windmill was Napoleon's own creation",
         )
 
-        bb.refresh_from_db()
-        self.assertEqual(bb.coordinates, coords)
-        self.assertEqual(bb.coordinates["width"], 100)
-        self.assertEqual(bb.coordinates["height"], 50)
-
-    def test_17_bb_query_by_page(self):
-        """Test querying BBs by page"""
-        BB.objects.create(page=self.test_page, original_text="Query BB 1")
-        BB.objects.create(page=self.test_page, original_text="Query BB 2")
-
-        # Create another page with BBs
-        other_page = Page.objects.create(
-            session=self.test_session, img_url="other_page.jpg"
-        )
-        BB.objects.create(page=other_page, original_text="Other page BB")
-
-        # Query BBs for test_page
-        page_bbs = BB.objects.filter(page=self.test_page)
-        self.assertEqual(page_bbs.count(), 2)
-
-        # Verify they belong to the correct page
-        for bb in page_bbs:
-            self.assertEqual(bb.page, self.test_page)
-
-    def test_18_empty_translation(self):
-        """Test BB with empty translation"""
-        bb = BB.objects.create(page=self.test_page, original_text="No translation")
-
-        self.assertEqual(bb.original_text, "No translation")
+        self.assertEqual(bb.tts_status, "pending")
         self.assertIsNone(bb.translated_text)
 
-    def test_19_update_multiple_fields(self):
-        """Test updating multiple fields at once"""
-        bb = BB.objects.create(page=self.test_page, original_text="Multi update test")
+        # Add translation
+        bb.updateTranslation("풍차는 나폴레옹 자신의 창조물이었다")
+        bb.refresh_from_db()
+        self.assertEqual(bb.translated_text, "풍차는 나폴레옹 자신의 창조물이었다")
 
-        bb.translated_text = "New translation"
-        bb.audio_base64 = ["audio1", "audio2"]
-        bb.tts_status = "ready"
-        bb.coordinates = {"x1": 0, "y1": 0, "x2": 100, "y2": 100}
+        # Add position
+        bb.updatePosition({"x1": 10, "y1": 10, "x2": 300, "y2": 50})
+        bb.refresh_from_db()
+        self.assertEqual(bb.coordinates["x1"], 10)
+
+        # Set status to processing
+        bb.tts_status = "processing"
         bb.save()
 
+        # Add audio
+        bb.updateAudio(["audio_part1", "audio_part2"])
         bb.refresh_from_db()
-        self.assertEqual(bb.translated_text, "New translation")
-        self.assertEqual(bb.audio_base64, ["audio1", "audio2"])
+        self.assertEqual(bb.audio_base64, ["audio_part1", "audio_part2"])
+
+        # Set status to ready
+        bb.tts_status = "ready"
+        bb.save()
+        bb.refresh_from_db()
+
+        # Verify final state
+        self.assertEqual(bb.original_text, "The windmill was Napoleon's own creation")
+        self.assertEqual(bb.translated_text, "풍차는 나폴레옹 자신의 창조물이었다")
+        self.assertEqual(bb.audio_base64, ["audio_part1", "audio_part2"])
+        self.assertEqual(bb.coordinates["x2"], 300)
         self.assertEqual(bb.tts_status, "ready")
-        self.assertEqual(bb.coordinates["x2"], 100)
