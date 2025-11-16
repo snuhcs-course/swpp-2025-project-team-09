@@ -210,10 +210,10 @@ class GetSessionInfoView(APIView):
                     "user_id": str(session.user.uid),
                     "voice_style": session.voicePreference,
                     "isOngoing": session.isOngoing,
-                    "started_at": session.created_at,
+                    "started_at": session.started_at,
                     "ended_at": session.ended_at,
                     "total_pages": session.totalPages,
-                    "total_time_spent": ((session.ended_at or timezone.now()) - session.created_at).seconds,
+                    "total_time_spent": ((session.ended_at or timezone.now()) - session.started_at).seconds,
                     "total_words_read": session.totalWords
                 },
                 status=status.HTTP_200_OK,
@@ -262,7 +262,7 @@ class GetSessionStatsView(APIView):
             session = Session.objects.get(id=session_id)
             duration = None
             if session.ended_at:
-                duration = (session.ended_at - session.created_at).seconds
+                duration = (session.ended_at - session.started_at).seconds
 
             return Response(
                 {
@@ -270,10 +270,10 @@ class GetSessionStatsView(APIView):
                     "user_id": str(session.user.uid),
                     "voice_style": session.voicePreference,
                     "isOngoing": session.isOngoing,
-                    "started_at": session.created_at,
+                    "started_at": session.started_at,
                     "ended_at": session.ended_at,
                     "total_pages": session.totalPages,
-                    "total_time_spent": ((session.ended_at or timezone.now()) - session.created_at).seconds,
+                    "total_time_spent": ((session.ended_at or timezone.now()) - session.started_at).seconds,
                     "total_words_read": session.totalWords
                 },
                 status=status.HTTP_200_OK,
@@ -309,18 +309,27 @@ class SessionReviewView(APIView):
 
     def get(self, request):
         session_id = request.query_params.get("session_id")
+        print("[DEBUG] Fetching info for session_id:", session_id)
         if not session_id:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
         try:
             session = Session.objects.get(id=session_id)
+            duration = None
+            if session.ended_at:
+                duration = (session.ended_at - session.started_at).seconds
+
             return Response(
                 {
                     "session_id": str(session.id),
                     "user_id": str(session.user.uid),
-                    "started_at": session.created_at,
+                    "voice_style": session.voicePreference,
+                    "isOngoing": session.isOngoing,
+                    "started_at": session.started_at,
                     "ended_at": session.ended_at,
                     "total_pages": session.totalPages,
+                    "total_time_spent": ((session.ended_at or timezone.now()) - session.started_at).seconds,
+                    "total_words_read": session.totalWords
                 },
                 status=status.HTTP_200_OK,
             )
@@ -381,7 +390,7 @@ class SessionReloadView(APIView):
                     {"error_code": 404, "message": "SESSION__NOT_FOUND"},
                     status=status.HTTP_404_NOT_FOUND,
                 )
-
+            session.created_at = timezone.now()
             pages = Page.objects.filter(session=session).order_by("created_at")
             if not pages.exists():
                 return Response(
@@ -457,7 +466,7 @@ class SessionReloadAllView(APIView):
                     {"error_code": 404, "message": "SESSION__NOT_FOUND"},
                     status=status.HTTP_404_NOT_FOUND,
                 )
-
+            session.created_at = timezone.now()
             pages_data = []
             for page in session.pages.all().order_by("id"):
                 page_info = {
