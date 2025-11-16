@@ -81,14 +81,6 @@ class DecideSaveActivityMockTest {
                 return Result.failure(Exception("unused"))
             }
 
-            override suspend fun reloadSession(
-                userId: String,
-                startedAt: String,
-                pageIndex: Int
-            ): Result<ReloadSessionResponse> {
-                return Result.failure(Exception("unused"))
-            }
-
             override suspend fun reloadAllSession(
                 userId: String,
                 startedAt: String
@@ -139,10 +131,6 @@ class DecideSaveActivityMockTest {
                 return Result.failure(Exception("unused"))
             }
 
-            override suspend fun reloadSession(userId: String, startedAt: String, pageIndex: Int): Result<ReloadSessionResponse> {
-                return Result.failure(Exception("unused"))
-            }
-
             override suspend fun reloadAllSession(userId: String, startedAt: String): Result<ReloadAllSessionResponse> {
                 return Result.failure(Exception("unused"))
             }
@@ -188,10 +176,6 @@ class DecideSaveActivityMockTest {
             }
 
             override suspend fun getSessionStats(sessionId: String): Result<SessionStatsResponse> {
-                return Result.failure(Exception("unused"))
-            }
-
-            override suspend fun reloadSession(userId: String, startedAt: String, pageIndex: Int): Result<ReloadSessionResponse> {
                 return Result.failure(Exception("unused"))
             }
 

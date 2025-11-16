@@ -67,9 +67,6 @@ class VoiceSelectActivityTest {
             override suspend fun getSessionStats(sessionId: String) =
                 Result.failure<SessionStatsResponse>(Exception("unused"))
 
-            override suspend fun reloadSession(userId: String, startedAt: String, pageIndex: Int) =
-                Result.failure<ReloadSessionResponse>(Exception("unused"))
-
             override suspend fun reloadAllSession(userId: String, startedAt: String) =
                 Result.failure<ReloadAllSessionResponse>(Exception("unused"))
 

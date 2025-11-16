@@ -76,14 +76,6 @@ class FinishActivityMockTest {
                 )
             }
 
-            override suspend fun reloadSession(
-                userId: String,
-                startedAt: String,
-                pageIndex: Int
-            ): Result<ReloadSessionResponse> {
-                return Result.failure(Exception("unused"))
-            }
-
             override suspend fun reloadAllSession(
                 userId: String,
                 startedAt: String
