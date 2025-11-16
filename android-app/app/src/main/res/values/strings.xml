@@ -60,4 +60,20 @@
     <string name="exit_loading">Please wait until loading is complete.</string>
 
 
+    <!-- 단위 -->
+    <string name="unit_minute">minute</string>
+    <string name="unit_minutes">minutes</string>
+    <string name="unit_second">second</string>
+    <string name="unit_seconds">seconds</string>
+    <string name="unit_page">page</string>
+    <string name="unit_pages">pages</string>
+
+    <!-- 문장 구성 -->
+    <string name="summary_text">You read %1$d words and %2$s\nfor %3$s. Amazing!</string>
+
+    <!-- Exit dialog text -->
+    <string name="exit_title">Are you sure you want to exit?</string>
+    <string name="exit_confirm">Exit</string>
+    <string name="exit_cancel">Cancel</string>
+
 </resources>

@@ -36,11 +36,6 @@ interface SessionApi {
         @Query("session_id") session_id: String
     ): Call<SessionInfoResponse>
 
-    @GET("/session/review")
-    fun getSessionReview(
-        @Query("session_id") session_id: String
-    ): Call<SessionReviewResponse>
-
     @GET("/session/reload")
     suspend fun reloadSession(
         @Query("user_id") userId: String,

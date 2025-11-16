@@ -23,7 +23,7 @@
             android:id="@+id/exitTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Are you sure you want to exit?"
+            android:text="@string/exit_title"
             style="@style/text40pt"
             android:layout_marginBottom="24dp" />
 
@@ -32,7 +32,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             style="@style/text24pt"
-            android:text="Exit"
+            android:text="@string/exit_confirm"
             android:backgroundTint="@color/white" />
 
         <Button
@@ -40,8 +40,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             style="@style/text24pt"
-            android:text="Cancel"
+            android:text="@string/exit_cancel"
             android:backgroundTint="@color/white"
             android:layout_marginTop="12dp" />
+
     </LinearLayout>
 </FrameLayout>

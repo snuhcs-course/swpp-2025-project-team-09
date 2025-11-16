@@ -1,5 +1,6 @@
 package com.example.storybridge_android.ui.session
 
+import com.example.storybridge_android.R
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -10,7 +11,7 @@ import androidx.lifecycle.Observer
 import com.example.storybridge_android.data.SessionRepositoryImpl
 import com.example.storybridge_android.databinding.ActivityFinishBinding
 import com.example.storybridge_android.ui.main.MainActivity
-
+import com.example.storybridge_android.ui.setting.AppSettings
 class FinishActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityFinishBinding
@@ -31,28 +32,55 @@ class FinishActivity : AppCompatActivity() {
 
         viewModel.endSession(sessionId)
 
+
         viewModel.sessionStats.observe(this, Observer { stats ->
             val totalSeconds = stats.total_time_spent
             val minutes = totalSeconds / 60
             val seconds = totalSeconds % 60
 
-            val minuteText = if (minutes > 0) {
-                "$minutes ${if (minutes == 1) "minute" else "minutes"}"
-            } else ""
-            val secondText = if (seconds > 0) {
-                "$seconds ${if (seconds == 1) "second" else "seconds"}"
-            } else ""
+            val unitMinute = getString(R.string.unit_minute)
+            val unitMinutes = getString(R.string.unit_minutes)
+            val unitSecond = getString(R.string.unit_second)
+            val unitSeconds = getString(R.string.unit_seconds)
+            val unitPage = getString(R.string.unit_page)
+            val unitPages = getString(R.string.unit_pages)
+
+            val minuteText = when {
+                minutes > 1 -> "$minutes $unitMinutes"
+                minutes == 1 -> "$minutes $unitMinute"
+                else -> ""
+            }
+
+            val secondText = when {
+                seconds > 1 -> "$seconds $unitSeconds"
+                seconds == 1 -> "$seconds $unitSecond"
+                else -> ""
+            }
+
             val timeText = when {
                 minuteText.isNotEmpty() && secondText.isNotEmpty() -> "$minuteText $secondText"
                 minuteText.isNotEmpty() -> minuteText
                 secondText.isNotEmpty() -> secondText
-                else -> "0 seconds"
+                else -> "0 $unitSeconds"
             }
+
             val pageCount = stats.total_pages - 1
-            val pageText = if (pageCount == 1) "1 page" else "$pageCount pages"
-            binding.sessionSummary.text = "You read ${stats.total_words_read} words and $pageText\nfor $timeText. Amazing!"
+            val pageText = if (pageCount == 1) {
+                "1 $unitPage"
+            } else {
+                "$pageCount $unitPages"
+            }
+
+            val finalText = getString(
+                R.string.summary_text,
+                stats.total_words_read,
+                pageText,
+                timeText
+            )
+            binding.sessionSummary.text = finalText
             binding.sessionSummary.visibility = View.VISIBLE
         })
+
 
 
         viewModel.showMainButton.observe(this, Observer { show ->
