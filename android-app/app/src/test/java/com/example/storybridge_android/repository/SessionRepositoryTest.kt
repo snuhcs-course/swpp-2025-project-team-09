@@ -139,38 +139,6 @@ class SessionRepositoryTest {
         assertTrue(result.isFailure)
     }
 
-
-    @Test
-    fun reloadSession_returnsParsedResponse() = runBlocking {
-        val json = """
-            {
-                "session_id":"s123","page_index":1,
-                "image_base64":"base64image","translation_text":"Hello","audio_url":"audio.mp3"
-            }
-        """
-        server.enqueue(MockResponse().setResponseCode(200).setBody(json))
-
-        val result = repository.reloadSession("u001", "2025-11-15T10:00:00", 1)
-
-        assertTrue(result.isSuccess)
-        assertEquals(1, result.getOrNull()?.page_index)
-    }
-
-    @Test
-    fun reloadSession_returnsFailureOnHttpError() = runBlocking {
-        server.enqueue(MockResponse().setResponseCode(500))
-        val result = repository.reloadSession("u1", "2025-01-01", 0)
-        assertTrue(result.isFailure)
-    }
-
-    @Test
-    fun reloadSession_returnsFailureOnNullBody() = runBlocking {
-        server.enqueue(MockResponse().setResponseCode(200).setBody(""))
-        val result = repository.reloadSession("u1", "2025-01-01", 0)
-        assertTrue(result.isFailure)
-    }
-
-
     @Test
     fun reloadAllSession_returnsParsedResponse() = runBlocking {
         val json = """

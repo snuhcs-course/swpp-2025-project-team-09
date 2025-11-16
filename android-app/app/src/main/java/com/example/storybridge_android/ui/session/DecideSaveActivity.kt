@@ -82,6 +82,22 @@ class DecideSaveActivity : AppCompatActivity() {
         }
     }
 
+    private fun setButtonSelected(selected: View) {
+        binding.btnSave.isSelected = false
+        binding.btnDiscard.isSelected = false
+        selected.isSelected = true
+    }
+
+    private fun disableButtons() {
+        binding.btnSave.isEnabled = false
+        binding.btnDiscard.isEnabled = false
+    }
+
+    private fun enableButtons() {
+        binding.btnSave.isEnabled = true
+        binding.btnDiscard.isEnabled = true
+    }
+
     private fun showMainButton() {
         binding.mainButton.visibility = View.VISIBLE
         binding.mainButton.isEnabled = true
@@ -92,4 +108,3 @@ class DecideSaveActivity : AppCompatActivity() {
         finish()
     }
 }
-

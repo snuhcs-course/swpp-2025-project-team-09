@@ -554,4 +554,102 @@ class LoadingViewModelTest {
 
         unmockkStatic(Settings.Secure::class)
     }
+
+    @Test
+    fun `pollOcr timeout after 60 attempts sets error`() = runTest {
+        // Given
+        mockkStatic(android.util.Base64::class)
+        mockkStatic(BitmapFactory::class)
+        mockkStatic(Bitmap::class)
+
+        val mockBitmap = mockk<Bitmap>(relaxed = true)
+        every { BitmapFactory.decodeFile(any()) } returns mockBitmap
+        every { Bitmap.createScaledBitmap(any(), any(), any(), any()) } returns mockBitmap
+        every { mockBitmap.width } returns 100
+        every { mockBitmap.height } returns 100
+        every { mockBitmap.recycle() } just Runs
+        every { mockBitmap.compress(any(), any(), any()) } returns true
+        every { android.util.Base64.encodeToString(any(), any()) } returns "base64string"
+
+        val uploadResponse = UploadImageResponse(
+            session_id = "session_123",
+            page_index = 1,
+            status = "pending",
+            submitted_at = "2023-01-01T00:00:00"
+        )
+        whenever(mockProcessRepo.uploadImage(any())).thenReturn(Result.success(uploadResponse))
+
+        val processingResponse = CheckOcrResponse(
+            session_id = "session_123",
+            page_index = 1,
+            status = "processing",
+            progress = 50,
+            submitted_at = "2023-01-01T00:00:00",
+            processed_at = null
+        )
+        whenever(mockProcessRepo.checkOcrStatus(any(), any()))
+            .thenReturn(Result.success(processingResponse))
+
+        // When
+        viewModel.uploadImage("session_123", 1, "en", testImageFile.absolutePath)
+        advanceUntilIdle()
+
+        // Then
+        assertEquals("Timeout while waiting for OCR", viewModel.error.value)
+        verify(mockProcessRepo, times(60)).checkOcrStatus("session_123", 1)
+
+        unmockkStatic(android.util.Base64::class)
+    }
+
+    @Test
+    fun `scaleBitmap creates scaled bitmap when ratio exceeds 1`() = runTest {
+        // Given
+        mockkStatic(BitmapFactory::class)
+        mockkStatic(Bitmap::class)
+
+        val mockBitmap = mockk<Bitmap>(relaxed = true)
+        val scaledBitmap = mockk<Bitmap>(relaxed = true)
+
+        every { mockBitmap.width } returns 3840
+        every { mockBitmap.height } returns 2160
+        every { scaledBitmap.width } returns 1920
+        every { scaledBitmap.height } returns 1080
+
+        every { BitmapFactory.decodeFile(any()) } returns mockBitmap
+        every { Bitmap.createScaledBitmap(mockBitmap, 1920, 1080, true) } returns scaledBitmap
+        every { mockBitmap.recycle() } just Runs
+        every { scaledBitmap.recycle() } just Runs
+        every { scaledBitmap.compress(any(), any(), any()) } returns true
+
+        mockkStatic(android.util.Base64::class)
+        every { android.util.Base64.encodeToString(any(), any()) } returns "base64string"
+
+        val uploadResponse = UploadImageResponse(
+            session_id = "session_123",
+            page_index = 1,
+            status = "pending",
+            submitted_at = "2023-01-01T00:00:00"
+        )
+        whenever(mockProcessRepo.uploadImage(any())).thenReturn(Result.success(uploadResponse))
+
+        val ocrResponse = CheckOcrResponse(
+            session_id = "session_123",
+            page_index = 1,
+            status = "ready",
+            progress = 100,
+            submitted_at = "2023-01-01T00:00:00",
+            processed_at = "2023-01-01T00:05:00"
+        )
+        whenever(mockProcessRepo.checkOcrStatus(any(), any())).thenReturn(Result.success(ocrResponse))
+
+        // When
+        viewModel.uploadImage("session_123", 1, "en", testImageFile.absolutePath)
+        advanceUntilIdle()
+
+        // Then
+        io.mockk.verify { Bitmap.createScaledBitmap(mockBitmap, 1920, 1080, true) }
+        assertEquals("ready", viewModel.status.value)
+
+        unmockkStatic(android.util.Base64::class)
+    }
 }
