@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.ui.session.LoadingActivity
 import com.example.storybridge_android.ui.session.VoiceSelectActivity
@@ -19,10 +20,13 @@ class CameraSessionActivity : AppCompatActivity() {
     private var pageIndex: Int = 0
     private var isCover: Boolean = false
 
-    private val viewModel: CameraSessionViewModel by viewModels { CameraSessionViewModelFactory() }
-
+    private val viewModel: CameraSessionViewModel by viewModels {
+        testViewModelFactory ?: CameraSessionViewModelFactory()
+    }
     companion object {
         private const val TAG = "CameraSessionActivity"
+        var testViewModelFactory: ViewModelProvider.Factory? = null
+        var testMode: Boolean = false
     }
 
     private val cameraLauncher =
@@ -74,6 +78,8 @@ class CameraSessionActivity : AppCompatActivity() {
     }
 
     private fun startCamera() {
+        if (testMode) return
+
         val intent = Intent(this, CameraActivity::class.java)
         cameraLauncher.launch(intent)
     }

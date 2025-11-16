@@ -121,22 +121,6 @@ class MainViewModelTest {
             )
         }
 
-        override suspend fun reloadSession(
-            userId: String,
-            startedAt: String,
-            pageIndex: Int
-        ): Result<ReloadSessionResponse> {
-            return Result.success(
-                ReloadSessionResponse(
-                    session_id = "sid",
-                    page_index = pageIndex,
-                    image_base64 = "xxxx",
-                    translation_text = "hello",
-                    audio_url = "audio.mp3"
-                )
-            )
-        }
-
         override suspend fun reloadAllSession(
             userId: String,
             startedAt: String
@@ -193,13 +177,6 @@ class MainViewModelTest {
             throw RuntimeException("boom")
         }
         override suspend fun getSessionStats(sessionId: String): Result<SessionStatsResponse> {
-            throw RuntimeException("boom")
-        }
-        override suspend fun reloadSession(
-            userId: String,
-            startedAt: String,
-            pageIndex: Int
-        ): Result<ReloadSessionResponse> {
             throw RuntimeException("boom")
         }
         override suspend fun reloadAllSession(

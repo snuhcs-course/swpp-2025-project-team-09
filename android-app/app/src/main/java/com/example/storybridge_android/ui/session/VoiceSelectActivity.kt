@@ -30,7 +30,7 @@ class VoiceSelectActivity : AppCompatActivity() {
     private var mediaPlayer: MediaPlayer? = null
 
     private val viewModel: VoiceSelectViewModel by viewModels {
-        VoiceSelectViewModelFactory(SessionRepositoryImpl())
+        VoiceSelectViewModelFactory()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

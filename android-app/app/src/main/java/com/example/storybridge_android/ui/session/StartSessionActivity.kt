@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.collectLatest
 class StartSessionActivity : AppCompatActivity() {
 
     private val viewModel: StartSessionViewModel by viewModels {
-        StartSessionViewModelFactory(SessionRepositoryImpl())
+        StartSessionViewModelFactory()
     }
 
     companion object {

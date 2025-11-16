@@ -15,7 +15,7 @@ class FinishActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityFinishBinding
     private val viewModel: FinishViewModel by viewModels {
-        FinishViewModelFactory(SessionRepositoryImpl())
+        FinishViewModelFactory()
     }
     private var isNewSession = true
     private lateinit var sessionId: String

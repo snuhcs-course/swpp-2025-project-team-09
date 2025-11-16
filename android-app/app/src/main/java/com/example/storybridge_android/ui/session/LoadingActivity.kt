@@ -27,11 +27,7 @@ class LoadingActivity : AppCompatActivity() {
     private lateinit var loadingBar: ProgressBar
 
     private val viewModel: LoadingViewModel by viewModels {
-        LoadingViewModelFactory(
-            ProcessRepositoryImpl(),
-            UserRepositoryImpl(),
-            SessionRepositoryImpl()
-        )
+        LoadingViewModelFactory()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
