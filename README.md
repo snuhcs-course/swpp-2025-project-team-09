@@ -138,7 +138,7 @@ pip install -r requirements.txt
 
 **Step 3: Run Backend Tests**
 
-**Option A: Interactive CLI Interface **
+**Option A: Interactive CLI Interface**
 ```bash
 
 # Navigate to backend directory
