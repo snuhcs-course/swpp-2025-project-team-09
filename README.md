@@ -245,9 +245,6 @@ The backend uses **SQLite** (`db.sqlite3`) for development and testing. For prod
 ```bash
 # Find and kill process using port 8000
 lsof -ti:8000 | xargs kill -9
-
-# Or use a different port
-python manage.py runserver 8080
 ```
 
 **Missing API keys:**
