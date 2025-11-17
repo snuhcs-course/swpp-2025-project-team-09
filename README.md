@@ -163,6 +163,14 @@ The test suite covers:
 - Session management (including save/delete functionality)
 - Database operations
 - Reading history tracking
+- 
+
+**Step 4: Run Frontend Tests**
+Run ./gradlew clean jacocoTestReport with a real device connected.
+
+After execution, the Jacoco coverage report can be viewed at: app/build/reports/jacoco/jacocoTestReport/html/index.html
+
+This test covers both unit test and instrumental(UI) test of M, V, VM
 
 ## Technology Stack
 
