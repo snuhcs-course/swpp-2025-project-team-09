@@ -73,7 +73,7 @@ cd swpp-2025-project-team-09
 The app is pre-configured to connect to the deployed EC2 server:
 
 ```
-Backend URL: http://ec2-15-164-229-164.ap-northeast-2.compute.amazonaws.com:8000
+Backend URL: http://ec2-3-36-206-206.ap-northeast-2.compute.amazonaws.com:8000
 ```
 
 No additional backend setup is required. The server is already running and accessible.
