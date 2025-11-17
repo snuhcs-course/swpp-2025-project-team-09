@@ -13,9 +13,10 @@ import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.R
 import com.example.storybridge_android.data.SessionRepositoryImpl
 import com.example.storybridge_android.ui.camera.CameraSessionActivity
+import com.example.storybridge_android.ui.common.BaseActivity
 import kotlinx.coroutines.flow.collectLatest
 
-class StartSessionActivity : AppCompatActivity() {
+class StartSessionActivity : BaseActivity() {
 
     private val viewModel: StartSessionViewModel by viewModels {
         StartSessionViewModelFactory()

@@ -9,10 +9,11 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.databinding.ActivityDecideSaveBinding
+import com.example.storybridge_android.ui.common.BaseActivity
 import com.example.storybridge_android.ui.main.MainActivity
 import kotlinx.coroutines.flow.collectLatest
 
-class DecideSaveActivity : AppCompatActivity() {
+class DecideSaveActivity : BaseActivity() {
 
     private lateinit var binding: ActivityDecideSaveBinding
     private lateinit var sessionId: String

@@ -7,15 +7,15 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.ui.setting.AppSettings
 import com.example.storybridge_android.ui.main.MainActivity
 import com.example.storybridge_android.R
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import com.example.storybridge_android.ui.common.BaseActivity
 
-class LandingActivity : AppCompatActivity() {
+class LandingActivity : BaseActivity() {
     private val viewModel: LandingViewModel by viewModels {
         LandingViewModelFactory()
     }
@@ -58,18 +58,21 @@ class LandingActivity : AppCompatActivity() {
             selectedLang = "en"
             AppSettings.setLanguage(this, "en")
             updateButtonState(btnEnglish)
+            recreate()
         }
 
         btnChinese.setOnClickListener {
             selectedLang = "zh"
             AppSettings.setLanguage(this, "zh")
             updateButtonState(btnChinese)
+            recreate()
         }
 
         btnVietnamese.setOnClickListener {
             selectedLang = "vi"
             AppSettings.setLanguage(this, "vi")
             updateButtonState(btnVietnamese)
+            recreate()
         }
 
         findViewById<Button>(R.id.startButton).setOnClickListener {

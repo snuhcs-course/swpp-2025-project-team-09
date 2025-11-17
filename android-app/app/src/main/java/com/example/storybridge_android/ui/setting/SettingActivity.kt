@@ -8,17 +8,16 @@ import android.widget.RadioButton
 import android.widget.RadioGroup
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.R
 import com.example.storybridge_android.StoryBridgeApplication
-import com.example.storybridge_android.data.UserRepositoryImpl
 import com.example.storybridge_android.network.UserLangRequest
+import com.example.storybridge_android.ui.common.BaseActivity
 import com.example.storybridge_android.ui.common.TopNavigationBar
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-class SettingActivity : AppCompatActivity() {
+class SettingActivity : BaseActivity() {
     private val viewModel: SettingViewModel by viewModels {
         SettingViewModelFactory()
     }

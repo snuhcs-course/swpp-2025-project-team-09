@@ -16,9 +16,10 @@ import com.example.storybridge_android.ui.camera.CameraSessionActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.data.SessionRepositoryImpl
+import com.example.storybridge_android.ui.common.BaseActivity
 import kotlinx.coroutines.launch
 
-class ContentInstructionActivity : AppCompatActivity() {
+class ContentInstructionActivity : BaseActivity() {
 
     private val viewModel: ContentInstructionViewModel by viewModels()
 

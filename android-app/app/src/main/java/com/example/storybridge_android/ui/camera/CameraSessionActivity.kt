@@ -9,12 +9,13 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import com.example.storybridge_android.ui.common.BaseActivity
 import com.example.storybridge_android.ui.session.LoadingActivity
 import com.example.storybridge_android.ui.session.VoiceSelectActivity
 import com.example.storybridge_android.ui.setting.AppSettings
 import kotlinx.coroutines.flow.collectLatest
 
-class CameraSessionActivity : AppCompatActivity() {
+class CameraSessionActivity : BaseActivity() {
 
     private var sessionId: String? = null
     private var pageIndex: Int = 0

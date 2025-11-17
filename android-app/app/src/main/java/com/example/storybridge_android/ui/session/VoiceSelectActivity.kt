@@ -26,10 +26,9 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 import android.widget.FrameLayout
-const val MALE_VOICE = "onyx"
-const val FEMALE_VOICE = "shimmer"
+import com.example.storybridge_android.ui.common.BaseActivity
 
-class VoiceSelectActivity : AppCompatActivity() {
+class VoiceSelectActivity : BaseActivity() {
 
     private var sessionId: String? = null
     private var imagePath: String? = null
@@ -81,21 +80,6 @@ class VoiceSelectActivity : AppCompatActivity() {
 
         fun updateButtonState(selected: Button) {
             listOf(manButton, womanButton).forEach { it.isSelected = it == selected }
-        }
-
-        val currentLang = AppSettings.getLanguage(this)
-
-        when (currentLang) {
-            "en", "zh" -> {
-                manButton.text = getString(R.string.male_voice)
-                womanButton.text = getString(R.string.female_voice)
-                nextButton.text = getString(R.string.next)
-            }
-            else -> {
-                manButton.text = getString(R.string.male_voice)
-                womanButton.text = getString(R.string.female_voice)
-                nextButton.text = getString(R.string.next)
-            }
         }
 
         nextButton.isEnabled = false

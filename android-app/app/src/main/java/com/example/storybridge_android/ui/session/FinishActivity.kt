@@ -10,9 +10,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import com.example.storybridge_android.data.SessionRepositoryImpl
 import com.example.storybridge_android.databinding.ActivityFinishBinding
+import com.example.storybridge_android.ui.common.BaseActivity
 import com.example.storybridge_android.ui.main.MainActivity
 import com.example.storybridge_android.ui.setting.AppSettings
-class FinishActivity : AppCompatActivity() {
+class FinishActivity : BaseActivity() {
 
     private lateinit var binding: ActivityFinishBinding
     private val viewModel: FinishViewModel by viewModels {

@@ -15,10 +15,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.R
+import com.example.storybridge_android.ui.common.BaseActivity
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import kotlinx.coroutines.flow.collectLatest
 
-class CameraActivity : AppCompatActivity() {
+class CameraActivity : BaseActivity() {
 
     private val viewModel: CameraViewModel by viewModels {
         CameraViewModelFactory(application)

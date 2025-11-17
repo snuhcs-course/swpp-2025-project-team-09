@@ -38,10 +38,11 @@ import com.example.storybridge_android.ui.common.BottomNav
 import com.example.storybridge_android.ui.common.LeftOverlay
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
+import com.example.storybridge_android.ui.common.BaseActivity
 import kotlin.math.max
 
 
-class ReadingActivity : AppCompatActivity() {
+class ReadingActivity : BaseActivity() {
 
     private lateinit var exitPanel: View
     private lateinit var exitConfirmBtn: Button

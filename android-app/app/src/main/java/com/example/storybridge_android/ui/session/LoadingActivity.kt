@@ -21,8 +21,9 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
+import com.example.storybridge_android.ui.common.BaseActivity
 
-class LoadingActivity : AppCompatActivity() {
+class LoadingActivity : BaseActivity() {
 
     private lateinit var loadingBar: ProgressBar
 
