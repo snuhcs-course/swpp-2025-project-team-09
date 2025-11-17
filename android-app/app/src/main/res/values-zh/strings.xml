@@ -13,6 +13,7 @@
     <string name="language_label">语言</string>
     <string name="english">英语</string>
     <string name="chinese">中文</string>
+    <string name="vietnamese">越南语</string>
     <string name="save_settings">保存设置</string>
 
     <!-- 표지 촬영 -->

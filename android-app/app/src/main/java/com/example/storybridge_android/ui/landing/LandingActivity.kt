@@ -47,8 +47,9 @@ class LandingActivity : AppCompatActivity() {
 
         val btnEnglish = findViewById<Button>(R.id.btnEnglish)
         val btnChinese = findViewById<Button>(R.id.btnChinese)
+        val btnVietnamese = findViewById<Button>(R.id.btnVietnamese)
 
-        val buttons = listOf(btnEnglish, btnChinese)
+        val buttons = listOf(btnEnglish, btnChinese, btnVietnamese)
         fun updateButtonState(selected: Button) {
             buttons.forEach { it.isSelected = it == selected }
         }
@@ -63,6 +64,12 @@ class LandingActivity : AppCompatActivity() {
             selectedLang = "zh"
             AppSettings.setLanguage(this, "zh")
             updateButtonState(btnChinese)
+        }
+
+        btnVietnamese.setOnClickListener {
+            selectedLang = "vi"
+            AppSettings.setLanguage(this, "vi")
+            updateButtonState(btnVietnamese)
         }
 
         findViewById<Button>(R.id.startButton).setOnClickListener {

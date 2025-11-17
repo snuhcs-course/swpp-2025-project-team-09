@@ -12,6 +12,7 @@
     <string name="language_label">Language</string>
     <string name="english">English</string>
     <string name="chinese">Chinese</string>
+    <string name="vietnamese">Vietnamese</string>
     <string name="save_settings">Save Settings</string>
 
     <!-- 표지 촬영 -->
