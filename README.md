@@ -140,8 +140,6 @@ pip install -r requirements.txt
 
 **Option A: Interactive CLI Interface **
 ```bash
-# Switch to testing/backend branch
-git checkout testing/backend
 
 # Navigate to backend directory
 cd backend
@@ -223,9 +221,7 @@ The test suite covers:
 
 4. **Educational Support**: Provides reading progress feedback (pages read, word count, time spent) with congratulations messaging to encourage young learners and build reading confidence.
 
-5. **Production-Ready Deployment**: Backend successfully deployed on AWS EC2 with automated CI/CD pipeline.
-
-6. **Clean Architecture**: Refactored frontend using MVVM pattern for maintainability and testability.
+5. **Clean Architecture**: Refactored frontend using MVVM pattern for maintainability and testability.
 
 ### Demo Flow
 1. **Start Session**: Select language and voice preferences
