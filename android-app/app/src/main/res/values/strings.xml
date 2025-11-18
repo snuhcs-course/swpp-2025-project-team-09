@@ -77,4 +77,7 @@
     <string name="exit_confirm">Exit</string>
     <string name="exit_cancel">Cancel</string>
 
+    <string name="button_add_new_page">Add New Page</string>
+    <string name="page_status_format">Page %1$d/%2$d</string>
+
 </resources>

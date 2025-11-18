@@ -213,10 +213,8 @@ class GetSessionInfoView(APIView):
                     "started_at": session.started_at,
                     "ended_at": session.ended_at,
                     "total_pages": session.totalPages,
-                    "total_time_spent": (
-                        (session.ended_at or timezone.now()) - session.created_at
-                    ).seconds,
-                    "total_words_read": session.totalWords,
+                    "total_time_spent": ((session.ended_at or timezone.now()) - session.started_at).seconds,
+                    "total_words_read": session.totalWords
                 },
                 status=status.HTTP_200_OK,
             )
@@ -275,10 +273,8 @@ class GetSessionStatsView(APIView):
                     "started_at": session.started_at,
                     "ended_at": session.ended_at,
                     "total_pages": session.totalPages,
-                    "total_time_spent": (
-                        (session.ended_at or timezone.now()) - session.created_at
-                    ).seconds,
-                    "total_words_read": session.totalWords,
+                    "total_time_spent": ((session.ended_at or timezone.now()) - session.started_at).seconds,
+                    "total_words_read": session.totalWords
                 },
                 status=status.HTTP_200_OK,
             )

@@ -77,4 +77,6 @@
     <string name="exit_confirm">Thoát Ra</string>
     <string name="exit_cancel">Ở Lại</string>
 
+    <string name="button_add_new_page">Thêm trang mới</string>
+    <string name="page_status_format">Trang %1$d/%2$d</string>
 </resources>
