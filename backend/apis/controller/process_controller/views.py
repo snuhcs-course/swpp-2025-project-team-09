@@ -58,7 +58,7 @@ class ProcessUploadView(APIView):
         print(f"[DEBUG] OCR words in page {page_index}: {total_words}")
 
         # Map language codes to full names for TTS
-        lang_map = {"en": "English", "zh": "Chinese"}
+        lang_map = {"en": "English", "zh": "Chinese", "vi": "Vietnamese"}
         target_lang = lang_map.get(lang, "English")
 
         # Run translation synchronously (fast, ~2-3s per paragraph)
@@ -397,7 +397,7 @@ class ProcessUploadCoverView(APIView):
             )
 
         # Map language codes to full names for TTS
-        lang_map = {"en": "English", "zh": "Chinese"}
+        lang_map = {"en": "English", "zh": "Chinese", "vi": "Vietnamese"}
         target_lang = lang_map.get(lang, "English")
 
         # Run translation for title synchronously
