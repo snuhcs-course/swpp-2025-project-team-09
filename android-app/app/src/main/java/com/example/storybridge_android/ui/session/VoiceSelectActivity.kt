@@ -12,8 +12,6 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
@@ -23,8 +21,6 @@ import com.example.storybridge_android.ui.setting.AppSettings
 import kotlinx.coroutines.flow.collectLatest
 
 import kotlinx.coroutines.launch
-import java.io.File
-import java.io.FileOutputStream
 import android.widget.FrameLayout
 import com.example.storybridge_android.ui.common.BaseActivity
 
@@ -87,14 +83,14 @@ class VoiceSelectActivity : BaseActivity() {
         manButton.setOnClickListener {
             AppSettings.setVoice(this, MALE_VOICE)
             viewModel.selectVoice(sessionId!!, MALE_VOICE)
-            playLocalAudio(R.raw.voice_man)
+            playLocalAudio(getVoiceResourceId(MALE_VOICE))
             updateButtonState(manButton)
         }
 
         womanButton.setOnClickListener {
             AppSettings.setVoice(this, FEMALE_VOICE)
             viewModel.selectVoice(sessionId!!, FEMALE_VOICE)
-            playLocalAudio(R.raw.voice_woman)
+            playLocalAudio(getVoiceResourceId(FEMALE_VOICE))
             updateButtonState(womanButton)
         }
 
@@ -137,6 +133,15 @@ class VoiceSelectActivity : BaseActivity() {
             exitPanel.visibility = View.GONE
         }
 
+    }
+
+    private fun getVoiceResourceId(voiceType: String): Int {
+        val language = AppSettings.getLanguage(this, "en")
+        return when (language) {
+            "zh" -> if (voiceType == MALE_VOICE) R.raw.zh_man else R.raw.zh_woman
+            "vi" -> if (voiceType == MALE_VOICE) R.raw.vn_man else R.raw.vn_woman
+            else -> if (voiceType == MALE_VOICE) R.raw.en_man else R.raw.en_woman
+        }
     }
 
     private fun playLocalAudio(audioResId: Int) {
