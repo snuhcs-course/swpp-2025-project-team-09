@@ -18,7 +18,7 @@ import kss
 load_dotenv()
 
 
-# Prompt Templates
+# Prompt Templates.
 TRANSLATION_PROMPT = """
 You are an expert multilingual children's-story adapter.
 You will be given a block of Korean text that may contain up to three
