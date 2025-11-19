@@ -44,6 +44,7 @@ jobs:
       env:
         DJANGO_SETTINGS_MODULE: settings
         PYTHONPATH: ${{ github.workspace }}/backend
+
       run: |
         source ${{ github.workspace }}/.venv-ci/bin/activate
         export DJANGO_SETTINGS_MODULE=settings

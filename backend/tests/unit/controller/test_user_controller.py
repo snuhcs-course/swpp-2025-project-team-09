@@ -172,8 +172,8 @@ class TestUserInfoView(APITestCase):
         response = self.client.get("/user/info", {"device_info": "test-info-device"})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(str(response.data["user_id"]), str(self.test_user.uid))
-        self.assertEqual(response.data["sessions"], [])
+        self.assertIsInstance(response.data, list)
+        self.assertEqual(len(response.data), 0)
 
     def test_02_get_user_info_with_sessions(self):
         """Test getting user info with sessions"""

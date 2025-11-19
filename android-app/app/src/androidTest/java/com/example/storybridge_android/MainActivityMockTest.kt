@@ -1,0 +1,156 @@
+package com.example.storybridge_android.ui.main
+
+import android.app.Activity.RESULT_OK
+import android.app.Instrumentation
+import android.content.Intent
+import android.provider.Settings
+import androidx.test.core.app.ActivityScenario
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.ViewMatchers.*
+import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.intent.Intents
+import androidx.test.espresso.intent.matcher.IntentMatchers
+import androidx.test.espresso.intent.Intents.intended
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.example.storybridge_android.ServiceLocator
+import com.example.storybridge_android.data.*
+import com.example.storybridge_android.network.UserInfoResponse
+import com.example.storybridge_android.R
+import io.mockk.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runTest
+import org.junit.*
+import org.junit.runner.RunWith
+
+@RunWith(AndroidJUnit4::class)
+@OptIn(ExperimentalCoroutinesApi::class)
+class MainActivityMockTest {
+
+    private lateinit var mockProcessRepo: ProcessRepository
+    private lateinit var mockUserRepo: UserRepository
+    private lateinit var mockSessionRepo: SessionRepository
+
+    @Before
+    fun setup() {
+        mockProcessRepo = mockk(relaxed = true)
+        mockUserRepo = mockk(relaxed = true)
+        mockSessionRepo = mockk(relaxed = true)
+
+        ServiceLocator.processRepository = mockProcessRepo
+        ServiceLocator.userRepository = mockUserRepo
+        ServiceLocator.sessionRepository = mockSessionRepo
+
+        mockkStatic(Settings.Secure::class)
+        every { Settings.Secure.getString(any(), Settings.Secure.ANDROID_ID) } returns "DEVICE123"
+
+        Intents.init()
+    }
+
+    @After
+    fun tearDown() {
+        unmockkAll()
+        Intents.release()
+    }
+
+    private fun launchMain() = ActivityScenario.launch<MainActivity>(
+        Intent(ApplicationProvider.getApplicationContext(), MainActivity::class.java)
+    )
+
+    @Test
+    fun startButton_opensStartSessionActivity() = runTest {
+        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns retrofit2.Response.success(emptyList())
+
+        launchMain()
+        Thread.sleep(800)
+
+        onView(withId(R.id.startNewReadingButton)).perform(click())
+
+        intended(IntentMatchers.hasComponent("com.example.storybridge_android.ui.session.StartSessionActivity"))
+    }
+
+    @Test
+    fun settingsButton_opensSettingActivity() = runTest {
+        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns retrofit2.Response.success(emptyList())
+
+        launchMain()
+        Thread.sleep(800)
+
+        onView(withId(R.id.navbarSettingsButton)).perform(click())
+
+        intended(IntentMatchers.hasComponent("com.example.storybridge_android.ui.setting.SettingActivity"))
+    }
+
+    @Test
+    fun userInfo_showsSessionCards() = runTest {
+        val fakeList = listOf(
+            UserInfoResponse(
+                session_id = "S1",
+                user_id = "DEVICE123",
+                image_base64 = "",
+                started_at = "2025-01-01",
+                title = "A",
+                translated_title = "Dog"
+            ),
+            UserInfoResponse(
+                session_id = "S2",
+                user_id = "DEVICE123",
+                image_base64 = "",
+                started_at = "2025-01-02",
+                title = "B",
+                translated_title = "Cat"
+            )
+        )
+
+        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns retrofit2.Response.success(fakeList)
+
+        launchMain()
+        Thread.sleep(1000)
+
+        onView(withText("Dog")).check(matches(isDisplayed()))
+        onView(withText("Cat")).check(matches(isDisplayed()))
+    }
+
+    @Test
+    fun userInfo_empty_showsEmptyContainer() = runTest {
+        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns retrofit2.Response.success(emptyList())
+
+        launchMain()
+        Thread.sleep(800)
+
+        onView(withId(R.id.emptyContainer)).check(matches(isDisplayed()))
+    }
+
+    @Test
+    fun settingsLauncher_receivesResultOk() = runTest {
+        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns retrofit2.Response.success(emptyList())
+
+        val intent = Intent(ApplicationProvider.getApplicationContext(), MainActivity::class.java)
+        val scenario = ActivityScenario.launch<MainActivity>(intent)
+
+        Thread.sleep(500)
+
+        Intents.intending(
+            IntentMatchers.hasComponent("com.example.storybridge_android.ui.setting.SettingActivity")
+        ).respondWith(
+            Instrumentation.ActivityResult(RESULT_OK, Intent())
+        )
+
+        // WHEN: Settings 버튼 클릭
+        onView(withId(R.id.navbarSettingsButton)).perform(click())
+
+        Thread.sleep(1000)
+
+        // THEN: SettingActivity가 실행되었는지 확인
+        Intents.intended(
+            IntentMatchers.hasComponent("com.example.storybridge_android.ui.setting.SettingActivity")
+        )
+
+        scenario.onActivity { activity ->
+            assert(!activity.isFinishing) { "MainActivity should still be running" }
+        }
+
+        scenario.close()
+    }
+}

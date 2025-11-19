@@ -210,6 +210,7 @@ class UserInfoView(APIView):
                 result.append(
                     {
                         "user_id": user.uid,
+                        "session_id": session.id,
                         "title": session.title,
                         "translated_title": session.translated_title,
                         "image_base64": image_base64,

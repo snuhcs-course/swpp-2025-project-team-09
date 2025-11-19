@@ -1,13 +1,21 @@
 import com.example.storybridge_android.network.*
 import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import org.junit.Test
 import org.junit.Assert.*
 
 class UserResponseParsingTest {
     private val gson = Gson()
 
-    // 1. Login Response
-    // 1. UserLoginResponse — verify correct parsing for successful login
+    private val flexibleGson: Gson by lazy {
+        GsonBuilder()
+            // This is the custom adapter we needed to register:
+            .registerTypeAdapter(UserInfoResponse::class.java, FlexibleUserInfoAdapter())
+            .create()
+    }
+
+    // 1. UserLogin
+    // 1) UserLoginResponse — verify correct parsing for successful login
     @Test
     fun loginResponse_successfulParsing() {
         val json = """
@@ -23,7 +31,7 @@ class UserResponseParsingTest {
         assertEquals("en", response.language_preference)
     }
 
-    // 2. UserLoginResponse — verify nullable handling when language field missing
+    // 2) UserLoginResponse — verify nullable handling when language field missing
     @Test
     fun loginResponse_missingLanguageField() {
         val json = """
@@ -38,7 +46,22 @@ class UserResponseParsingTest {
         assertNull("language_preference should be null if missing", response.language_preference)
     }
 
-    // 3. UserLangResponse — verify correct parsing with datetime field
+    // 3) UserLoginResponse — verify invalid type handling for language_preference
+    @Test
+    fun loginResponse_numericToString_convertedAutomatically() {
+        val json = """
+        {
+            "user_id": "test_user_007",
+            "language_preference": 123
+        }
+    """.trimIndent()
+
+        val response = gson.fromJson(json, UserLoginResponse::class.java)
+        assertEquals("123", response.language_preference)
+    }
+
+    // 2. UserLang
+    // 1) UserLangResponse — verify correct parsing with datetime field
     @Test
     fun langResponse_successfulParsing_withDatetime() {
         val json = """
@@ -56,7 +79,25 @@ class UserResponseParsingTest {
         assertEquals("2025-10-28T09:30:00Z", response.updated_at)
     }
 
-    // 4. UserInfoResponse — verify proper parsing of base64 field
+    // 2) UserLangResponse — verify handling of unexpected field
+    @Test
+    fun langResponse_withExtraField_ignoredSuccessfully() {
+        val json = """
+        {
+            "user_id": "test_user_006",
+            "language_preference": "ja",
+            "extra_field": "ignore_this"
+        }
+    """.trimIndent()
+
+        val response = gson.fromJson(json, UserLangResponse::class.java)
+
+        assertEquals("test_user_006", response.user_id)
+        assertEquals("ja", response.language_preference)
+    }
+
+    // 3. UserInfo
+    // 1) UserInfoResponse — verify proper parsing of base64 field
     @Test
     fun userInfoResponse_successfulParsing_withBase64() {
         val fakeBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYGD4Dw"
@@ -77,7 +118,7 @@ class UserResponseParsingTest {
         assertEquals("2024-01-15T10:00:00Z", response.started_at)
     }
 
-    // 5. UserInfoResponse — verify parsing when Base64 is empty
+    // 2) UserInfoResponse — verify parsing when Base64 is empty
     @Test
     fun userInfoResponse_emptyBase64() {
         val json = """
@@ -93,34 +134,25 @@ class UserResponseParsingTest {
         assertEquals("", response.image_base64)
     }
 
-    // 6. UserLangResponse — verify handling of unexpected field
+    // 3) UserInfoResponse - verify handling of JSON Array input
     @Test
-    fun langResponse_withExtraField_ignoredSuccessfully() {
+    fun userInfoResponse_arrayInput_handlesSuccessfully() {
         val json = """
-        {
-            "user_id": "test_user_006",
-            "language_preference": "ja",
-            "extra_field": "ignore_this"
-        }
-    """.trimIndent()
+        [
+            {
+                "user_id": "test_user_008",
+                "session_id": "S_ARRAY",
+                "title": "Array Story",
+                "translated_title": "",
+                "image_base64": "",
+                "started_at": "2025-02-02T00:00:00"
+            }
+        ]
+        """.trimIndent()
 
-        val response = gson.fromJson(json, UserLangResponse::class.java)
+        val response = flexibleGson.fromJson(json, UserInfoResponse::class.java)
 
-        assertEquals("test_user_006", response.user_id)
-        assertEquals("ja", response.language_preference)
-    }
-
-    // 7. UserLoginResponse — verify invalid type handling for language_preference
-    @Test
-    fun loginResponse_numericToString_convertedAutomatically() {
-        val json = """
-        {
-            "user_id": "test_user_007",
-            "language_preference": 123
-        }
-    """.trimIndent()
-
-        val response = gson.fromJson(json, UserLoginResponse::class.java)
-        assertEquals("123", response.language_preference)
+        assertEquals("test_user_008", response.user_id)
+        assertEquals("S_ARRAY", response.session_id)
     }
 }

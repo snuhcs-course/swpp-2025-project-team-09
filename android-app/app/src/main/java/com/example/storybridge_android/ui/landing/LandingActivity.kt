@@ -6,21 +6,23 @@ import android.provider.Settings
 import android.widget.Button
 import android.widget.Toast
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.ui.setting.AppSettings
 import com.example.storybridge_android.ui.main.MainActivity
 import com.example.storybridge_android.R
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import com.example.storybridge_android.ui.common.BaseActivity
 
-class LandingActivity : AppCompatActivity() {
+class LandingActivity : BaseActivity() {
     private val viewModel: LandingViewModel by viewModels {
         LandingViewModelFactory()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContentView(R.layout.activity_landing_first)
 
         val deviceId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
@@ -45,8 +47,9 @@ class LandingActivity : AppCompatActivity() {
 
         val btnEnglish = findViewById<Button>(R.id.btnEnglish)
         val btnChinese = findViewById<Button>(R.id.btnChinese)
+        val btnVietnamese = findViewById<Button>(R.id.btnVietnamese)
 
-        val buttons = listOf(btnEnglish, btnChinese)
+        val buttons = listOf(btnEnglish, btnChinese, btnVietnamese)
         fun updateButtonState(selected: Button) {
             buttons.forEach { it.isSelected = it == selected }
         }
@@ -55,12 +58,21 @@ class LandingActivity : AppCompatActivity() {
             selectedLang = "en"
             AppSettings.setLanguage(this, "en")
             updateButtonState(btnEnglish)
+            recreate()
         }
 
         btnChinese.setOnClickListener {
             selectedLang = "zh"
             AppSettings.setLanguage(this, "zh")
             updateButtonState(btnChinese)
+            recreate()
+        }
+
+        btnVietnamese.setOnClickListener {
+            selectedLang = "vi"
+            AppSettings.setLanguage(this, "vi")
+            updateButtonState(btnVietnamese)
+            recreate()
         }
 
         findViewById<Button>(R.id.startButton).setOnClickListener {
