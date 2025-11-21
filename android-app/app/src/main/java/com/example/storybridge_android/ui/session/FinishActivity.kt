@@ -6,13 +6,12 @@ import android.os.Bundle
 import android.view.View
 import androidx.activity.viewModels
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
-import com.example.storybridge_android.data.SessionRepositoryImpl
 import com.example.storybridge_android.databinding.ActivityFinishBinding
+import com.example.storybridge_android.network.SessionStatsResponse
 import com.example.storybridge_android.ui.common.BaseActivity
 import com.example.storybridge_android.ui.main.MainActivity
-import com.example.storybridge_android.ui.setting.AppSettings
+
 class FinishActivity : BaseActivity() {
 
     private lateinit var binding: ActivityFinishBinding
@@ -28,78 +27,111 @@ class FinishActivity : BaseActivity() {
         binding = ActivityFinishBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        sessionId = intent.getStringExtra("session_id") ?: ""
-        isNewSession = intent.getBooleanExtra("is_new_session", true)
+        initializeSessionData()
+        setupObservers()
+        setupClickListeners()
 
         viewModel.endSession(sessionId)
+    }
 
+    private fun initializeSessionData() {
+        sessionId = intent.getStringExtra("session_id") ?: ""
+        isNewSession = intent.getBooleanExtra("is_new_session", true)
+    }
 
+    private fun setupObservers() {
+        observeSessionStats()
+        observeMainButton()
+    }
+
+    private fun observeSessionStats() {
         viewModel.sessionStats.observe(this, Observer { stats ->
-            val totalSeconds = stats.total_time_spent
-            val minutes = totalSeconds / 60
-            val seconds = totalSeconds % 60
-
-            val unitMinute = getString(R.string.unit_minute)
-            val unitMinutes = getString(R.string.unit_minutes)
-            val unitSecond = getString(R.string.unit_second)
-            val unitSeconds = getString(R.string.unit_seconds)
-            val unitPage = getString(R.string.unit_page)
-            val unitPages = getString(R.string.unit_pages)
-
-            val minuteText = when {
-                minutes > 1 -> "$minutes $unitMinutes"
-                minutes == 1 -> "$minutes $unitMinute"
-                else -> ""
-            }
-
-            val secondText = when {
-                seconds > 1 -> "$seconds $unitSeconds"
-                seconds == 1 -> "$seconds $unitSecond"
-                else -> ""
-            }
-
-            val timeText = when {
-                minuteText.isNotEmpty() && secondText.isNotEmpty() -> "$minuteText $secondText"
-                minuteText.isNotEmpty() -> minuteText
-                secondText.isNotEmpty() -> secondText
-                else -> "0 $unitSeconds"
-            }
-
-            val pageCount = stats.total_pages - 1
-            val pageText = if (pageCount == 1) {
-                "1 $unitPage"
-            } else {
-                "$pageCount $unitPages"
-            }
-
-            val finalText = getString(
-                R.string.summary_text,
-                stats.total_words_read,
-                pageText,
-                timeText
-            )
-            binding.sessionSummary.text = finalText
+            val summaryText = formatSessionSummary(stats)
+            binding.sessionSummary.text = summaryText
             binding.sessionSummary.visibility = View.VISIBLE
         })
+    }
 
-
-
+    private fun observeMainButton() {
         viewModel.showMainButton.observe(this, Observer { show ->
             binding.mainButton.visibility = if (show) View.VISIBLE else View.INVISIBLE
         })
+    }
 
+    private fun setupClickListeners() {
         binding.mainButton.setOnClickListener {
-            if (isNewSession) {
-                // New session: go to DecideSaveActivity to choose save/discard
-                val intent = Intent(this, DecideSaveActivity::class.java).apply {
-                    putExtra("session_id", sessionId)
-                }
-                startActivity(intent)
-            } else {
-                // Existing session: go directly to MainActivity
-                startActivity(Intent(this, MainActivity::class.java))
-            }
-            finish()
+            handleMainButtonClick()
+        }
+    }
+
+    private fun handleMainButtonClick() {
+        if (isNewSession) {
+            navigateToDecideSave()
+        } else {
+            navigateToMain()
+        }
+        finish()
+    }
+
+    private fun navigateToDecideSave() {
+        val intent = Intent(this, DecideSaveActivity::class.java).apply {
+            putExtra("session_id", sessionId)
+        }
+        startActivity(intent)
+    }
+
+    private fun navigateToMain() {
+        startActivity(Intent(this, MainActivity::class.java))
+    }
+
+    private fun formatSessionSummary(stats: SessionStatsResponse): String {
+        val timeText = formatTimeText(stats.total_time_spent)
+        val pageText = formatPageText(stats.total_pages - 1)
+
+        return getString(
+            R.string.summary_text,
+            stats.total_words_read,
+            pageText,
+            timeText
+        )
+    }
+
+    private fun formatTimeText(totalSeconds: Int): String {
+        val minutes = totalSeconds / 60
+        val seconds = totalSeconds % 60
+
+        val minuteText = formatMinutes(minutes)
+        val secondText = formatSeconds(seconds)
+
+        return when {
+            minuteText.isNotEmpty() && secondText.isNotEmpty() -> "$minuteText $secondText"
+            minuteText.isNotEmpty() -> minuteText
+            secondText.isNotEmpty() -> secondText
+            else -> "0 ${getString(R.string.unit_seconds)}"
+        }
+    }
+
+    private fun formatMinutes(minutes: Int): String {
+        return when {
+            minutes > 1 -> "$minutes ${getString(R.string.unit_minutes)}"
+            minutes == 1 -> "$minutes ${getString(R.string.unit_minute)}"
+            else -> ""
+        }
+    }
+
+    private fun formatSeconds(seconds: Int): String {
+        return when {
+            seconds > 1 -> "$seconds ${getString(R.string.unit_seconds)}"
+            seconds == 1 -> "$seconds ${getString(R.string.unit_second)}"
+            else -> ""
+        }
+    }
+
+    private fun formatPageText(pageCount: Int): String {
+        return if (pageCount == 1) {
+            "1 ${getString(R.string.unit_page)}"
+        } else {
+            "$pageCount ${getString(R.string.unit_pages)}"
         }
     }
 }
