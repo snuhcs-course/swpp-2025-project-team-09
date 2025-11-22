@@ -263,6 +263,7 @@ class TestGetSessionStatsView(APITestCase):
             title="Test Session",
             created_at=timezone.now(),
             totalPages=8,
+            totalWords=800,
         )
 
     def test_01_get_session_stats_ongoing(self):
