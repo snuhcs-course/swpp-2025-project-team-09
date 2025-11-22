@@ -4,8 +4,8 @@
 BACKEND_DIR="backend"
 BRANCH_NAME="deployment"
 DJANGO_PORT=8000
-PYTHON_EXECUTABLE="./venv/bin/python"
-PIP_EXECUTABLE="./venv/bin/pip"
+PYTHON_EXECUTABLE="./backend/venv/bin/python"
+PIP_EXECUTABLE="./backend/venv/bin/pip"
 SERVER_LOG="$BACKEND_DIR/server.log" 
 
 echo "--- 배포 시작: $(date) ---"

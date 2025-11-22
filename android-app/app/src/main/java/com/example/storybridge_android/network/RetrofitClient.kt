@@ -26,7 +26,7 @@ class FlexibleUserInfoAdapter : JsonDeserializer<UserInfoResponse> {
 }
 
 object RetrofitClient {
-    private var BASE_URL = "http://ec2-3-105-111-6.ap-southeast-2.compute.amazonaws.com:8000"
+    private var BASE_URL = "http://ec2-43-203-114-138.ap-northeast-2.compute.amazonaws.com:8000"
 
     private val logging = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
