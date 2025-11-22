@@ -24,6 +24,15 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            packaging {
+                resources {
+                    excludes += "/META-INF/{AL2.0,LGPL2.1,LICENSE*.md,NOTICE*.md}"
+                }
+            }
+        }
+        debug {
+            enableAndroidTestCoverage = true
+            enableUnitTestCoverage = true
         }
     }
 
@@ -41,6 +50,65 @@ android {
         dataBinding = false     // Data Binding 필요 시 true
     }
 }
+
+tasks.register<JacocoReport>("jacocoTestReport") {
+    dependsOn("testDebugUnitTest", "createDebugAndroidTestCoverageReport")
+
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+
+    val fileFilter = listOf(
+        "**/R.class",
+        "**/R$*.class",
+        "**/BuildConfig.*",
+        "**/Manifest*.*",
+        "**/*Test*.*",
+        "**/Hilt_*.*",
+        "**/dagger/**",
+
+        "**/databinding/**",
+        "**/*Binding.class",
+        "**/BR.class",
+        "**/DataBinderMapperImpl*",
+        "**/DataBindingUtil*",
+        "**/ViewDataBinding*",
+        "**/ImageUtil.*",
+        "**/*\$*",
+        "**/*inlined*",
+        "**/*special*",
+        "**/*Function*",
+        "**/MainActivity*lambda*\$*",
+        "**/*\$lambda$*.*",
+        "**/*Lambda*.*",
+        "**/*\$*Lambda*.*"
+    )
+
+    val javaDebugTree = fileTree("${buildDir}/intermediates/javac/debug") {
+        exclude(fileFilter)
+    }
+
+    val kotlinDebugTree = fileTree("${buildDir}/tmp/kotlin-classes/debug") {
+        exclude(fileFilter)
+    }
+
+    classDirectories.setFrom(files(javaDebugTree, kotlinDebugTree))
+
+    sourceDirectories.setFrom(
+        files(
+            "${project.projectDir}/src/main/java",
+        )
+    )
+
+    executionData.setFrom(fileTree(buildDir) {
+        include(
+            "outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec",
+            "outputs/code_coverage/debugAndroidTest/connected/**/*.ec"
+        )
+    })
+}
+
 
 val camerax_version = "1.2.0"
 
@@ -78,16 +146,17 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.6")
     // lifecycleScope 같은 coroutine 사용 시
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
-
     // Test
     testImplementation(libs.junit)
     testImplementation("com.squareup.retrofit2:retrofit:2.9.0")
     testImplementation("com.squareup.retrofit2:converter-gson:2.9.0")
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
     testImplementation("org.jetbrains.kotlin:kotlin-test:1.9.23")
-
+    testImplementation("io.mockk:mockk:1.13.8")
+    testImplementation("androidx.arch.core:core-testing:2.2.0")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
 
     // Android Test
     androidTestImplementation(libs.androidx.junit)
@@ -98,9 +167,8 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-intents:3.5.1")
     androidTestImplementation("androidx.test:rules:1.5.0")
 
-    androidTestImplementation("org.mockito:mockito-core:5.3.1")
-    androidTestImplementation("org.mockito:mockito-android:5.3.1")
-    androidTestImplementation("org.mockito.kotlin:mockito-kotlin:5.1.0")
+    androidTestImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
+    androidTestImplementation("io.mockk:mockk-android:1.13.8")
 
     androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
 

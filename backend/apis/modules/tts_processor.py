@@ -18,7 +18,7 @@ import kss
 load_dotenv()
 
 
-# Prompt Templates
+# Prompt Templates.
 TRANSLATION_PROMPT = """
 You are an expert multilingual children's-story adapter.
 You will be given a block of Korean text that may contain up to three
@@ -473,7 +473,7 @@ class TTSModule:
         male_results = all_results[:mid_point]
         female_results = all_results[mid_point:]
 
-        # Filter out None results and join (for cover, typically just one sentence)
+        # Filter out None results and join (for cover, typically just one sentence).
         male_audio = male_results[0] if male_results and male_results[0] else ""
         female_audio = female_results[0] if female_results and female_results[0] else ""
 

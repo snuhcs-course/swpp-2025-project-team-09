@@ -3,6 +3,7 @@ package com.example.storybridge_android.ui.main
 import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Base64
@@ -21,17 +22,19 @@ import com.example.storybridge_android.ui.common.SessionCard
 import com.example.storybridge_android.ui.common.TopNavigationBar
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.appcompat.content.res.AppCompatResources
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
-import com.example.storybridge_android.data.SessionRepositoryImpl
-import com.example.storybridge_android.data.UserRepositoryImpl
+import com.example.storybridge_android.ui.common.BaseActivity
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.util.*
 
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : BaseActivity() {
     private val viewModel: MainViewModel by viewModels {
-        MainViewModelFactory(UserRepositoryImpl(), SessionRepositoryImpl())
+        MainViewModelFactory()
     }
 
     private val settingsLauncher = registerForActivityResult(
@@ -80,9 +83,41 @@ class MainActivity : AppCompatActivity() {
                         return@collectLatest
                     }
 
-                    for (data in sessions.reversed()) {
+                    // Session card background color change
+                    val palette = listOf(
+                        R.color.yellow_light,
+                        R.color.blue_light,
+                        R.color.purple_light,
+                        R.color.teal_light,
+                        R.color.red_light
+                    )
+
+                    val reversedSessions = sessions.reversed()
+                    val total = reversedSessions.size
+
+                    reversedSessions.forEachIndexed { index, data ->
+
                         val sessionCard = SessionCard(this@MainActivity)
-                        sessionCard.setBookTitle(data.translated_title ?: "NULL")
+                        val root = sessionCard.findViewById<ConstraintLayout>(R.id.sessionCardRoot)
+
+                        val logicalIndex = total - 1 - index
+                        val colorInt = ContextCompat.getColor(this@MainActivity, palette[logicalIndex % palette.size])
+
+                        val drawable = AppCompatResources.getDrawable(
+                            this@MainActivity,
+                            R.drawable.card_background
+                        )!!.mutate()
+
+                        drawable.setTint(colorInt)
+                        root.background = drawable
+
+                        // Session Card title
+                        val title = data.translated_title ?: "NULL"
+                        val maxLen = 12
+                        val cropped =
+                            if (title.length > maxLen) title.substring(0, maxLen) + "…" else title
+
+                        sessionCard.setBookTitle(cropped)
 
                         val raw = data.started_at.take(10)
                         val parts = raw.split("-")
@@ -93,17 +128,21 @@ class MainActivity : AppCompatActivity() {
                             sessionCard.setBookProgress(data.started_at)
                         }
 
+                        // Session card image
                         if (!data.image_base64.isNullOrEmpty()) {
                             val imageBytes = Base64.decode(data.image_base64, Base64.DEFAULT)
                             val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
                             sessionCard.findViewById<ImageView>(R.id.cardBookImage).setImageBitmap(bitmap)
                         }
 
+                        // Session card click
                         sessionCard.setOnImageClickListener {
                             val intent = Intent(this@MainActivity, LoadingActivity::class.java)
                             intent.putExtra("started_at", data.started_at)
                             startActivity(intent)
                         }
+
+                        // Session card discard
                         sessionCard.setOnTrashClickListener {
                             AlertDialog.Builder(this@MainActivity)
                                 .setTitle("삭제 확인")
@@ -111,12 +150,13 @@ class MainActivity : AppCompatActivity() {
                                 .setPositiveButton("삭제") { _, _ ->
                                     lifecycleScope.launch {
                                         val deviceInfo = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
-                                        viewModel.discardSession(data.session_id, deviceInfo) // session_id 사
+                                        viewModel.discardSession(data.session_id, deviceInfo)
                                     }
                                 }
                                 .setNegativeButton("취소", null)
                                 .show()
                         }
+
                         container.addView(sessionCard)
                     }
 

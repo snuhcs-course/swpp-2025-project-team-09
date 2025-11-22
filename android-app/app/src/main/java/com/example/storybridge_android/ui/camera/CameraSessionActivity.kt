@@ -7,22 +7,27 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import com.example.storybridge_android.ui.common.BaseActivity
 import com.example.storybridge_android.ui.session.LoadingActivity
 import com.example.storybridge_android.ui.session.VoiceSelectActivity
 import com.example.storybridge_android.ui.setting.AppSettings
 import kotlinx.coroutines.flow.collectLatest
 
-class CameraSessionActivity : AppCompatActivity() {
+class CameraSessionActivity : BaseActivity() {
 
     private var sessionId: String? = null
     private var pageIndex: Int = 0
     private var isCover: Boolean = false
 
-    private val viewModel: CameraSessionViewModel by viewModels { CameraSessionViewModelFactory() }
-
+    private val viewModel: CameraSessionViewModel by viewModels {
+        testViewModelFactory ?: CameraSessionViewModelFactory()
+    }
     companion object {
         private const val TAG = "CameraSessionActivity"
+        var testViewModelFactory: ViewModelProvider.Factory? = null
+        var testMode: Boolean = false
     }
 
     private val cameraLauncher =
@@ -40,6 +45,7 @@ class CameraSessionActivity : AppCompatActivity() {
         isCover = intent.getBooleanExtra("is_cover", false)
 
         if (sessionId == null) {
+            setResult(RESULT_CANCELED)
             finish()
             return
         }
@@ -57,9 +63,14 @@ class CameraSessionActivity : AppCompatActivity() {
                             navigateToLoading(state.imagePath)
                         }
                     }
-                    is SessionUiState.Cancelled -> finish()
+                    is SessionUiState.Cancelled -> {
+                        // User cancelled - return to previous activity (ReadingActivity)
+                        setResult(RESULT_CANCELED)
+                        finish()
+                    }
                     is SessionUiState.Error -> {
                         Log.e(TAG, state.message)
+                        setResult(RESULT_CANCELED)
                         finish()
                     }
                 }
@@ -68,6 +79,8 @@ class CameraSessionActivity : AppCompatActivity() {
     }
 
     private fun startCamera() {
+        if (testMode) return
+
         val intent = Intent(this, CameraActivity::class.java)
         cameraLauncher.launch(intent)
     }
@@ -78,6 +91,9 @@ class CameraSessionActivity : AppCompatActivity() {
         intent.putExtra("image_path", imagePath)
         intent.putExtra("lang", AppSettings.getLanguage(this))
         startActivity(intent)
+
+        // Signal success back to ReadingActivity
+        setResult(RESULT_OK, Intent().putExtra("page_added", true))
         finish()
     }
 
@@ -89,6 +105,9 @@ class CameraSessionActivity : AppCompatActivity() {
         intent.putExtra("is_cover", isCover)
         intent.putExtra("lang", AppSettings.getLanguage(this))  // 현재 언어 설정 전달
         startActivity(intent)
+
+        // Signal success back to ReadingActivity
+        setResult(RESULT_OK, Intent().putExtra("page_added", true))
         finish()
     }
 }

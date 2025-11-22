@@ -2,6 +2,9 @@ package com.example.storybridge_android.ui.session
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
+import android.widget.Button
+import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
@@ -11,9 +14,12 @@ import androidx.core.view.WindowInsetsCompat
 import com.example.storybridge_android.R
 import com.example.storybridge_android.ui.camera.CameraSessionActivity
 import androidx.activity.OnBackPressedCallback
-import androidx.appcompat.app.AlertDialog
+import androidx.lifecycle.lifecycleScope
+import com.example.storybridge_android.data.SessionRepositoryImpl
+import com.example.storybridge_android.ui.common.BaseActivity
+import kotlinx.coroutines.launch
 
-class ContentInstructionActivity : AppCompatActivity() {
+class ContentInstructionActivity : BaseActivity() {
 
     private val viewModel: ContentInstructionViewModel by viewModels()
 
@@ -34,7 +40,29 @@ class ContentInstructionActivity : AppCompatActivity() {
             finish()
             return
         }
+
         viewModel.setSessionId(sessionId)
+
+        val exitPanel = findViewById<FrameLayout>(R.id.exitPanelInclude)
+        val exitConfirmBtn = findViewById<Button>(R.id.exitConfirmBtn)
+        val exitCancelBtn = findViewById<Button>(R.id.exitCancelBtn)
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                exitPanel.visibility = View.VISIBLE
+            }
+        })
+
+        exitCancelBtn.setOnClickListener {
+            exitPanel.visibility = View.GONE
+        }
+
+        exitConfirmBtn.setOnClickListener {
+            lifecycleScope.launch {
+                val result = SessionRepositoryImpl().discardSession(sessionId)
+                finish()
+            }
+        }
 
         viewModel.navigateToCamera.observe(this) { shouldNavigate ->
             if (shouldNavigate == true) {
@@ -42,30 +70,14 @@ class ContentInstructionActivity : AppCompatActivity() {
             }
         }
 
-        findViewById<android.widget.Button>(R.id.contentInstructionButton).setOnClickListener {
+        findViewById<Button>(R.id.contentInstructionButton).setOnClickListener {
             viewModel.onStartClicked()
         }
-
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                AlertDialog.Builder(this@ContentInstructionActivity)
-                    .setTitle(getString(R.string.exit_dialog_title))
-                    .setMessage(getString(R.string.exit_dialog_message))
-                    .setPositiveButton(getString(R.string.exit_dialog_confirm)) { _, _ ->
-                        isEnabled = false
-                        onBackPressedDispatcher.onBackPressed()
-                    }
-                    .setNegativeButton(getString(R.string.exit_dialog_cancel), null)
-                    .show()
-            }
-        })
-
     }
 
     private fun goToCamera(sessionId: String) {
         val intent = Intent(this, CameraSessionActivity::class.java).apply {
             putExtra("session_id", sessionId)
-            // 본문 페이지 인덱스 1부터 시작
             putExtra("page_index", 1)
         }
         startActivity(intent)

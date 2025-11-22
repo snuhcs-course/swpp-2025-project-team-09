@@ -3,15 +3,15 @@ package com.example.storybridge_android.ui.session
 import android.content.Intent
 import android.media.MediaPlayer
 import android.os.Bundle
-import android.util.Base64
+import com.example.storybridge_android.data.MALE_VOICE
+import com.example.storybridge_android.data.FEMALE_VOICE
 import android.util.Log
+import android.view.View
 import android.widget.Button
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
@@ -19,14 +19,12 @@ import com.example.storybridge_android.R
 import com.example.storybridge_android.data.SessionRepositoryImpl
 import com.example.storybridge_android.ui.setting.AppSettings
 import kotlinx.coroutines.flow.collectLatest
+
 import kotlinx.coroutines.launch
-import java.io.File
-import java.io.FileOutputStream
+import android.widget.FrameLayout
+import com.example.storybridge_android.ui.common.BaseActivity
 
-const val MALE_VOICE = "onyx"
-const val FEMALE_VOICE = "shimmer"
-
-class VoiceSelectActivity : AppCompatActivity() {
+class VoiceSelectActivity : BaseActivity() {
 
     private var sessionId: String? = null
     private var imagePath: String? = null
@@ -34,13 +32,14 @@ class VoiceSelectActivity : AppCompatActivity() {
     private var mediaPlayer: MediaPlayer? = null
 
     private val viewModel: VoiceSelectViewModel by viewModels {
-        VoiceSelectViewModelFactory(SessionRepositoryImpl())
+        VoiceSelectViewModelFactory()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_voice_select)
+
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -62,6 +61,10 @@ class VoiceSelectActivity : AppCompatActivity() {
             return
         }
 
+        val exitPanel = findViewById<FrameLayout>(R.id.exitPanelInclude)
+        val exitConfirm = findViewById<Button>(R.id.exitConfirmBtn)
+        val exitCancel = findViewById<Button>(R.id.exitCancelBtn)
+
         // 백그라운드에서 cover 이미지 업로드 시작
         if (imagePath != null && lang != null) {
             viewModel.uploadCoverInBackground(sessionId!!, lang!!, imagePath!!)
@@ -75,34 +78,19 @@ class VoiceSelectActivity : AppCompatActivity() {
             listOf(manButton, womanButton).forEach { it.isSelected = it == selected }
         }
 
-        val currentLang = AppSettings.getLanguage(this)
-
-        when (currentLang) {
-            "en", "zh" -> {
-                manButton.text = getString(R.string.male_voice)
-                womanButton.text = getString(R.string.female_voice)
-                nextButton.text = getString(R.string.next)
-            }
-            else -> {
-                manButton.text = getString(R.string.male_voice)
-                womanButton.text = getString(R.string.female_voice)
-                nextButton.text = getString(R.string.next)
-            }
-        }
-
         nextButton.isEnabled = false
 
         manButton.setOnClickListener {
             AppSettings.setVoice(this, MALE_VOICE)
             viewModel.selectVoice(sessionId!!, MALE_VOICE)
-            playLocalAudio(R.raw.voice_man)
+            playLocalAudio(getVoiceResourceId(MALE_VOICE))
             updateButtonState(manButton)
         }
 
         womanButton.setOnClickListener {
             AppSettings.setVoice(this, FEMALE_VOICE)
             viewModel.selectVoice(sessionId!!, FEMALE_VOICE)
-            playLocalAudio(R.raw.voice_woman)
+            playLocalAudio(getVoiceResourceId(FEMALE_VOICE))
             updateButtonState(womanButton)
         }
 
@@ -125,17 +113,35 @@ class VoiceSelectActivity : AppCompatActivity() {
         }
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                AlertDialog.Builder(this@VoiceSelectActivity)
-                    .setTitle(getString(R.string.exit_dialog_title))
-                    .setMessage(getString(R.string.exit_dialog_message))
-                    .setPositiveButton(getString(R.string.exit_dialog_confirm)) { _, _ ->
-                        isEnabled = false
-                        onBackPressedDispatcher.onBackPressed()
-                    }
-                    .setNegativeButton(getString(R.string.exit_dialog_cancel), null)
-                    .show()
+                exitPanel.visibility = View.VISIBLE
             }
         })
+        exitConfirm.setOnClickListener {
+            val id = sessionId ?: return@setOnClickListener
+
+            lifecycleScope.launch {
+                val result = SessionRepositoryImpl().discardSession(id)
+                result.onSuccess {
+                    finish()
+                }.onFailure {
+                    Toast.makeText(this@VoiceSelectActivity, "Failed to discard session", Toast.LENGTH_SHORT).show()
+                    finish()
+                }
+            }
+        }
+        exitCancel.setOnClickListener {
+            exitPanel.visibility = View.GONE
+        }
+
+    }
+
+    private fun getVoiceResourceId(voiceType: String): Int {
+        val language = AppSettings.getLanguage(this, "en")
+        return when (language) {
+            "zh" -> if (voiceType == MALE_VOICE) R.raw.zh_man else R.raw.zh_woman
+            "vi" -> if (voiceType == MALE_VOICE) R.raw.vn_man else R.raw.vn_woman
+            else -> if (voiceType == MALE_VOICE) R.raw.en_man else R.raw.en_woman
+        }
     }
 
     private fun playLocalAudio(audioResId: Int) {

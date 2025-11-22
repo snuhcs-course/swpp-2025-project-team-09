@@ -49,9 +49,16 @@ class ProcessUploadView(APIView):
                 {"error_code": 422, "message": "PROCESS__UNABLE_TO_PROCESS_IMAGE"},
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
+        
+        # Count words from OCR and add to session.totalWords
+        total_words = sum(
+            len((para.get("text", "") or "").split()) for para in ocr_result
+        )
+        session.totalWords = session.totalWords + total_words
+        print(f"[DEBUG] OCR words in page {page_index}: {total_words}")
 
         # Map language codes to full names for TTS
-        lang_map = {"en": "English", "zh": "Chinese"}
+        lang_map = {"en": "English", "zh": "Chinese", "vi": "Vietnamese"}
         target_lang = lang_map.get(lang, "English")
 
         # Run translation synchronously (fast, ~2-3s per paragraph)
@@ -65,6 +72,10 @@ class ProcessUploadView(APIView):
             session, image_path, ocr_result, translation_data
         )
 
+        # Get voice preference with fallback to default
+        para_voice = session.voicePreference if session.voicePreference else "shimmer"
+        print("[DEBUG] voice preference:", session.voicePreference, "→ using:", para_voice)
+
         # Start background TTS
         self._start_background_tts(
             tts_module,
@@ -73,12 +84,12 @@ class ProcessUploadView(APIView):
             page,
             session_id,
             page_index,
-            para_voice=session.voicePreference,
+            para_voice=para_voice,
         )
 
-        # Update session
+        # Update session (only update specific fields to avoid race condition)
         session.totalPages += 1
-        session.save()
+        session.save(update_fields=['totalPages', 'totalWords'])
         print("[DEBUG] Page index after upload:", page_index)
         return Response(
             {
@@ -125,7 +136,10 @@ class ProcessUploadView(APIView):
         try:
             translation_data = loop.run_until_complete(
                 asyncio.gather(
-                    *[get_para_translation(i, para) for i, para in enumerate(ocr_result)]
+                    *[
+                        get_para_translation(i, para)
+                        for i, para in enumerate(ocr_result)
+                    ]
                 )
             )
             return translation_data
@@ -185,7 +199,7 @@ class ProcessUploadView(APIView):
 
         def run_tts():
             print(f"[TTS Background] Starting TTS for page {page_index}")
-
+            print(f"[TTS Background] Using voice preference: {para_voice}")
             try:
                 for i, _ in enumerate(ocr_result):
                     not_ok = (
@@ -201,7 +215,11 @@ class ProcessUploadView(APIView):
                     try:
                         audio_results = loop.run_until_complete(
                             tts_module.run_tts_only(
-                                translation_data[i], session_id, page_index, i, para_voice
+                                translation_data[i],
+                                session_id,
+                                page_index,
+                                i,
+                                para_voice,
                             )
                         )
                     finally:
@@ -366,7 +384,7 @@ class ProcessUploadCoverView(APIView):
 
         page_index = 0  # Cover page is always index 0
 
-        # Save cover image
+        # Save cover image (to a different path)
         image_path = self._save_image(image_base64, session_id, page_index)
 
         # Run OCR to get title
@@ -378,36 +396,33 @@ class ProcessUploadCoverView(APIView):
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
 
-        # Map language codes to full names for translation
-        lang_map = {"en": "English", "zh": "Chinese"}
+        # Map language codes to full names for TTS
+        lang_map = {"en": "English", "zh": "Chinese", "vi": "Vietnamese"}
         target_lang = lang_map.get(lang, "English")
 
-        # Create OCR result structure for _get_all_translations
-        ocr_result = [{"text": title, "bbox": {}}]
-
-        # Run translation synchronously (without TTS)
-        tts_module = TTSModule(target_lang=target_lang)
-        translation_data = self._get_all_translations(
-            tts_module, ocr_result, session_id, page_index
+        # Run translation for title synchronously
+        translated_text, tts_male, tts_female = self._run_async(
+            TTSModule(target_lang=target_lang).translate_and_tts_cover(
+                title, session_id, page_index
+            )
         )
 
-        # Extract translated text
-        translated_text = ""
-        if translation_data and translation_data[0]["status"] == "ok":
-            sentences = translation_data[0]["sentences"]
-            translated_text = " ".join([s["translation"] for s in sentences])
-
-        # Create page and bounding boxes with translations
         page = self._create_page_and_bbs(
-            session, image_path, ocr_result, translation_data
+            session,
+            image_path,
+            [{"text": title}],
+            [{
+                "status": "ok",
+                "sentences": [{"translation": translated_text}]
+            }]
         )
 
-        # Update session
+        # Update session (only update specific fields to avoid overwriting voicePreference)
         session.title = title
         session.translated_title = translated_text
-        print(f'[DEBUG] Translated title: {session.translated_title}')
+        print(f"[debug]{session.translated_title}")
         session.totalPages += 1
-        session.save()
+        session.save(update_fields=['title', 'translated_title', 'totalPages'])
 
         return Response(
             {
@@ -417,8 +432,8 @@ class ProcessUploadCoverView(APIView):
                 "submitted_at": timezone.now().isoformat(),
                 "title": session.title,
                 "translated_title": session.translated_title,
-                "tts_male": None,
-                "tts_female": None,
+                "tts_male": tts_male,
+                "tts_female": tts_female,
             },
             status=status.HTTP_200_OK,
         )
@@ -442,17 +457,14 @@ class ProcessUploadCoverView(APIView):
         # Run ALL paragraphs in parallel
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        try:
-            translation_data = loop.run_until_complete(
-                asyncio.gather(
-                    *[get_para_translation(i, para) for i, para in enumerate(ocr_result)]
-                )
+        translation_data = loop.run_until_complete(
+            asyncio.gather(
+                *[get_para_translation(i, para) for i, para in enumerate(ocr_result)]
             )
-            return translation_data
-        finally:
-            # Properly cleanup async resources before closing the loop
-            loop.run_until_complete(loop.shutdown_asyncgens())
-            loop.close()
+        )
+        loop.close()
+
+        return translation_data
 
     def _create_page_and_bbs(
         self,
@@ -499,3 +511,17 @@ class ProcessUploadCoverView(APIView):
             f.write(image_bytes)
 
         return image_path
+
+    def _run_async(self, coroutine):
+        """Helper to run async code in sync context."""
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            result = loop.run_until_complete(coroutine)
+            loop.close()
+            return result
+        except Exception as e:
+            import traceback
+
+            traceback.print_exc()
+            return "", ""

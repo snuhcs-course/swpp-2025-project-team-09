@@ -21,18 +21,14 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
+import com.example.storybridge_android.ui.common.BaseActivity
 
-class LoadingActivity : AppCompatActivity() {
+class LoadingActivity : BaseActivity() {
 
     private lateinit var loadingBar: ProgressBar
 
     private val viewModel: LoadingViewModel by viewModels {
-        LoadingViewModelFactory(
-            ProcessRepositoryImpl(),
-            PageRepositoryImpl(),
-            UserRepositoryImpl(),
-            SessionRepositoryImpl()
-        )
+        LoadingViewModelFactory()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,7 +66,6 @@ class LoadingActivity : AppCompatActivity() {
                     val sessions = response.body() ?: return@collectLatest
                     val match = sessions.find { it.started_at == startedAt }
                     if (match != null) {
-                        // viewModel.reloadSession(match.started_at, 0, this@LoadingActivity)
                         viewModel.reloadAllSession(match.started_at, this@LoadingActivity)
                     } else {
                         showError("Session not found")
@@ -81,7 +76,8 @@ class LoadingActivity : AppCompatActivity() {
             lifecycleScope.launchWhenStarted {
                 viewModel.navigateToReading.collectLatest { session ->
                     session?.let {
-                        navigateToReading(it.session_id, it.page_index, it.total_pages)
+                        val realStartIndex = if (it.page_index == 0) 1 else it.page_index
+                        navigateToReading(it.session_id, realStartIndex, it.total_pages)
                     }
                 }
             }

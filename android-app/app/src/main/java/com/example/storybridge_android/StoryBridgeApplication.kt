@@ -13,8 +13,13 @@ class StoryBridgeApplication : Application() {
     override fun attachBaseContext(base: Context?) {
         val context = base?.let {
             val lang = AppSettings.getLanguage(it, "en")
-            val locale = Locale(lang)
-            val config = Configuration()
+            val locale = when (lang) {
+                "zh" -> Locale.CHINESE
+                "vi" -> Locale("vi")
+                else -> Locale.ENGLISH
+            }
+            Locale.setDefault(locale)
+            val config = Configuration(it.resources.configuration)
             config.setLocale(locale)
             it.createConfigurationContext(config)
         }
@@ -34,7 +39,11 @@ class StoryBridgeApplication : Application() {
     companion object {
         fun applyLanguage(context: Context) {
             val languageCode = AppSettings.getLanguage(context, "en")
-            val locale = Locale(languageCode)
+            val locale = when (languageCode) {
+                "zh" -> Locale.CHINESE
+                "vi" -> Locale("vi")
+                else -> Locale.ENGLISH
+            }
             Locale.setDefault(locale)
             val config = Configuration(context.resources.configuration)
             config.setLocale(locale)
