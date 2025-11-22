@@ -4,6 +4,7 @@ import com.example.storybridge_android.data.UserRepositoryImpl
 import com.example.storybridge_android.network.UserLoginRequest
 import com.example.storybridge_android.network.UserRegisterRequest
 import com.example.storybridge_android.network.RetrofitClient
+import com.example.storybridge_android.network.UserLangRequest
 import kotlinx.coroutines.runBlocking
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -52,5 +53,58 @@ class UserRepositoryTest {
 
         assertTrue(response.isSuccessful)
         assertEquals("u999", response.body()?.user_id)
+    }
+
+    @Test
+    fun userLang_returnsParsedResponse() = runBlocking {
+        val mockJson = """
+        {
+            "user_id": "u123",
+            "language_preference": "en",
+            "updated_at": "2025-11-14T10:00:00"
+        }
+    """.trimIndent()
+        server.enqueue(MockResponse().setResponseCode(200).setBody(mockJson))
+
+        val response = repository.userLang(UserLangRequest("device_123", "en"))
+
+        assertTrue(response.isSuccessful)
+        val body = response.body()
+        assertEquals("u123", body?.user_id)
+        assertEquals("en", body?.language_preference)
+        assertEquals("2025-11-14T10:00:00", body?.updated_at)
+    }
+
+    @Test
+    fun getUserInfo_returnsParsedList() = runBlocking {
+        val mockJson = """
+        [
+            {
+                "user_id": "u123",
+                "session_id": "s1",
+                "title": "책 제목",
+                "translated_title": "Book Title",
+                "image_base64": "base64image",
+                "started_at": "2025-11-14T09:00:00"
+            },
+            {
+                "user_id": "u123",
+                "session_id": "s2",
+                "title": "다른 책",
+                "translated_title": "Another Book",
+                "image_base64": "base64image2",
+                "started_at": "2025-11-14T10:00:00"
+            }
+        ]
+    """.trimIndent()
+        server.enqueue(MockResponse().setResponseCode(200).setBody(mockJson))
+
+        val response = repository.getUserInfo("device_123")
+
+        assertTrue(response.isSuccessful)
+        val list = response.body()
+        assertEquals(2, list?.size)
+        assertEquals("s1", list?.get(0)?.session_id)
+        assertEquals("다른 책", list?.get(1)?.title)
     }
 }

@@ -69,17 +69,11 @@ data class UserLangResponse(
 )
 
 // 1-4. Get user's full reading list
-data class UserInfoRequest(
-    val device_info: String
-)
-
-
 data class UserInfoResponse(
     val user_id: String,
+    val session_id: String,
     val title: String,
     val translated_title: String,
     val image_base64: String,
     val started_at: String  // datetime as ISO string
 )
-
-typealias UserInfoListResponse = List<UserInfoResponse>

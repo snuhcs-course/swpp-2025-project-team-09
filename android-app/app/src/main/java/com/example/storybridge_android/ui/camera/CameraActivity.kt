@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -14,10 +15,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.R
+import com.example.storybridge_android.ui.common.BaseActivity
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import kotlinx.coroutines.flow.collectLatest
 
-class CameraActivity : AppCompatActivity() {
+class CameraActivity : BaseActivity() {
 
     private val viewModel: CameraViewModel by viewModels {
         CameraViewModelFactory(application)
@@ -32,6 +34,7 @@ class CameraActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContentView(R.layout.activity_camera)
 
         initLaunchers()
@@ -39,6 +42,7 @@ class CameraActivity : AppCompatActivity() {
 
         if (!viewModel.checkGooglePlayServices()) {
             Toast.makeText(this, "Google Play Services required", Toast.LENGTH_LONG).show()
+            setResult(RESULT_CANCELED)
             finish()
             return
         }
@@ -53,6 +57,7 @@ class CameraActivity : AppCompatActivity() {
             if (granted) viewModel.checkModuleAndInitScanner()
             else {
                 Toast.makeText(this, "Camera permission denied", Toast.LENGTH_SHORT).show()
+                setResult(RESULT_CANCELED)
                 finish()
             }
         }
@@ -64,7 +69,9 @@ class CameraActivity : AppCompatActivity() {
                 val scanningResult = GmsDocumentScanningResult.fromActivityResultIntent(result.data)
                 viewModel.handleScanningResult(scanningResult, contentResolver)
             } else {
+                // User cancelled the scan - return to previous activity
                 Toast.makeText(this, "Scan canceled", Toast.LENGTH_SHORT).show()
+                setResult(RESULT_CANCELED)
                 finish()
             }
         }
@@ -116,6 +123,7 @@ class CameraActivity : AppCompatActivity() {
             },
             onError = { err ->
                 Toast.makeText(this, err, Toast.LENGTH_SHORT).show()
+                setResult(RESULT_CANCELED)
                 finish()
             }
         )

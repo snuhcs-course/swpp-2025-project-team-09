@@ -8,6 +8,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.R
@@ -18,22 +19,21 @@ import com.example.storybridge_android.data.UserRepositoryImpl
 import com.example.storybridge_android.ui.reading.ReadingActivity
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.AlertDialog
+import com.example.storybridge_android.ui.common.BaseActivity
 
-class LoadingActivity : AppCompatActivity() {
+class LoadingActivity : BaseActivity() {
 
     private lateinit var loadingBar: ProgressBar
 
     private val viewModel: LoadingViewModel by viewModels {
-        LoadingViewModelFactory(
-            ProcessRepositoryImpl(),
-            PageRepositoryImpl(),
-            UserRepositoryImpl(),
-            SessionRepositoryImpl()
-        )
+        LoadingViewModelFactory()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContentView(R.layout.activity_loading)
 
         loadingBar = findViewById(R.id.loadingBar)
@@ -66,7 +66,6 @@ class LoadingActivity : AppCompatActivity() {
                     val sessions = response.body() ?: return@collectLatest
                     val match = sessions.find { it.started_at == startedAt }
                     if (match != null) {
-                        // viewModel.reloadSession(match.started_at, 0, this@LoadingActivity)
                         viewModel.reloadAllSession(match.started_at, this@LoadingActivity)
                     } else {
                         showError("Session not found")
@@ -77,7 +76,8 @@ class LoadingActivity : AppCompatActivity() {
             lifecycleScope.launchWhenStarted {
                 viewModel.navigateToReading.collectLatest { session ->
                     session?.let {
-                        navigateToReading(it.session_id, it.page_index, it.total_pages)
+                        val realStartIndex = if (it.page_index == 0) 1 else it.page_index
+                        navigateToReading(it.session_id, realStartIndex, it.total_pages)
                     }
                 }
             }
@@ -123,13 +123,23 @@ class LoadingActivity : AppCompatActivity() {
                 }
             }
         }
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                Toast.makeText(this@LoadingActivity, getString(R.string.exit_loading), Toast.LENGTH_SHORT).show()
+            }
+        })
+
     }
 
     private fun navigateToReading(sessionId: String, pageIndex: Int, totalPages: Int = pageIndex + 1) {
+        // Check if this is a new session (no started_at) or existing session (has started_at)
+        val isNewSession = intent.getStringExtra("started_at") == null
+
         val intent = Intent(this, ReadingActivity::class.java).apply {
             putExtra("session_id", sessionId)
             putExtra("page_index", pageIndex)
             putExtra("total_pages", totalPages)
+            putExtra("is_new_session", isNewSession)
         }
         startActivity(intent)
         finish()

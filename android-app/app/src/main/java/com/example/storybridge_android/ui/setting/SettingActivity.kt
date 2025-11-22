@@ -8,23 +8,20 @@ import android.widget.RadioButton
 import android.widget.RadioGroup
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.R
 import com.example.storybridge_android.StoryBridgeApplication
-import com.example.storybridge_android.data.UserRepositoryImpl
 import com.example.storybridge_android.network.UserLangRequest
+import com.example.storybridge_android.ui.common.BaseActivity
 import com.example.storybridge_android.ui.common.TopNavigationBar
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-class SettingActivity : AppCompatActivity() {
-    private lateinit var languageGroup: RadioGroup
-    private lateinit var voiceGroup: RadioGroup
-
+class SettingActivity : BaseActivity() {
     private val viewModel: SettingViewModel by viewModels {
-        SettingViewModelFactory(UserRepositoryImpl())
+        SettingViewModelFactory()
     }
+    private lateinit var languageGroup: RadioGroup
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,15 +43,18 @@ class SettingActivity : AppCompatActivity() {
         languageGroup = findViewById(R.id.languageGroup)
         val english = findViewById<RadioButton>(R.id.radioEnglish)
         val chinese = findViewById<RadioButton>(R.id.radioChinese)
+        val vietnamese = findViewById<RadioButton>(R.id.radioVietnamese)
         val currentLang = AppSettings.getLanguage(this)
 
         when (currentLang) {
             "en" -> english.isChecked = true
             "zh" -> chinese.isChecked = true
+            "vi" -> vietnamese.isChecked = true
         }
 
         english.setOnClickListener { AppSettings.setLanguage(this, "en") }
         chinese.setOnClickListener { AppSettings.setLanguage(this, "zh") }
+        vietnamese.setOnClickListener { AppSettings.setLanguage(this, "vi") }
     }
 
     private fun setupSaveButton() {
@@ -64,6 +64,7 @@ class SettingActivity : AppCompatActivity() {
             val selectedLang = when (languageGroup.checkedRadioButtonId) {
                 R.id.radioEnglish -> "en"
                 R.id.radioChinese -> "zh"
+                R.id.radioVietnamese -> "vi"
                 else -> "en"
             }
             val request = UserLangRequest(device_info = deviceInfo, language_preference = selectedLang)
@@ -80,10 +81,10 @@ class SettingActivity : AppCompatActivity() {
                     val selectedLang = when (languageGroup.checkedRadioButtonId) {
                         R.id.radioEnglish -> "en"
                         R.id.radioChinese -> "zh"
+                        R.id.radioVietnamese -> "vi"
                         else -> "en"
                     }
 
-                    // ✅ 서버 성공 시 무조건 저장 + 적용
                     AppSettings.setLanguage(this@SettingActivity, selectedLang)
                     StoryBridgeApplication.applyLanguage(this@SettingActivity)
                     setResult(RESULT_OK)

@@ -16,9 +16,11 @@ class Session(models.Model):
     translated_title = models.CharField(max_length=255, null=True, blank=True)
     cover_img_url = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
+    started_at = models.DateTimeField(default=timezone.now)
     ended_at = models.DateTimeField(null=True, blank=True)
     isOngoing = models.BooleanField(default=True)
     totalPages = models.IntegerField(default=0)
+    totalWords = models.IntegerField(default=0)
     voicePreference = models.CharField(
         max_length=50, default=None, null=True, blank=True
     )

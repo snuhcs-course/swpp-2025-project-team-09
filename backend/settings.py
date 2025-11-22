@@ -11,7 +11,7 @@ load_dotenv(os.path.join(BASE_DIR, ".env"))
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
+SECRET_KEY = "django-insecure-t8!2r@i32okpb@uj4v=($m^zn9z4(4s_1f=x4xmphave!n&_t7"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -65,13 +65,23 @@ WSGI_APPLICATION = "app.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": os.getenv("DB_NAME", "postgres"),
+#         "USER": os.getenv("DB_USER", "postgres"),
+#         "PASSWORD": os.getenv("DB_PASSWORD"),
+#         "HOST": os.getenv("DB_HOST"),
+#         "PORT": os.getenv("DB_PORT", "5432"),
+#     }
+# }
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators

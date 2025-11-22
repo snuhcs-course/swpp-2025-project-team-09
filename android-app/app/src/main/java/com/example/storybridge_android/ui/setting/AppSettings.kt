@@ -3,6 +3,7 @@ package com.example.storybridge_android.ui.setting
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import com.example.storybridge_android.StoryBridgeApplication
 
 object AppSettings {
 
@@ -17,6 +18,7 @@ object AppSettings {
         prefs(context).edit {
             putString(KEY_LANGUAGE, languageCode)
         }
+        StoryBridgeApplication.applyLanguage(context)
     }
 
     fun getLanguage(context: Context, default: String = "en"): String =
@@ -27,9 +29,6 @@ object AppSettings {
             putString(KEY_VOICE, voiceType)
         }
     }
-
-    fun getVoice(context: Context, default: String = "MAN"): String =
-        prefs(context).getString(KEY_VOICE, default) ?: default
 
     fun clearAll(context: Context) {
         prefs(context).edit {

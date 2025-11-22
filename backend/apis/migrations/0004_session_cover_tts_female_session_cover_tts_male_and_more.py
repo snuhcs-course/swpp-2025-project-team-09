@@ -6,23 +6,25 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('apis', '0003_add_tts_status'),
+        ("apis", "0003_session_translated_title"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='session',
-            name='cover_tts_female',
+            model_name="session",
+            name="cover_tts_female",
             field=models.TextField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='session',
-            name='cover_tts_male',
+            model_name="session",
+            name="cover_tts_male",
             field=models.TextField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='session',
-            name='cover_tts_status',
-            field=models.CharField(blank=True, default='pending', max_length=20, null=True),
+            model_name="session",
+            name="cover_tts_status",
+            field=models.CharField(
+                blank=True, default="pending", max_length=20, null=True
+            ),
         ),
     ]

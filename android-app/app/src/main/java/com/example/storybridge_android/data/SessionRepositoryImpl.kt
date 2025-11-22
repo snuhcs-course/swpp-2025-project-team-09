@@ -58,23 +58,6 @@ class SessionRepositoryImpl : SessionRepository {
             }
         }
 
-    override suspend fun reloadSession(
-        userId: String,
-        startedAt: String,
-        pageIndex: Int
-    ): Result<ReloadSessionResponse> =
-        withContext(Dispatchers.IO) {
-            try {
-                val res = RetrofitClient.sessionApi.reloadSession(userId, startedAt, pageIndex)
-                if (res.isSuccessful && res.body() != null)
-                    Result.success(res.body()!!)
-                else
-                    Result.failure(Exception("Reload session failed: ${res.code()}"))
-            } catch (e: Exception) {
-                Result.failure(e)
-            }
-        }
-
     override suspend fun reloadAllSession(
         userId: String,
         startedAt: String
@@ -86,6 +69,19 @@ class SessionRepositoryImpl : SessionRepository {
                     Result.success(res.body()!!)
                 else
                     Result.failure(Exception("Reload all session failed: ${res.code()}"))
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    override suspend fun discardSession(sessionId: String): Result<DiscardSessionResponse> =
+        withContext(Dispatchers.IO) {
+            try {
+                val res = RetrofitClient.sessionApi.discardSession(DiscardSessionRequest(sessionId))
+                if (res.isSuccessful && res.body() != null)
+                    Result.success(res.body()!!)
+                else
+                    Result.failure(Exception("Discard session failed: ${res.code()}"))
             } catch (e: Exception) {
                 Result.failure(e)
             }
