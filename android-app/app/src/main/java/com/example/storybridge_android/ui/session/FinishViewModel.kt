@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 class FinishViewModel(private val repository: SessionRepository) : ViewModel() {
 
     val sessionStats = MutableLiveData<SessionStatsResponse>()
-    val showMainButton = MutableLiveData<Boolean>()
+    val showMainButton = MutableLiveData<Boolean>(false)
 
     fun endSession(sessionId: String) {
         if (sessionId.isEmpty()) return

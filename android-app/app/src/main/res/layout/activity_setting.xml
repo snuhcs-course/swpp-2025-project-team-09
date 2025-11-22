@@ -55,7 +55,15 @@
             style="@style/text24pt"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="32dp"
             android:text="Chinese" />
+
+        <RadioButton
+            android:id="@+id/radioVietnamese"
+            style="@style/text24pt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Vietnamese" />
 
     </RadioGroup>
 

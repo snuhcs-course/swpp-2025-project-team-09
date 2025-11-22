@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # --- [0] 설정 변수 ---
-BACKEND_DIR="backend" 
-BRANCH_NAME="deployment" 
-DJANGO_PORT=8000 
-PYTHON_EXECUTABLE="./$BACKEND_DIR/venv/bin/python" 
-PIP_EXECUTABLE="./$BACKEND_DIR/venv/bin/pip"
+BACKEND_DIR="backend"
+BRANCH_NAME="deployment"
+DJANGO_PORT=8000
+PYTHON_EXECUTABLE="./backend/venv/bin/python"
+PIP_EXECUTABLE="./backend/venv/bin/pip"
 SERVER_LOG="$BACKEND_DIR/server.log" 
 
 echo "--- 배포 시작: $(date) ---"

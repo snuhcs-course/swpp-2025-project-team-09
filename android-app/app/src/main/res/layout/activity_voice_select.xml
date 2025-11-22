@@ -31,7 +31,7 @@
         android:background="@drawable/big_button"
         android:elevation="8dp"
         android:translationZ="8dp"
-        android:text="Man"
+        android:text="@string/male_voice"
         android:textAllCaps="false"
         style="@style/text80pt"
         app:layout_constraintTop_toBottomOf="@id/voiceSelectTitleText"
@@ -49,7 +49,7 @@
         android:layout_height="160dp"
         android:background="@drawable/big_button"
         android:elevation="8dp"
-        android:text="Woman"
+        android:text="@string/female_voice"
         android:textAllCaps="false"
         android:translationZ="8dp"
         app:layout_constraintBottom_toTopOf="@id/nextButton"
@@ -66,12 +66,21 @@
         android:background="@drawable/grad_button"
         android:elevation="8dp"
         android:translationZ="8dp"
-        android:text="Next"
+        android:text="@string/next"
         android:textAllCaps="false"
         style="@style/text64pt"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/womanButton" />
+
+    <include
+        android:id="@+id/exitPanelInclude"
+        layout="@layout/exit_confirm_panel"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

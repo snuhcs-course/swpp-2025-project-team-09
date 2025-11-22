@@ -37,7 +37,7 @@
         android:background="@drawable/white_button"
         android:elevation="8dp"
         android:translationZ="8dp"
-        android:text="Add New Page"
+        android:text="@string/button_add_new_page"
         android:textAllCaps="false"
         style="@style/text40pt"
         app:layout_constraintTop_toTopOf="@id/prevButton"

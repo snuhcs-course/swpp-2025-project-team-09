@@ -2,13 +2,16 @@ package com.example.storybridge_android.ui.main
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.example.storybridge_android.ServiceLocator
 import com.example.storybridge_android.data.UserRepository
 import com.example.storybridge_android.data.SessionRepository
 
 class MainViewModelFactory(
-    private val userRepository: UserRepository,
-    private val sessionRepository: SessionRepository
+    private val userRepository: UserRepository = ServiceLocator.userRepository,
+    private val sessionRepository: SessionRepository = ServiceLocator.sessionRepository
 ) : ViewModelProvider.Factory {
+
+    @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
             return MainViewModel(userRepository, sessionRepository) as T

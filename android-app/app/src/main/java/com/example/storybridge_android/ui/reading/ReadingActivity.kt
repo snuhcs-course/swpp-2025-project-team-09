@@ -17,13 +17,13 @@ import android.view.View
 import android.widget.*
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.storybridge_android.R
-import com.example.storybridge_android.data.PageRepositoryImpl
 import com.example.storybridge_android.network.GetImageResponse
 import com.example.storybridge_android.network.GetOcrTranslationResponse
 import com.example.storybridge_android.network.GetTtsResponse
@@ -36,12 +36,17 @@ import java.io.FileOutputStream
 import com.example.storybridge_android.ui.common.TopNav
 import com.example.storybridge_android.ui.common.BottomNav
 import com.example.storybridge_android.ui.common.LeftOverlay
-import com.example.storybridge_android.ui.session.DecideSaveActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
+import com.example.storybridge_android.ui.common.BaseActivity
 import kotlin.math.max
 
-class ReadingActivity : AppCompatActivity() {
+
+class ReadingActivity : BaseActivity() {
+
+    private lateinit var exitPanel: View
+    private lateinit var exitConfirmBtn: Button
+    private lateinit var exitCancelBtn: Button
 
     private lateinit var sessionId: String
     private var pageIndex = 0
@@ -60,15 +65,13 @@ class ReadingActivity : AppCompatActivity() {
     private val handler = Handler(Looper.getMainLooper())
     private var mediaPlayer: MediaPlayer? = null
     private var pageBitmap: Bitmap? = null
-    private var isTtsPolling = false
 
     private val viewModel: ReadingViewModel by viewModels {
-        ReadingViewModelFactory(PageRepositoryImpl())
+        ReadingViewModelFactory()
     }
 
     companion object {
         private const val TAG = "ReadingActivity"
-        private const val TTS_POLL_INTERVAL = 2000L
         private const val TOUCH_SLOP = 10f
     }
 
@@ -78,32 +81,38 @@ class ReadingActivity : AppCompatActivity() {
     private val playButtonsMap: MutableMap<Int, ImageButton> = mutableMapOf()
     private val boundingBoxViewsMap: MutableMap<Int, TextView> = mutableMapOf()
     private var cachedBoundingBoxes: List<BoundingBox> = emptyList()
-    private val MIN_WIDTH = 500;
+    private val savedBoxTranslations: MutableMap<Int, Pair<Float, Float>> = mutableMapOf()
+    private val MIN_WIDTH = 500
 
     private lateinit var thumbnailAdapter: ThumbnailAdapter
-    private val thumbnailList = mutableListOf<PageThumbnail>()
+
+    private val cameraLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val newPageAdded = result.data?.getBooleanExtra("page_added", false) ?: false
+            if (newPageAdded) {
+                totalPages++
+                fetchAllThumbnails()
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_reading)
 
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                AlertDialog.Builder(this@ReadingActivity)
-                    .setTitle(getString(R.string.exit_dialog_title))
-                    .setMessage(getString(R.string.exit_dialog_message))
-                    .setPositiveButton(getString(R.string.exit_dialog_confirm)) { _, _ ->
-                        navigateToFinish()
-                    }
-                    .setNegativeButton(getString(R.string.exit_dialog_cancel), null)
-                    .show()
-            }
-        })
 
         initViews()
         initUiState()
         initListeners()
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                exitPanel.visibility = View.VISIBLE
+            }
+        })
 
         sessionId = intent.getStringExtra("session_id") ?: ""
         pageIndex = intent.getIntExtra("page_index", 0)
@@ -134,6 +143,9 @@ class ReadingActivity : AppCompatActivity() {
             layoutManager = LinearLayoutManager(this@ReadingActivity)
             adapter = thumbnailAdapter
         }
+        exitPanel = findViewById(R.id.exitPanelInclude)
+        exitConfirmBtn = findViewById(R.id.exitConfirmBtn)
+        exitCancelBtn = findViewById(R.id.exitCancelBtn)
     }
 
     private fun initUiState() {
@@ -155,7 +167,7 @@ class ReadingActivity : AppCompatActivity() {
             loadPage(pageIndex - 1)
         }
         bottomUi.setOnCaptureButtonClickListener { navigateToCamera() }
-        
+
         bottomUi.setOnNextButtonClickListener {
             loadPage(pageIndex + 1)
         }
@@ -165,6 +177,15 @@ class ReadingActivity : AppCompatActivity() {
 
         // Main layout listener for toggling UI
         mainLayout.setOnClickListener { toggleUI() }
+
+        exitConfirmBtn.setOnClickListener {
+            navigateToFinish()
+        }
+
+        exitCancelBtn.setOnClickListener {
+            exitPanel.visibility = View.GONE
+        }
+
     }
 
     private fun observeViewModel() {
@@ -282,6 +303,10 @@ class ReadingActivity : AppCompatActivity() {
                     true
                 }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    // Save the final position when user releases
+                    if (dragging) {
+                        savedBoxTranslations[boxIndex] = Pair(boxView.translationX, boxView.translationY)
+                    }
                     dragging = false; true
                 }
                 else -> false
@@ -332,6 +357,12 @@ class ReadingActivity : AppCompatActivity() {
 
             setupBoundingBoxTouchListener(boxView, box.index)
 
+            // Restore saved position if it exists
+            savedBoxTranslations[box.index]?.let { (savedX, savedY) ->
+                boxView.translationX = savedX
+                boxView.translationY = savedY
+            }
+
             if (audioResultsMap.containsKey(box.index)) {
                 createPlayButton(box.index, rect)
             }
@@ -351,8 +382,11 @@ class ReadingActivity : AppCompatActivity() {
         params.startToStart = pageImage.id
         params.topToTop = pageImage.id
         playButton.layoutParams = params
-        playButton.translationX = rect.right - size / 2
-        playButton.translationY = rect.top - size / 2
+        val boxView = boundingBoxViewsMap[bboxIndex]
+        val boxTranslationX = boxView?.translationX ?: rect.left
+        val boxTranslationY = boxView?.translationY ?: rect.top
+        playButton.translationX = boxTranslationX + rect.width() - size / 2
+        playButton.translationY = boxTranslationY + rect.height() - size / 2
         playButton.elevation = 8f
         playButton.setOnClickListener { playAudioForBox(bboxIndex) }
         mainLayout.addView(playButton)
@@ -435,13 +469,21 @@ class ReadingActivity : AppCompatActivity() {
     }
 
     private fun loadPage(newIndex: Int) {
+        // Stop any playing audio and reset state
+        mediaPlayer?.release()
+        mediaPlayer = null
+        currentPlayingIndex = -1
+        currentAudioIndex = 0
+        // Clear page data
         pageIndex = newIndex
         audioResultsMap = emptyMap()
         cachedBoundingBoxes = emptyList()
         pageImage.setImageDrawable(null)
         playButtonsMap.clear()
         boundingBoxViewsMap.clear()
+        savedBoxTranslations.clear()
         updateBottomNavStatus()
+        // Fetch new page
         fetchPage()
     }
 
@@ -471,8 +513,7 @@ class ReadingActivity : AppCompatActivity() {
             putExtra("session_id", sessionId)
             putExtra("page_index", totalPages)  // 새 페이지 인덱스
         }
-        startActivity(intent)
-        finish()
+        cameraLauncher.launch(intent)
     }
 
     override fun onDestroy() {
@@ -482,5 +523,6 @@ class ReadingActivity : AppCompatActivity() {
         mediaPlayer = null
         playButtonsMap.clear()
         boundingBoxViewsMap.clear()
+        savedBoxTranslations.clear()
     }
 }

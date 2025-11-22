@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">STORY BRIDGE</string>
+    <string name="story_bridge">STORY BRIDGE</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <!-- 메인 화면 -->
+    <string name="start_new_reading">Đọc Mới</string>
+    <string name="previous_readings">Những Truyện Đã Đọc</string>
+    <string name="no_previous_readings">Con chưa đọc truyện nào.</string>
+
+    <!-- 세팅 -->
+    <string name="language_label">Ngôn Ngữ</string>
+    <string name="english">Tiếng Anh</string>
+    <string name="chinese">Tiếng Trung</string>
+    <string name="vietnamese">Tiếng Việt</string>
+    <string name="save_settings">Lưu Lại</string>
+
+    <!-- 표지 촬영 -->
+    <string name="take_photo_instruction">Chụp ảnh\nbìa sách của con nhé</string>
+    <string name="start">Bắt Đầu!</string>
+
+    <!-- 본문 촬영 -->
+    <string name="take_content_instruction">Bây giờ, con hãy chụp ảnh\ncác trang sách nhé</string>
+
+    <!-- 로딩 -->
+    <string name="loading_text">Đang chuẩn bị...</string>
+
+    <!-- 음성 선택 -->
+    <string name="preferred_voice_question">Con thích giọng nào&#10;để đọc truyện?</string>
+    <string name="male_voice">Giọng Chú</string>
+    <string name="female_voice">Giọng Cô</string>
+    <string name="next">Tiếp Theo</string>
+    <string name="session_error">Có lỗi xảy ra. Con thử lại nhé.</string>
+    <string name="voice_preview_not_available">Không thể nghe thử giọng %1$s</string>
+    <string name="failed_audio_preview">Không nghe được âm thanh</string>
+
+    <!-- 읽기 -->
+    <string name="first_page">Đây là trang đầu tiên rồi</string>
+    <string name="last_page">Đây là trang cuối cùng rồi</string>
+    <string name="current_page">Đây là trang hiện tại</string>
+    <string name="loading_error">Không mở được trang</string>
+    <string name="audio_error">Không nghe được âm thanh</string>
+    <string name="finish_reading">Đọc Xong</string>
+    <string name="capture_new_page">CHỤP TRANG MỚI</string>
+
+    <!-- 끝내기 -->
+    <string name="congratulations">Giỏi Lắm Con!</string>
+    <string name="you_achieved">Con đã hoàn thành...</string>
+
+    <!-- 저장 -->
+    <string name="save_session_question">Con có muốn\nlưu lại không?</string>
+    <string name="save">Lưu Lại</string>
+    <string name="discard">Không Lưu</string>
+    <string name="go_back_to_main">Về Trang Chủ</string>
+
+    <!--exit 다이얼로그 -->
+    <string name="exit_dialog_title">Thoát Ra</string>
+    <string name="exit_dialog_message">Con có muốn thoát ra không?</string>
+    <string name="exit_dialog_confirm">Thoát Ra</string>
+    <string name="exit_dialog_cancel">Ở Lại</string>
+    <string name="exit_loading">Con đợi một chút nhé.</string>
+
+    <!-- 단위 -->
+    <string name="unit_minute">phút</string>
+    <string name="unit_minutes">phút</string>
+    <string name="unit_second">giây</string>
+    <string name="unit_seconds">giây</string>
+    <string name="unit_page">trang</string>
+    <string name="unit_pages">trang</string>
+
+    <!-- 문장 구성 -->
+    <string name="summary_text">Con đã đọc %1$d từ và %2$s\ntrong %3$s. Giỏi lắm!</string>
+
+    <!-- Exit dialog text -->
+    <string name="exit_title">Con có chắc muốn thoát ra không?</string>
+    <string name="exit_confirm">Thoát Ra</string>
+    <string name="exit_cancel">Ở Lại</string>
+
+    <string name="button_add_new_page">Thêm trang mới</string>
+    <string name="page_status_format">Trang %1$d/%2$d</string>
+</resources>
