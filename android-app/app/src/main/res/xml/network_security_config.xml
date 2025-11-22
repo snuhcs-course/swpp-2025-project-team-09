@@ -6,12 +6,7 @@
         </trust-anchors>
     </base-config>
     <domain-config cleartextTrafficPermitted="true">
-<<<<<<< HEAD
-        <domain includeSubdomains="true">ec2-3-105-111-6.ap-southeast-2.compute.amazonaws.com</domain>
-        <domain includeSubdomains="true">ec2-3-36-206-206.ap-northeast-2.compute.amazonaws.com</domain>
-=======
         <domain includeSubdomains="true">ec2-43-203-114-138.ap-northeast-2.compute.amazonaws.com</domain>
->>>>>>> db-change
         <domain includeSubdomains="true">10.0.2.2</domain>
         <domain includeSubdomains="true">localhost</domain>
     </domain-config>
