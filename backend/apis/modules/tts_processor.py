@@ -14,6 +14,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 import kss
+from profanity_check import is_clean
 
 load_dotenv()
 
@@ -103,7 +104,20 @@ class TTSModule:
                     }
                 )
                 latency = time.time() - t0
-                return {"result": response, "latency": round(latency, 3)}
+                
+                translated_text = response["result"].translated_text.strip()
+                if not translated_text:
+                    continue
+
+                is_clean_flag, found_words = is_clean(translated_text, self.target_lang)
+                if is_clean_flag:
+                    return {"result": response, "latency": round(latency, 3)}
+                else:
+                    print(f"[WARNING] Profanity detected: {found_words}")
+                    # Add instruction to translation prompt
+                    text_with_context += f"\n\nDo not use these words: {', '.join(found_words)}."
+
+                await asyncio.sleep(0.5)
             except Exception as e:
                 print(f"Translation attempt {attempt + 1} failed: {e}")
                 if attempt == 2:

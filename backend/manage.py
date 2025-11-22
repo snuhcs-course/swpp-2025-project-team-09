@@ -2,6 +2,7 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
+from apis.modules.profanity_check import load_profanity_lists
 
 
 def main():
@@ -19,4 +20,5 @@ def main():
 
 
 if __name__ == "__main__":
+    load_profanity_lists()
     main()
