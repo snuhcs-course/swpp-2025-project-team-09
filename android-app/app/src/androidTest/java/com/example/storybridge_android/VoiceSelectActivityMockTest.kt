@@ -88,8 +88,6 @@ class VoiceSelectActivityTest {
                         title = "Test Title",
                         translated_title = "Test Title",
                         submitted_at = "2025-01-01",
-                        tts_female = "",
-                        tts_male = ""
                     )
                 )
             }

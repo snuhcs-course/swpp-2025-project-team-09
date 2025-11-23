@@ -113,7 +113,7 @@ class LoadingActivity : BaseActivity() {
         lifecycleScope.launchWhenStarted {
             viewModel.navigateToVoice.collectLatest { result ->
                 result?.let {
-                    navigateToVoiceSelect(sessionId, it.title, it.maleTts, it.femaleTts)
+                    navigateToVoiceSelect(sessionId, it.title)
                 }
             }
         }
@@ -151,15 +151,11 @@ class LoadingActivity : BaseActivity() {
 
     private fun navigateToVoiceSelect(
         sessionId: String,
-        title: String,
-        maleTts: String?,
-        femaleTts: String?
+        title: String
     ) {
         val intent = Intent(this, VoiceSelectActivity::class.java).apply {
             putExtra("session_id", sessionId)
             putExtra("book_title", title)
-            putExtra("male_tts", maleTts)
-            putExtra("female_tts", femaleTts)
         }
         startActivity(intent)
         finish()

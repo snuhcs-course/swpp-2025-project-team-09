@@ -114,9 +114,7 @@ class LoadingViewModel(
                     _progress.value = 100
 
                     val result = CoverResult(
-                        it.title,
-                        it.tts_male.takeIf { t -> t.isNotEmpty() },
-                        it.tts_female.takeIf { t -> t.isNotEmpty() }
+                        it.title
                     )
                     _cover.value = result
                     _navigateToVoice.value = result
@@ -247,5 +245,5 @@ class LoadingViewModel(
 }
 
 // Data classes
-data class CoverResult(val title: String, val maleTts: String?, val femaleTts: String?)
+data class CoverResult(val title: String)
 data class SessionResumeResult(val session_id: String, val page_index: Int, val total_pages: Int = page_index + 1)

@@ -673,8 +673,6 @@ This document contains a comprehensive list of all classes, methods, and relatio
 - `submitted_at: String` - ISO datetime
 - `title: String` - Book title (original)
 - `translated_title: String` - Translated title
-- `tts_male: String` - Base64 audio (male voice)
-- `tts_female: String` - Base64 audio (female voice)
 
 **CheckOcrResponse:**
 - `session_id: String` - UUID

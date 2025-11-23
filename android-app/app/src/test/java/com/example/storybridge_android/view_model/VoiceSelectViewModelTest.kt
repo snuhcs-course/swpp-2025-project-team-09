@@ -630,10 +630,8 @@ class VoiceSelectViewModelTest {
             page_index = 0,
             status = "complete",
             submitted_at = "2025-01-01T00:00:00Z",
-            title = title, // 테스트에서 검증할 제목 필드
+            title = title,
             translated_title = "Translated Title",
-            tts_male = "url/male",
-            tts_female = "url/female"
         )
 
         mockkStatic(android.util.Base64::class)

@@ -57,8 +57,6 @@ data class UploadCoverResponse(
     val submitted_at: String,
     val title: String,
     val translated_title: String,
-    val tts_male: String,
-    val tts_female: String
 )
 
 data class CheckOcrResponse(

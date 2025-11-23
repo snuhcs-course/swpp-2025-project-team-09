@@ -412,9 +412,7 @@ class ProcessUploadCoverView(APIView):
             "status": "ready",
             "submitted_at": "datetime",
             "title": "string",
-            "translated_title": "string",
-            "tts_male": "string or null",
-            "tts_female": "string or null"
+            "translated_title": "string"
         }
     """
 
@@ -432,9 +430,9 @@ class ProcessUploadCoverView(APIView):
         except Session.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        page_index = 0  # Cover page is always index 0
+        page_index = 0
 
-        # Save cover image (to a different path)
+        # Save cover image
         image_path = self._save_image(image_base64, session_id, page_index)
 
         # Run OCR to get title
@@ -446,17 +444,20 @@ class ProcessUploadCoverView(APIView):
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
 
-        # Map language codes to full names for TTS
+        # Map language codes to full names
         lang_map = {"en": "English", "zh": "Chinese", "vi": "Vietnamese"}
         target_lang = lang_map.get(lang, "English")
 
-        # Run translation for title synchronously
-        translated_text, tts_male, tts_female = self._run_async(
-            TTSModule(target_lang=target_lang).translate_and_tts_cover(
-                title, session_id, page_index
+        # Run translation for title (no TTS needed)
+        translated_text = self._translate_title(title, target_lang)
+        
+        if not translated_text:
+            return Response(
+                {"error_code": 422, "message": "PROCESS__TRANSLATION_FAILED"},
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
-        )
 
+        # Create page and BB
         page = self._create_page_and_bbs(
             session,
             image_path,
@@ -467,10 +468,10 @@ class ProcessUploadCoverView(APIView):
             }]
         )
 
-        # Update session (only update specific fields to avoid overwriting voicePreference)
+        # Update session
         session.title = title
         session.translated_title = translated_text
-        print(f"[debug]{session.translated_title}")
+        print(f"[DEBUG] Translated title: {session.translated_title}")
         session.totalPages += 1
         session.save(update_fields=['title', 'translated_title', 'totalPages'])
 
@@ -482,39 +483,34 @@ class ProcessUploadCoverView(APIView):
                 "submitted_at": timezone.now().isoformat(),
                 "title": session.title,
                 "translated_title": session.translated_title,
-                "tts_male": tts_male,
-                "tts_female": tts_female,
             },
             status=status.HTTP_200_OK,
         )
 
-    def _get_all_translations(
-        self, tts_module: TTSModule, ocr_result: list, session_id: str, page_index: int
-    ) -> list:
-        """
-        Get translations and sentiment for all paragraphs (no TTS yet).
-        Runs ALL paragraphs in parallel.
-        Returns list of translation data per paragraph.
-        """
-
-        async def get_para_translation(i: int, para: dict):
-            page_data = {
-                "fileName": f"{session_id}_{page_index}_{i}.jpg",
-                "text": para.get("text", ""),
-            }
-            return await tts_module.get_translations_only(page_data)
-
-        # Run ALL paragraphs in parallel
+    def _translate_title(self, title: str, target_lang: str) -> str:
+        """Translate title using TTS module's translate method"""
+        
+        async def translate_async():
+            tts_module = TTSModule(target_lang=target_lang)
+            trans_response = await tts_module.translate(f"[CURRENT]: {title}")
+            
+            if isinstance(trans_response["result"], Exception):
+                return ""
+            
+            translated = trans_response["result"].translated_text.strip()
+            return translated
+        
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        translation_data = loop.run_until_complete(
-            asyncio.gather(
-                *[get_para_translation(i, para) for i, para in enumerate(ocr_result)]
-            )
-        )
-        loop.close()
-
-        return translation_data
+        try:
+            result = loop.run_until_complete(translate_async())
+            return result
+        except Exception as e:
+            print(f"[DEBUG] Translation error: {e}")
+            return ""
+        finally:
+            loop.run_until_complete(loop.shutdown_asyncgens())
+            loop.close()
 
     def _create_page_and_bbs(
         self,
@@ -523,7 +519,7 @@ class ProcessUploadCoverView(APIView):
         ocr_result: list,
         translation_data: list,
     ) -> Page:
-        """Create Page and BoundingBox objects with translations."""
+        """Create Page and BoundingBox objects with translations"""
         page = Page.objects.create(
             session=session,
             img_url=image_path,
@@ -539,7 +535,6 @@ class ProcessUploadCoverView(APIView):
             else:
                 translated_text = ""
 
-            # Create BB with translation but no audio yet
             BB.objects.create(
                 page=page,
                 original_text=para.get("text", ""),
@@ -551,7 +546,7 @@ class ProcessUploadCoverView(APIView):
         return page
 
     def _save_image(self, image_base64: str, session_id: str, page_index: int) -> str:
-        """Decode and save uploaded image."""
+        """Decode and save uploaded image"""
         image_bytes = base64.b64decode(image_base64)
         image_filename = f"{uuid.uuid4().hex}.jpg"
         image_path = f"media/images/{session_id}_{page_index}_{image_filename}"
@@ -561,17 +556,3 @@ class ProcessUploadCoverView(APIView):
             f.write(image_bytes)
 
         return image_path
-
-    def _run_async(self, coroutine):
-        """Helper to run async code in sync context."""
-        try:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(coroutine)
-            loop.close()
-            return result
-        except Exception as e:
-            import traceback
-
-            traceback.print_exc()
-            return "", ""
