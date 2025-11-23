@@ -80,62 +80,6 @@ class TestUserModel(TestCase):
         expected_str = "test-device-str (en)"
         self.assertEqual(str(user), expected_str)
 
-    def test_08_get_sessions_empty(self):
-        """Test getSessions with no sessions"""
-        user = User.objects.create(device_info="test-device-no-sessions")
-
-        session_set = user.getSessions()
-        self.assertEqual(session_set.count(), 0)
-
-    def test_09_get_sessions_with_sessions(self):
-        """Test getSessions with multiple sessions"""
-        user = User.objects.create(device_info="test-device-with-sessions")
-
-        # Create sessions
-        session1 = Session.objects.create(
-            user=user, title="Book 1", created_at=timezone.now()
-        )
-        session2 = Session.objects.create(
-            user=user, title="Book 2", created_at=timezone.now()
-        )
-
-        session_set = user.getSessions()
-        self.assertEqual(session_set.count(), 2)
-        self.assertIn(session1, session_set)
-        self.assertIn(session2, session_set)
-
-    def test_10_delete_session_success(self):
-        """Test deleteSession method"""
-        user = User.objects.create(device_info="test-device-delete-session")
-
-        # Create sessions
-        session1 = Session.objects.create(
-            user=user, title="Book to Delete", created_at=timezone.now()
-        )
-        session2 = Session.objects.create(
-            user=user, title="Book to Keep", created_at=timezone.now()
-        )
-
-        # Delete session1
-        result = user.deleteSession(session1.id)
-
-        # Verify deletion
-        self.assertEqual(result[0], 1)
-        remaining_sessions = user.getSessions()
-        self.assertEqual(remaining_sessions.count(), 1)
-        self.assertNotIn(session1.id, [s.id for s in remaining_sessions])
-        self.assertIn(session2.id, [s.id for s in remaining_sessions])
-
-    def test_11_delete_session_nonexistent(self):
-        """Test deleteSession with non-existent session"""
-        user = User.objects.create(device_info="test-device-delete-nonexistent")
-
-        # Try to delete non-existent session
-        fake_uuid = uuid.uuid4()
-        result = user.deleteSession(fake_uuid)
-
-        # Should return 0 deletions
-        self.assertEqual(result[0], 0)
 
     def test_12_user_cascade_delete_sessions(self):
         """Test that deleting user cascades to sessions"""

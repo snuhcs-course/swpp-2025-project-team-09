@@ -20,13 +20,20 @@ load_dotenv()
 
 # Prompt Templates.
 TRANSLATION_PROMPT = """
-You are an expert multilingual children's-story adapter.
-You will be given a block of Korean text that may contain up to three
-parts: [PREVIOUS], [CURRENT], and [NEXT].
-Your task is to translate ONLY the [CURRENT] Korean sentence into a
-single, fluent {target_lang} sentence.
-Use the [PREVIOUS] and [NEXT] sentences for context to ensure pronouns,
-flow, and style are correct.
+You are an expert adapter of multilingual children's stories.
+You will receive a block of Korean text that may contain up to three parts:
+[PREVIOUS], [CURRENT], and [NEXT].
+
+Your task is to translate ONLY the [CURRENT] Korean sentence into a single,
+gentle, child-friendly {target_lang} sentence.
+
+Use the [PREVIOUS] and [NEXT] sentences only for context, so that pronouns,
+tone, and flow stay natural.
+
+While translating:
+- Use simple, clear, kind words that children can easily understand.
+- Avoid any harmful, scary, or age-inappropriate expressions.
+- Keep the style warm, friendly, and suitable for young readers.
 """
 
 SENTIMENT_PROMPT = """
@@ -368,9 +375,9 @@ class TTSModule:
 
         return tts_male, tts_female
 
-    async def translate_and_tts_cover(
+    async def translate_cover(
         self, title: str, session_id: str, page_index: int
-    ) -> tuple[str, str]:
+    ) -> str:
         """
         Translate title and generate TTS for both male and female voices.
 
@@ -380,35 +387,19 @@ class TTSModule:
             page_index: Page index (0 for cover)
 
         Returns:
-            (tts_male_base64, tts_female_base64)
+            translated_text
         """
         # Translate the title
         trans_response = await self.translate(f"[CURRENT]: {title}")
 
         if isinstance(trans_response["result"], Exception):
-            return "", ""
+            return ""
 
         translated_text = trans_response["result"].translated_text.strip()
         if not translated_text:
-            return "", ""
+            return ""
 
-        # Generate TTS for male voice (echo)
-        male_latency, male_audio = await self.synthesize_tts_lite(
-            voice="echo", text=translated_text
-        )
-
-        # Generate TTS for female voice (shimmer)
-        female_latency, female_audio = await self.synthesize_tts_lite(
-            voice="shimmer", text=translated_text
-        )
-
-        # Convert to base64
-        male_b64 = base64.b64encode(male_audio).decode("utf-8") if male_audio else ""
-        female_b64 = (
-            base64.b64encode(female_audio).decode("utf-8") if female_audio else ""
-        )
-
-        return translated_text, male_b64, female_b64
+        return translated_text
 
         # async def run_tts_cover_only(self, translation_data: Dict[str, Any], session_id: str, page_index: int, para_index: int) -> tuple[str, str]:
         """

@@ -59,9 +59,7 @@ data class UploadCoverResponse(
     val status: String,
     val submitted_at: String, // datetime as ISO string
     val title: String,
-    val translated_title: String,
-    val tts_male: String,
-    val tts_female: String
+    val translated_title: String
 )
 
 // 3-2. Check OCR, Translation Status

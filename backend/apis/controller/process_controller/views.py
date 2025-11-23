@@ -364,8 +364,6 @@ class ProcessUploadCoverView(APIView):
         - submitted_at (string, ISO8601): submission timestamp
         - title (string): extracted book title
         - translated_title (string): translated book title
-        - tts_male (string): null (no TTS for cover)
-        - tts_female (string): null (no TTS for cover)
     """
 
     def post(self, request):
@@ -396,13 +394,13 @@ class ProcessUploadCoverView(APIView):
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
 
-        # Map language codes to full names for TTS
+        # Map language codes
         lang_map = {"en": "English", "zh": "Chinese", "vi": "Vietnamese"}
         target_lang = lang_map.get(lang, "English")
 
         # Run translation for title synchronously
-        translated_text, tts_male, tts_female = self._run_async(
-            TTSModule(target_lang=target_lang).translate_and_tts_cover(
+        translated_text = self._run_async(
+            TTSModule(target_lang=target_lang).translate_cover(
                 title, session_id, page_index
             )
         )
@@ -432,8 +430,6 @@ class ProcessUploadCoverView(APIView):
                 "submitted_at": timezone.now().isoformat(),
                 "title": session.title,
                 "translated_title": session.translated_title,
-                "tts_male": tts_male,
-                "tts_female": tts_female,
             },
             status=status.HTTP_200_OK,
         )
