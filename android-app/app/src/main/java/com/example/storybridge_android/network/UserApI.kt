@@ -1,6 +1,5 @@
 package com.example.storybridge_android.network
 
-import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -8,7 +7,6 @@ import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Query
 
-// Retrofit API Interface
 interface UserApi {
     @POST("/user/register")
     suspend fun userRegister(

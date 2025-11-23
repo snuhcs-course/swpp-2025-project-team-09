@@ -1,16 +1,13 @@
 package com.example.storybridge_android.network
 
 import com.google.gson.annotations.SerializedName
-import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Query
 
-// Retrofit API Interface
 interface ProcessApi {
-
     @POST("/process/upload/")
     suspend fun uploadImage(
         @Body request: UploadImageRequest
@@ -50,24 +47,18 @@ data class UploadImageResponse(
     val session_id: String,
     val page_index: Int,
     val status: String,
-    val submitted_at: String // datetime as ISO string
+    val submitted_at: String
 )
 
 data class UploadCoverResponse(
     val session_id: String,
     val page_index: Int,
     val status: String,
-    val submitted_at: String, // datetime as ISO string
+    val submitted_at: String,
     val title: String,
     val translated_title: String,
     val tts_male: String,
     val tts_female: String
-)
-
-// 3-2. Check OCR, Translation Status
-data class CheckOcrRequest(
-    val session_id: String,
-    val page_index: Int
 )
 
 data class CheckOcrResponse(
@@ -79,29 +70,15 @@ data class CheckOcrResponse(
     val processed_at: String?     // nullable, if not ready
 )
 
-// 3-3. Check TTS Status
-data class CheckTtsRequest(
-    val session_id: String,
-    val page_index: Int
-)
-
-/**
- * Updated to match new backend response format
- * Backend now returns bb_status for granular TTS progress tracking
- */
 data class CheckTtsResponse(
     val session_id: String,
     val page_index: Int,
     val status: String,           // "pending", "processing", "ready"
     val progress: Int,            // 0-100
     @SerializedName("bb_status")
-    val bb_status: List<BBoxStatus>? = null  // New field for per-bbox status
+    val bb_status: List<BBoxStatus>? = null
 )
 
-/**
- * Status information for individual bounding boxes
- * Allows tracking which specific text boxes have audio ready
- */
 data class BBoxStatus(
     @SerializedName("bbox_index")
     val bbox_index: Int,

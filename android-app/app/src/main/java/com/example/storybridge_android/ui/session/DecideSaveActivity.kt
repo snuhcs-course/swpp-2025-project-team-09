@@ -14,14 +14,11 @@ import com.example.storybridge_android.ui.main.MainActivity
 import kotlinx.coroutines.flow.collectLatest
 
 class DecideSaveActivity : BaseActivity() {
-
     private lateinit var binding: ActivityDecideSaveBinding
     private lateinit var sessionId: String
-
     private val viewModel: DecideSaveActivityViewModel by viewModels {
         DecideSaveActivityViewModelFactory()
     }
-
     private var decisionMade = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -80,22 +77,6 @@ class DecideSaveActivity : BaseActivity() {
                 }
             }
         }
-    }
-
-    private fun setButtonSelected(selected: View) {
-        binding.btnSave.isSelected = false
-        binding.btnDiscard.isSelected = false
-        selected.isSelected = true
-    }
-
-    private fun disableButtons() {
-        binding.btnSave.isEnabled = false
-        binding.btnDiscard.isEnabled = false
-    }
-
-    private fun enableButtons() {
-        binding.btnSave.isEnabled = true
-        binding.btnDiscard.isEnabled = true
     }
 
     private fun showMainButton() {

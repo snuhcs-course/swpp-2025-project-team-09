@@ -1,6 +1,5 @@
 package com.example.storybridge_android.network
 
-import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -30,24 +29,6 @@ interface SessionApi {
         @Query("session_id") session_id: String
     ): Response<SessionStatsResponse>
 
-    // 두 개는 안 쓰는 중인듯
-    @GET("/session/info")
-    fun getSessionInfo(
-        @Query("session_id") session_id: String
-    ): Call<SessionInfoResponse>
-
-    @GET("/session/review")
-    fun getSessionReview(
-        @Query("session_id") session_id: String
-    ): Call<SessionReviewResponse>
-    
-    @GET("/session/reload")
-    suspend fun reloadSession(
-        @Query("user_id") userId: String,
-        @Query("started_at") startedAt: String,
-        @Query("page_index") pageIndex: Int
-    ): Response<ReloadSessionResponse>
-
     @GET("/session/reload_all")
     suspend fun reloadAllSession(
         @Query("user_id") userId: String,
@@ -65,18 +46,16 @@ interface SessionApi {
 // Request / Response data classes
 // --------------------
 
-// 2-1. Start Reading Session
 data class StartSessionRequest(
     val user_id: String
 )
 
 data class StartSessionResponse(
     val session_id: String,
-    val started_at: String, // datetime as ISO string
+    val started_at: String,
     val page_index: Int
 )
 
-// 2-2. Select Voice for Session
 data class SelectVoiceRequest(
     val session_id: String,
     val voice_style: String
@@ -87,20 +66,14 @@ data class SelectVoiceResponse(
     val voice_style: String
 )
 
-// 2-3. End Reading Session
 data class EndSessionRequest(
     val session_id: String
 )
 
 data class EndSessionResponse(
     val session_id: String,
-    val ended_at: String, // datetime as ISO string
+    val ended_at: String,
     val total_pages: Int
-)
-
-// 2-4. Get Session Statistics
-data class SessionStatsRequest(
-    val session_id: String
 )
 
 data class SessionStatsResponse(
@@ -112,10 +85,8 @@ data class SessionStatsResponse(
     val total_pages: Int,
     val total_time_spent: Int,
     val total_words_read: Int
-    // TODO: add other optional fields
 )
 
-// 2-5. Get Session Info
 data class SessionInfoResponse(
     val session_id: String,
     val user_id: String,
@@ -126,22 +97,12 @@ data class SessionInfoResponse(
     val total_pages: Int?  // nullable
 )
 
-// 2-6. Review
 data class SessionReviewResponse(
     val session_id: String,
     val user_id: String,
     val started_at: String,
     val ended_at: String,
     val total_pages: Int
-)
-
-// 2-7. Reload Session (이어보기)
-data class ReloadSessionResponse(
-    val session_id: String,
-    val page_index: Int,
-    val image_base64: String?,         // 이미지 base64 문자열
-    val translation_text: String?,     // 번역 텍스트
-    val audio_url: String?             // 오디오 파일 경로 or base64
 )
 
 data class ReloadAllSessionResponse(
