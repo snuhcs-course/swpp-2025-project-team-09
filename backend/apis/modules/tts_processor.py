@@ -72,12 +72,18 @@ class TTSModule:
         self.sentiment_chain = self._create_sentiment_chain()
 
         # Reset directories
-        if self.OUT_DIR.exists():
-            shutil.rmtree(self.OUT_DIR)
-        if self.LOG_DIR.exists():
-            shutil.rmtree(self.LOG_DIR)
-        self.OUT_DIR.mkdir(parents=True)
-        self.LOG_DIR.mkdir(parents=True)
+        try:
+            if self.OUT_DIR.exists():
+                shutil.rmtree(self.OUT_DIR)
+        except Exception:
+            pass
+        try:
+            if self.LOG_DIR.exists():
+                shutil.rmtree(self.LOG_DIR)
+        except Exception:
+            pass
+        self.OUT_DIR.mkdir(parents=True, exist_ok=True)
+        self.LOG_DIR.mkdir(parents=True, exist_ok=True)
 
     def _create_translation_chain(self):
         prompt = ChatPromptTemplate.from_messages(

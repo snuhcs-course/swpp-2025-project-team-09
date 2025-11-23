@@ -748,7 +748,7 @@ This document contains a comprehensive list of all classes, methods, and relatio
 
 - **Type:** Singleton object
 - **Properties:**
-  - `BASE_URL: String` - Default: `"http://ec2-3-36-206-206.ap-northeast-2.compute.amazonaws.com:8000"`
+  - `BASE_URL: String` - Default: `"http://ec2-43-203-114-138.ap-northeast-2.compute.amazonaws.com:8000"`
   - `userApi: UserApi` - Lazy singleton instance
   - `sessionApi: SessionApi` - Lazy singleton instance
   - `processApi: ProcessApi` - Lazy singleton instance

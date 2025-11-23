@@ -190,7 +190,7 @@ class OCRModule:
 
         return paragraphs
 
-    def process_cover_page(self, image_path: str) -> str:  
+    def process_cover_page(self, image_path: str) -> str:
         request_json = {
             "images": [{"format": "png", "name": Path(image_path).stem}],
             "requestId": str(uuid.uuid4()),
@@ -226,7 +226,7 @@ class OCRModule:
                 tokens.append(
                     {
                         "text": text,
-                        "field": field, 
+                        "field": field,
                         "x": float(np.mean(xs)),
                         "y": float(np.mean(ys)),
                         "xs": xs,
@@ -242,8 +242,7 @@ class OCRModule:
         max_height = max(heights)
 
         filtered_tokens = [
-            t for t in tokens
-            if (max(t["ys"]) - min(t["ys"])) >= 0.33 * max_height
+            t for t in tokens if (max(t["ys"]) - min(t["ys"])) >= 0.33 * max_height
         ]
 
         if not filtered_tokens:
@@ -252,13 +251,7 @@ class OCRModule:
 
         filtered_fields = [t["field"] for t in filtered_tokens]
 
-        filtered_json_for_fs = {
-            "images": [
-                {
-                    "fields": filtered_fields
-                }
-            ]
-        }
+        filtered_json_for_fs = {"images": [{"fields": filtered_fields}]}
 
         fs = self._font_size(filtered_json_for_fs)
 
@@ -314,4 +307,3 @@ class OCRModule:
 
         results.sort(key=lambda r: r["height"], reverse=True)
         return results[0]["text"] if results else None
-
