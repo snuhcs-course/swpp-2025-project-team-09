@@ -137,12 +137,12 @@ class MainActivityMockTest {
             Instrumentation.ActivityResult(RESULT_OK, Intent())
         )
 
-        // WHEN: Settings 버튼 클릭
+        // WHEN: Settings button clicked
         onView(withId(R.id.navbarSettingsButton)).perform(click())
 
         Thread.sleep(1000)
 
-        // THEN: SettingActivity가 실행되었는지 확인
+        // THEN: SettingActivity activated
         Intents.intended(
             IntentMatchers.hasComponent("com.example.storybridge_android.ui.setting.SettingActivity")
         )

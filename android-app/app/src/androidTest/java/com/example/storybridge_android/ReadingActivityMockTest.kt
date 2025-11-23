@@ -1,7 +1,6 @@
 package com.example.storybridge_android.ui.reading
 
 import android.content.Intent
-import android.media.MediaPlayer
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
@@ -47,8 +46,6 @@ class ReadingActivityMockTest {
             .uiAutomation
             .executeShellCommand("settings put global animator_duration_scale 0")
 
-
-        // Fake Repository 생성
         mockPageRepository = object : PageRepository {
             override suspend fun getImage(sessionId: String, pageIndex: Int): Result<GetImageResponse> {
                 return Result.success(
@@ -140,7 +137,7 @@ class ReadingActivityMockTest {
 
     @Test
     fun imageLoadError_handlesFailure() = runTest {
-        // Fake Repository를 에러 반환하도록 재생성
+        // Fake Repository returns error
         mockPageRepository = object : PageRepository {
             override suspend fun getImage(sessionId: String, pageIndex: Int): Result<GetImageResponse> {
                 return Result.failure(Exception("Image fetch failed: 500"))
@@ -274,7 +271,6 @@ class ReadingActivityMockTest {
                 bboxFound = bboxCount > 0
             }
         } catch (e: Exception) {
-            // Activity가 종료된 경우 무시
         }
 
         Assert.assertTrue("Should have at least one bounding box", bboxFound)
@@ -294,13 +290,13 @@ class ReadingActivityMockTest {
         scenario = ActivityScenario.launch(createIntent(totalPages = 2))
         Thread.sleep(1000)
 
-        // WHEN: 백 버튼 누르기
+        // WHEN: back button clicked
         scenario.onActivity { activity ->
             activity.onBackPressedDispatcher.onBackPressed()
         }
         Thread.sleep(500)
 
-        // THEN: 다이얼로그가 표시됨 (Activity가 종료되지 않음)
+        // THEN: dialog should be shown
         scenario.onActivity { activity ->
             Assert.assertFalse("Activity should not finish immediately", activity.isFinishing)
         }
@@ -311,39 +307,38 @@ class ReadingActivityMockTest {
         scenario = ActivityScenario.launch(createIntent(pageIndex = 1, totalPages = 3))
         Thread.sleep(1500)
 
-        // 오버레이 열기
+        // Open overlay
         onView(withId(R.id.main)).perform(click())
         Thread.sleep(300)
         onView(withId(R.id.menuButton)).perform(click())
         Thread.sleep(500)
 
-        // WHEN: RecyclerView의 아이템 클릭 (실제로는 썸네일 어댑터 콜백 테스트)
-        // RecyclerView 아이템 클릭은 복잡하므로, 대신 다른 페이지로 이동하는 기능 테스트
+        // WHEN: RecyclerView item clicked
         onView(withId(R.id.dimBackground)).perform(click())
         Thread.sleep(300)
 
-        // 다음 페이지로 이동
+        // Move to next page
         onView(withId(R.id.main)).perform(click())
         Thread.sleep(300)
         onView(withId(R.id.nextButton)).perform(click())
         Thread.sleep(2000)
 
-        // THEN: 페이지가 로드됨
+        // THEN: Page should load
         onView(withId(R.id.pageImage)).check(matches(isDisplayed()))
     }
 
     @Test
     fun thumbnailAdapter_displaysCorrectly() = runTest {
         scenario = ActivityScenario.launch(createIntent(pageIndex = 1, totalPages = 3))
-        Thread.sleep(2000) // 썸네일 로딩 대기
+        Thread.sleep(2000)
 
-        // 오버레이 열기
+        // Overlay opened
         onView(withId(R.id.main)).perform(click())
         Thread.sleep(300)
         onView(withId(R.id.menuButton)).perform(click())
         Thread.sleep(500)
 
-        // THEN: RecyclerView가 표시됨
+        // THEN: RecyclerView is displayed
         scenario.onActivity { activity ->
             val leftPanel = activity.findViewById<com.example.storybridge_android.ui.common.LeftOverlay>(R.id.leftPanel)
             val recyclerView = leftPanel.thumbnailRecyclerView
@@ -355,223 +350,7 @@ class ReadingActivityMockTest {
 
     @Test
     fun audioPlayButton_playsAndPauses() = runTest {
-        // GIVEN: TTS 결과가 있는 OCR
-        val bbox = BBox(100, 100, 200, 100, 200, 200, 100, 200)
-        val ocrBox = OcrBox(bbox, "Original", "Translated Text")
-        val audioResult = AudioResult(
-            bbox_index = 0,
-            audio_base64_list = listOf("dGVzdA==") // "test" in base64
-        )
-
-        mockPageRepository = object : PageRepository {
-            override suspend fun getImage(sessionId: String, pageIndex: Int): Result<GetImageResponse> {
-                return Result.success(
-                    GetImageResponse(sessionId, pageIndex, testImageBase64, "2025-11-15T12:00:00")
-                )
-            }
-            override suspend fun getOcrResults(sessionId: String, pageIndex: Int): Result<GetOcrTranslationResponse> {
-                return Result.success(
-                    GetOcrTranslationResponse(sessionId, pageIndex, listOf(ocrBox), "2025-11-15T12:00:00")
-                )
-            }
-            override suspend fun getTtsResults(sessionId: String, pageIndex: Int): Result<GetTtsResponse> {
-                return Result.success(
-                    GetTtsResponse(sessionId, pageIndex, listOf(audioResult), "2025-11-15T12:00:00")
-                )
-            }
-        }
-        ServiceLocator.pageRepository = mockPageRepository
-
-        scenario = ActivityScenario.launch(createIntent(totalPages = 2))
-        Thread.sleep(3000)
-
-        // WHEN: Play 버튼 찾아서 클릭
-        var playButtonFound = false
-        scenario.onActivity { activity ->
-            val mainLayout = activity.findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.main)
-            for (i in 0 until mainLayout.childCount) {
-                val child = mainLayout.getChildAt(i)
-                if (child.tag == "play_button") {
-                    child.performClick()
-                    playButtonFound = true
-                    break
-                }
-            }
-        }
-
-        Assert.assertTrue("Play button should be found and clickable", playButtonFound)
-        Thread.sleep(1000)
-    }
-
-    @Test
-    fun boundingBoxDrag_savesPosition() = runTest {
-        // GIVEN: OCR 결과
-        val bbox = BBox(100, 100, 200, 100, 200, 200, 100, 200)
-        val ocrBox = OcrBox(bbox, "Original", "Translated Text")
-
-        mockPageRepository = object : PageRepository {
-            override suspend fun getImage(sessionId: String, pageIndex: Int): Result<GetImageResponse> {
-                return Result.success(
-                    GetImageResponse(sessionId, pageIndex, testImageBase64, "2025-11-15T12:00:00")
-                )
-            }
-            override suspend fun getOcrResults(sessionId: String, pageIndex: Int): Result<GetOcrTranslationResponse> {
-                return Result.success(
-                    GetOcrTranslationResponse(sessionId, pageIndex, listOf(ocrBox), "2025-11-15T12:00:00")
-                )
-            }
-            override suspend fun getTtsResults(sessionId: String, pageIndex: Int): Result<GetTtsResponse> {
-                return Result.success(
-                    GetTtsResponse(sessionId, pageIndex, emptyList(), "2025-11-15T12:00:00")
-                )
-            }
-        }
-        ServiceLocator.pageRepository = mockPageRepository
-
-        scenario = ActivityScenario.launch(createIntent(totalPages = 2))
-        Thread.sleep(3000)
-
-        // WHEN: Bounding box를 드래그 (실제 터치 이벤트는 어려우므로 존재 확인)
-        var bboxFound = false
-        scenario.onActivity { activity ->
-            val mainLayout = activity.findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.main)
-            for (i in 0 until mainLayout.childCount) {
-                val child = mainLayout.getChildAt(i)
-                if (child.tag == "bbox") {
-                    bboxFound = true
-                    // Touch listener가 설정되어 있는지 확인
-                    Assert.assertTrue("BBox should have touch listener", child.hasOnClickListeners() || true)
-                    break
-                }
-            }
-        }
-
-        Assert.assertTrue("BBox should be rendered", bboxFound)
-    }
-
-    @Test
-    fun pageNavigation_clearsAudioState() = runTest {
-        scenario = ActivityScenario.launch(createIntent(pageIndex = 1, totalPages = 3))
-        Thread.sleep(1500)
-
-        // WHEN: 다음 페이지로 이동
-        onView(withId(R.id.main)).perform(click())
-        Thread.sleep(300)
-        onView(withId(R.id.nextButton)).perform(click())
-        Thread.sleep(2000)
-
-        // THEN: 새 페이지가 로드되고 이전 상태가 초기화됨
-        scenario.onActivity { activity ->
-            val mainLayout = activity.findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.main)
-
-            // 이전 페이지의 bounding box가 제거되었는지 확인
-            var oldBboxCount = 0
-            for (i in 0 until mainLayout.childCount) {
-                if (mainLayout.getChildAt(i).tag == "bbox") {
-                    oldBboxCount++
-                }
-            }
-            // 새 페이지가 로드되었으므로 카운트 확인 (empty list이므로 0)
-            Assert.assertEquals("Old bboxes should be cleared", 0, oldBboxCount)
-        }
-    }
-
-    @Test
-    fun captureButton_navigatesToCamera() = runTest {
-        scenario = ActivityScenario.launch(createIntent(totalPages = 2))
-        Thread.sleep(1500)
-
-        // UI 표시
-        onView(withId(R.id.main)).perform(click())
-        Thread.sleep(300)
-
-        // WHEN: Capture 버튼 클릭
-        onView(withId(R.id.startButton)).perform(click())
-        Thread.sleep(1000)
-
-        // THEN: CameraSessionActivity로 이동 (실제 검증은 어려우므로 에러 없이 실행 확인)
-        // Intent 검증은 Espresso Intents로 가능하지만 여기서는 생략
-    }
-
-    @Test
-    fun finishButton_navigatesToFinish() = runTest {
-        scenario = ActivityScenario.launch(createIntent(totalPages = 2))
-        Thread.sleep(1500)
-
-        // UI 표시
-        onView(withId(R.id.main)).perform(click())
-        Thread.sleep(300)
-
-        // WHEN: Finish 버튼 클릭
-        onView(withId(R.id.finishButton)).perform(click())
-        Thread.sleep(1000)
-
-        // THEN: FinishActivity로 이동
-        // Activity가 종료되었는지 확인
-        var isFinishing = false
-        try {
-            scenario.onActivity { activity ->
-                isFinishing = activity.isFinishing
-            }
-        } catch (e: Exception) {
-            isFinishing = true
-        }
-        Assert.assertTrue("Activity should be finishing or destroyed", isFinishing)
-    }
-
-    @Test
-    fun pollingTts_updatesAudioButtons() = runTest {
-        // GIVEN: 초기에는 TTS 없음, 나중에 추가됨 (polling 시뮬레이션)
-        val bbox = BBox(100, 100, 200, 100, 200, 200, 100, 200)
-        val ocrBox = OcrBox(bbox, "Original", "Translated")
-
-        var ttsCallCount = 0
-        mockPageRepository = object : PageRepository {
-            override suspend fun getImage(sessionId: String, pageIndex: Int): Result<GetImageResponse> {
-                return Result.success(
-                    GetImageResponse(sessionId, pageIndex, testImageBase64, "2025-11-15T12:00:00")
-                )
-            }
-            override suspend fun getOcrResults(sessionId: String, pageIndex: Int): Result<GetOcrTranslationResponse> {
-                return Result.success(
-                    GetOcrTranslationResponse(sessionId, pageIndex, listOf(ocrBox), "2025-11-15T12:00:00")
-                )
-            }
-            override suspend fun getTtsResults(sessionId: String, pageIndex: Int): Result<GetTtsResponse> {
-                ttsCallCount++
-                // 2번째 호출부터 오디오 결과 반환
-                val audioResults = if (ttsCallCount >= 2) {
-                    listOf(AudioResult(0, listOf("dGVzdA==")))
-                } else {
-                    emptyList()
-                }
-                return Result.success(
-                    GetTtsResponse(sessionId, pageIndex, audioResults, "2025-11-15T12:00:00")
-                )
-            }
-        }
-        ServiceLocator.pageRepository = mockPageRepository
-
-        scenario = ActivityScenario.launch(createIntent(totalPages = 2))
-        Thread.sleep(5000) // Polling 대기 (2초 간격)
-
-        // THEN: Play 버튼이 추가됨
-        var playButtonFound = false
-        scenario.onActivity { activity ->
-            val mainLayout = activity.findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.main)
-            for (i in 0 until mainLayout.childCount) {
-                if (mainLayout.getChildAt(i).tag == "play_button") {
-                    playButtonFound = true
-                    break
-                }
-            }
-        }
-        Assert.assertTrue("Play button should appear after polling", playButtonFound)
-    }
-
-    @Test
-    fun audioPlayButton_existsAndClickable() = runTest {
-        // GIVEN: TTS 결과가 있는 OCR
+        // GIVEN: OCR includes TTS results
         val bbox = BBox(100, 100, 200, 100, 200, 200, 100, 200)
         val ocrBox = OcrBox(bbox, "Original", "Translated Text")
         val audioResult = AudioResult(
@@ -601,27 +380,235 @@ class ReadingActivityMockTest {
         scenario = ActivityScenario.launch(createIntent(totalPages = 2))
         Thread.sleep(3000)
 
-        // WHEN & THEN: Play 버튼 찾아서 클릭
+        // WHEN: Play button find and click
+        var playButtonFound = false
+        scenario.onActivity { activity ->
+            val mainLayout = activity.findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.main)
+            for (i in 0 until mainLayout.childCount) {
+                val child = mainLayout.getChildAt(i)
+                if (child.tag == "play_button") {
+                    child.performClick()
+                    playButtonFound = true
+                    break
+                }
+            }
+        }
+
+        Assert.assertTrue("Play button should be found and clickable", playButtonFound)
+        Thread.sleep(1000)
+    }
+
+    @Test
+    fun boundingBoxDrag_savesPosition() = runTest {
+        // GIVEN: OCR results
+        val bbox = BBox(100, 100, 200, 100, 200, 200, 100, 200)
+        val ocrBox = OcrBox(bbox, "Original", "Translated Text")
+
+        mockPageRepository = object : PageRepository {
+            override suspend fun getImage(sessionId: String, pageIndex: Int): Result<GetImageResponse> {
+                return Result.success(
+                    GetImageResponse(sessionId, pageIndex, testImageBase64, "2025-11-15T12:00:00")
+                )
+            }
+            override suspend fun getOcrResults(sessionId: String, pageIndex: Int): Result<GetOcrTranslationResponse> {
+                return Result.success(
+                    GetOcrTranslationResponse(sessionId, pageIndex, listOf(ocrBox), "2025-11-15T12:00:00")
+                )
+            }
+            override suspend fun getTtsResults(sessionId: String, pageIndex: Int): Result<GetTtsResponse> {
+                return Result.success(
+                    GetTtsResponse(sessionId, pageIndex, emptyList(), "2025-11-15T12:00:00")
+                )
+            }
+        }
+        ServiceLocator.pageRepository = mockPageRepository
+
+        scenario = ActivityScenario.launch(createIntent(totalPages = 2))
+        Thread.sleep(3000)
+
+        // WHEN: Bounding box drag
+        var bboxFound = false
+        scenario.onActivity { activity ->
+            val mainLayout = activity.findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.main)
+            for (i in 0 until mainLayout.childCount) {
+                val child = mainLayout.getChildAt(i)
+                if (child.tag == "bbox") {
+                    bboxFound = true
+                    Assert.assertTrue("BBox should have touch listener", child.hasOnClickListeners() || true)
+                    break
+                }
+            }
+        }
+
+        Assert.assertTrue("BBox should be rendered", bboxFound)
+    }
+
+    @Test
+    fun pageNavigation_clearsAudioState() = runTest {
+        scenario = ActivityScenario.launch(createIntent(pageIndex = 1, totalPages = 3))
+        Thread.sleep(1500)
+
+        // WHEN: Move to the next page
+        onView(withId(R.id.main)).perform(click())
+        Thread.sleep(300)
+        onView(withId(R.id.nextButton)).perform(click())
+        Thread.sleep(2000)
+
+        // THEN: New page should be loaded
+        scenario.onActivity { activity ->
+            val mainLayout = activity.findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.main)
+
+            var oldBboxCount = 0
+            for (i in 0 until mainLayout.childCount) {
+                if (mainLayout.getChildAt(i).tag == "bbox") {
+                    oldBboxCount++
+                }
+            }
+            Assert.assertEquals("Old bboxes should be cleared", 0, oldBboxCount)
+        }
+    }
+
+    @Test
+    fun captureButton_navigatesToCamera() = runTest {
+        scenario = ActivityScenario.launch(createIntent(totalPages = 2))
+        Thread.sleep(1500)
+
+        // UI
+        onView(withId(R.id.main)).perform(click())
+        Thread.sleep(300)
+
+        // WHEN: Capture button clicked
+        onView(withId(R.id.startButton)).perform(click())
+        Thread.sleep(1000)
+
+        // THEN: CameraSessionActivity로 이동
+    }
+
+    @Test
+    fun finishButton_navigatesToFinish() = runTest {
+        scenario = ActivityScenario.launch(createIntent(totalPages = 2))
+        Thread.sleep(1500)
+
+        // UI 표시
+        onView(withId(R.id.main)).perform(click())
+        Thread.sleep(300)
+
+        // WHEN: Finish button clicked
+        onView(withId(R.id.finishButton)).perform(click())
+        Thread.sleep(1000)
+
+        // THEN: move to FinishActivity
+        var isFinishing = false
+        try {
+            scenario.onActivity { activity ->
+                isFinishing = activity.isFinishing
+            }
+        } catch (e: Exception) {
+            isFinishing = true
+        }
+        Assert.assertTrue("Activity should be finishing or destroyed", isFinishing)
+    }
+
+    @Test
+    fun pollingTts_updatesAudioButtons() = runTest {
+        // GIVEN: No TTS first
+        val bbox = BBox(100, 100, 200, 100, 200, 200, 100, 200)
+        val ocrBox = OcrBox(bbox, "Original", "Translated")
+
+        var ttsCallCount = 0
+        mockPageRepository = object : PageRepository {
+            override suspend fun getImage(sessionId: String, pageIndex: Int): Result<GetImageResponse> {
+                return Result.success(
+                    GetImageResponse(sessionId, pageIndex, testImageBase64, "2025-11-15T12:00:00")
+                )
+            }
+            override suspend fun getOcrResults(sessionId: String, pageIndex: Int): Result<GetOcrTranslationResponse> {
+                return Result.success(
+                    GetOcrTranslationResponse(sessionId, pageIndex, listOf(ocrBox), "2025-11-15T12:00:00")
+                )
+            }
+            override suspend fun getTtsResults(sessionId: String, pageIndex: Int): Result<GetTtsResponse> {
+                ttsCallCount++
+                // TTS result is returned after second call
+                val audioResults = if (ttsCallCount >= 2) {
+                    listOf(AudioResult(0, listOf("dGVzdA==")))
+                } else {
+                    emptyList()
+                }
+                return Result.success(
+                    GetTtsResponse(sessionId, pageIndex, audioResults, "2025-11-15T12:00:00")
+                )
+            }
+        }
+        ServiceLocator.pageRepository = mockPageRepository
+
+        scenario = ActivityScenario.launch(createIntent(totalPages = 2))
+        Thread.sleep(5000)
+
+        // THEN: Play button added
+        var playButtonFound = false
+        scenario.onActivity { activity ->
+            val mainLayout = activity.findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.main)
+            for (i in 0 until mainLayout.childCount) {
+                if (mainLayout.getChildAt(i).tag == "play_button") {
+                    playButtonFound = true
+                    break
+                }
+            }
+        }
+        Assert.assertTrue("Play button should appear after polling", playButtonFound)
+    }
+
+    @Test
+    fun audioPlayButton_existsAndClickable() = runTest {
+        // GIVEN: OCR with TTS results
+        val bbox = BBox(100, 100, 200, 100, 200, 200, 100, 200)
+        val ocrBox = OcrBox(bbox, "Original", "Translated Text")
+        val audioResult = AudioResult(
+            bbox_index = 0,
+            audio_base64_list = listOf("dGVzdA==")
+        )
+
+        mockPageRepository = object : PageRepository {
+            override suspend fun getImage(sessionId: String, pageIndex: Int): Result<GetImageResponse> {
+                return Result.success(
+                    GetImageResponse(sessionId, pageIndex, testImageBase64, "2025-11-15T12:00:00")
+                )
+            }
+            override suspend fun getOcrResults(sessionId: String, pageIndex: Int): Result<GetOcrTranslationResponse> {
+                return Result.success(
+                    GetOcrTranslationResponse(sessionId, pageIndex, listOf(ocrBox), "2025-11-15T12:00:00")
+                )
+            }
+            override suspend fun getTtsResults(sessionId: String, pageIndex: Int): Result<GetTtsResponse> {
+                return Result.success(
+                    GetTtsResponse(sessionId, pageIndex, listOf(audioResult), "2025-11-15T12:00:00")
+                )
+            }
+        }
+        ServiceLocator.pageRepository = mockPageRepository
+
+        scenario = ActivityScenario.launch(createIntent(totalPages = 2))
+        Thread.sleep(3000)
+
+        // WHEN & THEN: Play button click
         var playButtonClicked = false
         scenario.onActivity { activity ->
             val mainLayout = activity.findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.main)
             for (i in 0 until mainLayout.childCount) {
                 val child = mainLayout.getChildAt(i)
                 if (child.tag == "play_button" && child is android.widget.ImageButton) {
-                    // 첫 번째 클릭 - 재생 시작
+                    // first click
                     child.performClick()
                     playButtonClicked = true
-
                     Thread.sleep(500)
 
-                    // 두 번째 클릭 - 일시정지/재개
+                    // Second click
                     child.performClick()
-
                     Thread.sleep(500)
 
-                    // 세 번째 클릭 - 재개/일시정지
+                    // Third click
                     child.performClick()
-
                     break
                 }
             }
@@ -632,7 +619,7 @@ class ReadingActivityMockTest {
 
     @Test
     fun audioPlayButton_switchesBetweenBoxes() = runTest {
-        // GIVEN: 두 개의 오디오가 있는 OCR
+        // GIVEN: OCR has two audio results
         val bbox1 = BBox(100, 100, 200, 100, 200, 200, 100, 200)
         val bbox2 = BBox(100, 300, 200, 100, 200, 400, 100, 400)
         val ocrBox1 = OcrBox(bbox1, "Original1", "Translated1")
@@ -663,7 +650,7 @@ class ReadingActivityMockTest {
         scenario = ActivityScenario.launch(createIntent(totalPages = 2))
         Thread.sleep(3000)
 
-        // WHEN: 첫 번째 Play 버튼 클릭, 그 다음 두 번째 Play 버튼 클릭
+        // WHEN: first play button clicked, then second
         scenario.onActivity { activity ->
             val mainLayout = activity.findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.main)
             val playButtons = mutableListOf<android.widget.ImageButton>()
@@ -677,22 +664,20 @@ class ReadingActivityMockTest {
 
             Assert.assertEquals("Should have 2 play buttons", 2, playButtons.size)
 
-            // 첫 번째 버튼 클릭
             playButtons[0].performClick()
             Thread.sleep(500)
 
-            // 두 번째 버튼 클릭 (첫 번째 오디오가 중지되고 두 번째 재생)
             playButtons[1].performClick()
             Thread.sleep(500)
         }
 
-        // THEN: 두 번째 오디오가 재생 중
+        // THEN: Second audio played
         Thread.sleep(1000)
     }
 
     @Test
     fun audioPlayback_completesAndResetsButton() = runTest {
-        // GIVEN: 짧은 오디오
+        // GIVEN: short audio
         val bbox = BBox(100, 100, 200, 100, 200, 200, 100, 200)
         val ocrBox = OcrBox(bbox, "Original", "Translated")
         val audioResult = AudioResult(0, listOf("dGVzdA=="))
@@ -719,7 +704,7 @@ class ReadingActivityMockTest {
         scenario = ActivityScenario.launch(createIntent(totalPages = 2))
         Thread.sleep(3000)
 
-        // WHEN: Play 버튼 클릭
+        // WHEN: Play button clicked
         scenario.onActivity { activity ->
             val mainLayout = activity.findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.main)
             for (i in 0 until mainLayout.childCount) {
@@ -731,16 +716,15 @@ class ReadingActivityMockTest {
             }
         }
 
-        // THEN: 오디오 재생 완료 대기
+        // THEN: Wait for audio done
         Thread.sleep(2000)
 
-        // 버튼이 headphone 아이콘으로 돌아왔는지 확인
+        // headphone icon
         scenario.onActivity { activity ->
             val mainLayout = activity.findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.main)
             for (i in 0 until mainLayout.childCount) {
                 val child = mainLayout.getChildAt(i)
                 if (child.tag == "play_button" && child is android.widget.ImageButton) {
-                    // 버튼 상태 확인
                     Assert.assertTrue("Play button should exist", true)
                     break
                 }
@@ -750,7 +734,7 @@ class ReadingActivityMockTest {
 
     @Test
     fun boundingBox_rendersWithCorrectText() = runTest {
-        // GIVEN: OCR 결과
+        // GIVEN: OCR result
         val bbox = BBox(100, 100, 200, 100, 200, 200, 100, 200)
         val ocrBox = OcrBox(bbox, "Original", "번역된 텍스트")
 
@@ -776,7 +760,7 @@ class ReadingActivityMockTest {
         scenario = ActivityScenario.launch(createIntent(totalPages = 2))
         Thread.sleep(3000)
 
-        // THEN: Bounding box 텍스트 확인
+        // THEN: Bounding box
         scenario.onActivity { activity ->
             val mainLayout = activity.findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.main)
             var textFound = false
@@ -794,6 +778,7 @@ class ReadingActivityMockTest {
 
     @Test
     fun pageNavigation_clearsPlayButtons() = runTest {
+        // GIVEN: Page 1 with audio, Page 2 without audio
         val bbox = BBox(100, 100, 200, 100, 200, 200, 100, 200)
         val ocrBox = OcrBox(bbox, "Original", "Translated")
         val audioResult = AudioResult(0, listOf("dGVzdA=="))
@@ -805,14 +790,12 @@ class ReadingActivityMockTest {
                 )
             }
             override suspend fun getOcrResults(sessionId: String, pageIndex: Int): Result<GetOcrTranslationResponse> {
-                // pageIndex 1: OCR 있음, pageIndex 2: OCR 없음
                 val ocrResults = if (pageIndex == 1) listOf(ocrBox) else emptyList()
                 return Result.success(
                     GetOcrTranslationResponse(sessionId, pageIndex, ocrResults, "2025-11-15T12:00:00")
                 )
             }
             override suspend fun getTtsResults(sessionId: String, pageIndex: Int): Result<GetTtsResponse> {
-                // pageIndex 1: TTS 있음, pageIndex 2: TTS 없음
                 val ttsResults = if (pageIndex == 1) listOf(audioResult) else emptyList()
                 return Result.success(
                     GetTtsResponse(sessionId, pageIndex, ttsResults, "2025-11-15T12:00:00")
@@ -824,7 +807,7 @@ class ReadingActivityMockTest {
         scenario = ActivityScenario.launch(createIntent(pageIndex = 1, totalPages = 3))
         Thread.sleep(3000)
 
-        // Play 버튼이 있는지 확인 (pageIndex=1)
+        // Verify play button exists on page 1
         scenario.onActivity { activity ->
             val mainLayout = activity.findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.main)
             var playButtonCount = 0
@@ -836,13 +819,13 @@ class ReadingActivityMockTest {
             Assert.assertTrue("Should have at least 1 play button", playButtonCount > 0)
         }
 
-        // WHEN: 다음 페이지로 이동 (pageIndex=2, 오디오 없음)
+        // WHEN: Navigate to next page (page 2, no audio)
         onView(withId(R.id.main)).perform(click())
         Thread.sleep(300)
         onView(withId(R.id.nextButton)).perform(click())
-        Thread.sleep(3000) // 페이지 로딩 대기
+        Thread.sleep(3000)
 
-        // THEN: Play 버튼이 제거됨
+        // THEN: Verify play buttons are cleared
         scenario.onActivity { activity ->
             val mainLayout = activity.findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.main)
             var playButtonCount = 0
@@ -857,7 +840,7 @@ class ReadingActivityMockTest {
 
     @Test
     fun imageDecodeFails_logsError() = runTest {
-        // GIVEN: 잘못된 Base64 데이터
+        // GIVEN: Invalid Base64 image data
         val invalidImageResponse = GetImageResponse(
             session_id = "test",
             page_index = 1,
@@ -882,11 +865,11 @@ class ReadingActivityMockTest {
         }
         ServiceLocator.pageRepository = mockPageRepository
 
-        // WHEN: Activity 실행
+        // WHEN: Launch activity with invalid image
         scenario = ActivityScenario.launch(createIntent(totalPages = 2))
         Thread.sleep(2000)
 
-        // THEN: 에러가 발생해도 앱이 크래시하지 않음
+        // THEN: Verify app doesn't crash
         scenario.onActivity { activity ->
             Assert.assertFalse("Activity should not be finishing", activity.isFinishing)
         }
@@ -894,8 +877,8 @@ class ReadingActivityMockTest {
 
     @Test
     fun minWidthBoundingBox_usesMinWidth() = runTest {
-        // GIVEN: 너비가 MIN_WIDTH보다 작은 BBox
-        val bbox = BBox(100, 100, 100, 100, 200, 200, 100, 200) // width=100 < MIN_WIDTH=500
+        // GIVEN: BBox with width smaller than MIN_WIDTH (500)
+        val bbox = BBox(100, 100, 100, 100, 200, 200, 100, 200)
         val ocrBox = OcrBox(bbox, "Original", "Short Text")
 
         mockPageRepository = object : PageRepository {
@@ -920,7 +903,7 @@ class ReadingActivityMockTest {
         scenario = ActivityScenario.launch(createIntent(totalPages = 2))
         Thread.sleep(3000)
 
-        // THEN: BBox가 MIN_WIDTH(500)으로 렌더링됨
+        // THEN: Verify BBox is rendered with MIN_WIDTH (500)
         scenario.onActivity { activity ->
             val mainLayout = activity.findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.main)
             var bboxFound = false
@@ -944,22 +927,20 @@ class ReadingActivityMockTest {
 
         val initialTotalPages = 3
 
-        // WHEN: Camera에서 페이지 추가 결과 받음
+        // WHEN: Receive page added result from camera
         scenario.onActivity { activity ->
             val resultIntent = Intent().apply {
                 putExtra("page_added", true)
             }
-            // cameraLauncher를 직접 시뮬레이션하기는 어려우므로,
-            // totalPages가 증가하는지만 확인
         }
 
-        // NOTE: cameraLauncher는 ActivityResultLauncher이므로 직접 테스트하기 어려움
-        // 이 경우 Espresso Intents를 사용하거나 통합 테스트로 검증
+        // NOTE: Direct testing of cameraLauncher (ActivityResultLauncher) is difficult
+        // Consider using Espresso Intents or integration tests for full verification
     }
 
     @Test
     fun ttsError_handlesGracefully() = runTest {
-        // GIVEN: TTS 실패
+        // GIVEN: TTS fails
         val bbox = BBox(100, 100, 200, 100, 200, 200, 100, 200)
         val ocrBox = OcrBox(bbox, "Original", "Translated")
 
@@ -980,11 +961,11 @@ class ReadingActivityMockTest {
         }
         ServiceLocator.pageRepository = mockPageRepository
 
-        // WHEN: Activity 실행
+        // WHEN: Launch activity
         scenario = ActivityScenario.launch(createIntent(totalPages = 2))
         Thread.sleep(3000)
 
-        // THEN: BBox는 표시되지만 Play 버튼은 없음
+        // THEN: Verify bounding boxes are shown but no play buttons
         scenario.onActivity { activity ->
             val mainLayout = activity.findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.main)
             var bboxCount = 0
@@ -1006,18 +987,16 @@ class ReadingActivityMockTest {
         scenario = ActivityScenario.launch(createIntent(pageIndex = 1, totalPages = 3))
         Thread.sleep(1500)
 
-        // WHEN: Camera에서 page_added=true 결과 받음
+        // WHEN: Receive page_added=true result from camera
         scenario.onActivity { activity ->
-            // ActivityResult를 직접 시뮬레이션
             val resultData = Intent().apply {
                 putExtra("page_added", true)
             }
 
-            // Reflection을 사용하여 cameraLauncher의 콜백 호출
+            // Use reflection to call cameraLauncher callback
             val resultCode = android.app.Activity.RESULT_OK
             val result = androidx.activity.result.ActivityResult(resultCode, resultData)
 
-            // totalPages 증가 확인을 위해 초기값 저장
             val initialTotal = 3
         }
         Thread.sleep(2000)
@@ -1030,7 +1009,7 @@ class ReadingActivityMockTest {
 
         scenario.onActivity { activity ->
             val statusText = activity.findViewById<android.widget.TextView>(R.id.statusText)
-            // 초기 상태 확인용
+            // Verify initial state
         }
     }
 
@@ -1039,15 +1018,15 @@ class ReadingActivityMockTest {
         scenario = ActivityScenario.launch(createIntent(totalPages = 2))
         Thread.sleep(1500)
 
-        // UI를 먼저 보이게 함
+        // Show UI first
         onView(withId(R.id.main)).perform(click())
         Thread.sleep(500)
 
-        // WHEN: UI가 visible 상태에서 다시 클릭
+        // WHEN: Click again while UI is visible
         onView(withId(R.id.main)).perform(click())
         Thread.sleep(500)
 
-        // THEN: UI가 숨겨짐
+        // THEN: Verify UI is hidden
         scenario.onActivity { activity ->
             val topUi = activity.findViewById<View>(R.id.topUi)
             val bottomUi = activity.findViewById<View>(R.id.bottomUi)
@@ -1059,6 +1038,7 @@ class ReadingActivityMockTest {
 
     @Test
     fun boundingBoxTouch_actionDown_recordsPosition() = runTest {
+        // GIVEN: Page with bounding box
         val bbox = BBox(100, 100, 200, 100, 200, 200, 100, 200)
         val ocrBox = OcrBox(bbox, "Original", "Translated")
 
@@ -1084,6 +1064,7 @@ class ReadingActivityMockTest {
         scenario = ActivityScenario.launch(createIntent(totalPages = 2))
         Thread.sleep(3000)
 
+        // WHEN: Dispatch ACTION_DOWN event to BBox
         scenario.onActivity { activity ->
             val mainLayout = activity.findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.main)
             var bboxView: TextView? = null
@@ -1098,9 +1079,8 @@ class ReadingActivityMockTest {
 
             Assert.assertNotNull("BBox should exist", bboxView)
 
-            // Touch listener가 설정되어 있는지 확인
+            // THEN: Verify touch listener is set
             bboxView?.let { view ->
-                // ACTION_DOWN 이벤트 생성
                 val downEvent = MotionEvent.obtain(
                     0, 0, MotionEvent.ACTION_DOWN,
                     100f, 100f, 0
@@ -1113,6 +1093,7 @@ class ReadingActivityMockTest {
 
     @Test
     fun boundingBoxTouch_actionCancel_stopsDragging() = runTest {
+        // GIVEN: Page with bounding box
         val bbox = BBox(100, 100, 200, 100, 200, 200, 100, 200)
         val ocrBox = OcrBox(bbox, "Original", "Translated")
 
@@ -1138,13 +1119,13 @@ class ReadingActivityMockTest {
         scenario = ActivityScenario.launch(createIntent(totalPages = 2))
         Thread.sleep(3000)
 
+        // WHEN: Dispatch ACTION_CANCEL event
         scenario.onActivity { activity ->
             val mainLayout = activity.findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.main)
 
             for (i in 0 until mainLayout.childCount) {
                 val child = mainLayout.getChildAt(i)
                 if (child.tag == "bbox" && child is TextView) {
-                    // ACTION_CANCEL 이벤트
                     val cancelEvent = MotionEvent.obtain(
                         0, 0, MotionEvent.ACTION_CANCEL,
                         100f, 100f, 0
@@ -1159,63 +1140,7 @@ class ReadingActivityMockTest {
 
     @Test
     fun playNextAudio_indexExceedsListSize_resetsButton() = runTest {
-        val bbox = BBox(100, 100, 200, 100, 200, 200, 100, 200)
-        val ocrBox = OcrBox(bbox, "Original", "Translated")
-        val audioResult = AudioResult(0, listOf("dGVzdA==")) // 1개만
-
-        mockPageRepository = object : PageRepository {
-            override suspend fun getImage(sessionId: String, pageIndex: Int): Result<GetImageResponse> {
-                return Result.success(
-                    GetImageResponse(sessionId, pageIndex, testImageBase64, "2025-11-15T12:00:00")
-                )
-            }
-            override suspend fun getOcrResults(sessionId: String, pageIndex: Int): Result<GetOcrTranslationResponse> {
-                return Result.success(
-                    GetOcrTranslationResponse(sessionId, pageIndex, listOf(ocrBox), "2025-11-15T12:00:00")
-                )
-            }
-            override suspend fun getTtsResults(sessionId: String, pageIndex: Int): Result<GetTtsResponse> {
-                return Result.success(
-                    GetTtsResponse(sessionId, pageIndex, listOf(audioResult), "2025-11-15T12:00:00")
-                )
-            }
-        }
-        ServiceLocator.pageRepository = mockPageRepository
-
-        scenario = ActivityScenario.launch(createIntent(totalPages = 2))
-        Thread.sleep(3000)
-
-        // Play 버튼 클릭하고 재생 완료 대기
-        scenario.onActivity { activity ->
-            val mainLayout = activity.findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.main)
-            for (i in 0 until mainLayout.childCount) {
-                val child = mainLayout.getChildAt(i)
-                if (child.tag == "play_button" && child is android.widget.ImageButton) {
-                    child.performClick()
-                    break
-                }
-            }
-        }
-
-        // 오디오 재생 완료 대기 (playNextAudio가 리스트 끝에 도달)
-        Thread.sleep(2000)
-
-        // 버튼이 headphone으로 리셋되었는지 확인
-        scenario.onActivity { activity ->
-            val mainLayout = activity.findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.main)
-            for (i in 0 until mainLayout.childCount) {
-                val child = mainLayout.getChildAt(i)
-                if (child.tag == "play_button" && child is android.widget.ImageButton) {
-                    // 리셋된 상태 확인
-                    Assert.assertTrue("Button should be reset", true)
-                    break
-                }
-            }
-        }
-    }
-
-    @Test
-    fun playAudioForBox_whenPlaying_pausesAudio() = runTest {
+        // GIVEN: Single audio clip
         val bbox = BBox(100, 100, 200, 100, 200, 200, 100, 200)
         val ocrBox = OcrBox(bbox, "Original", "Translated")
         val audioResult = AudioResult(0, listOf("dGVzdA=="))
@@ -1242,6 +1167,63 @@ class ReadingActivityMockTest {
         scenario = ActivityScenario.launch(createIntent(totalPages = 2))
         Thread.sleep(3000)
 
+        // WHEN: Click play button and wait for audio completion
+        scenario.onActivity { activity ->
+            val mainLayout = activity.findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.main)
+            for (i in 0 until mainLayout.childCount) {
+                val child = mainLayout.getChildAt(i)
+                if (child.tag == "play_button" && child is android.widget.ImageButton) {
+                    child.performClick()
+                    break
+                }
+            }
+        }
+
+        Thread.sleep(2000)
+
+        // THEN: Verify button is reset to headphone icon
+        scenario.onActivity { activity ->
+            val mainLayout = activity.findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.main)
+            for (i in 0 until mainLayout.childCount) {
+                val child = mainLayout.getChildAt(i)
+                if (child.tag == "play_button" && child is android.widget.ImageButton) {
+                    Assert.assertTrue("Button should be reset", true)
+                    break
+                }
+            }
+        }
+    }
+
+    @Test
+    fun playAudioForBox_whenPlaying_pausesAudio() = runTest {
+        // GIVEN: Page with audio
+        val bbox = BBox(100, 100, 200, 100, 200, 200, 100, 200)
+        val ocrBox = OcrBox(bbox, "Original", "Translated")
+        val audioResult = AudioResult(0, listOf("dGVzdA=="))
+
+        mockPageRepository = object : PageRepository {
+            override suspend fun getImage(sessionId: String, pageIndex: Int): Result<GetImageResponse> {
+                return Result.success(
+                    GetImageResponse(sessionId, pageIndex, testImageBase64, "2025-11-15T12:00:00")
+                )
+            }
+            override suspend fun getOcrResults(sessionId: String, pageIndex: Int): Result<GetOcrTranslationResponse> {
+                return Result.success(
+                    GetOcrTranslationResponse(sessionId, pageIndex, listOf(ocrBox), "2025-11-15T12:00:00")
+                )
+            }
+            override suspend fun getTtsResults(sessionId: String, pageIndex: Int): Result<GetTtsResponse> {
+                return Result.success(
+                    GetTtsResponse(sessionId, pageIndex, listOf(audioResult), "2025-11-15T12:00:00")
+                )
+            }
+        }
+        ServiceLocator.pageRepository = mockPageRepository
+
+        scenario = ActivityScenario.launch(createIntent(totalPages = 2))
+        Thread.sleep(3000)
+
+        // WHEN: Click play button twice
         scenario.onActivity { activity ->
             val mainLayout = activity.findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.main)
             var playButton: android.widget.ImageButton? = null
@@ -1254,14 +1236,15 @@ class ReadingActivityMockTest {
                 }
             }
 
-            // 첫 번째 클릭 - 재생 시작
+            // First click - start playback
             playButton?.performClick()
             Thread.sleep(300)
 
-            // 두 번째 클릭 - 일시정지 (같은 박스이므로 pause 경로)
+            // Second click - pause
             playButton?.performClick()
             Thread.sleep(300)
 
+            // THEN: Verify button exists
             Assert.assertNotNull("Play button should exist", playButton)
         }
     }
@@ -1271,21 +1254,20 @@ class ReadingActivityMockTest {
         scenario = ActivityScenario.launch(createIntent(pageIndex = 1, totalPages = 3))
         Thread.sleep(2000)
 
-        // 오버레이 열기
+        // Overlay
         onView(withId(R.id.main)).perform(click())
         Thread.sleep(300)
         onView(withId(R.id.menuButton)).perform(click())
         Thread.sleep(500)
 
-        // WHEN: 현재 페이지 썸네일 클릭 시뮬레이션
+        // WHEN: Click current page - toast should show
         scenario.onActivity { activity ->
             val method = activity.javaClass.getDeclaredMethod("onThumbnailClick", Int::class.java)
             method.isAccessible = true
-            method.invoke(activity, 1) // 현재 페이지
+            method.invoke(activity, 1)
         }
 
         Thread.sleep(500)
-        // Toast 메시지가 표시되었는지 확인 (실제로는 Toast 검증이 어려움)
     }
 
     @Test
@@ -1322,15 +1304,15 @@ class ReadingActivityMockTest {
             for (i in 0 until mainLayout.childCount) {
                 val child = mainLayout.getChildAt(i)
                 if (child.tag == "play_button" && child is android.widget.ImageButton) {
-                    // 재생 시작
+                    // play
                     child.performClick()
                     Thread.sleep(300)
 
-                    // 일시정지 (updateButtonToPaused 호출)
+                    // updateButtonToPaused
                     child.performClick()
                     Thread.sleep(300)
 
-                    // 아이콘이 변경되었는지 확인
+                    // icon changed
                     Assert.assertTrue("Button should exist and be clickable", true)
                     break
                 }

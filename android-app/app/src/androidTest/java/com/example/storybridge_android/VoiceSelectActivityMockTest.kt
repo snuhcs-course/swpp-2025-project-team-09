@@ -174,15 +174,15 @@ class VoiceSelectActivityTest {
 
     @Test
     fun testNextButtonEnabledAfterSelectingVoice() {
-        // GIVEN: Next 버튼이 비활성화
+        // GIVEN: Next button is not enabled
         onView(withId(R.id.nextButton))
             .check(matches(isNotEnabled()))
 
-        // WHEN: Woman 버튼 클릭
+        // WHEN: Woman button is clicked
         onView(withId(R.id.womanButton)).perform(click())
         Thread.sleep(2000)
 
-        // THEN: Next 버튼 활성화
+        // THEN: Next button enabled
         onView(withId(R.id.nextButton))
             .check(matches(isEnabled()))
     }

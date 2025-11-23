@@ -652,7 +652,7 @@ class VoiceSelectViewModelTest {
             Log.d("VoiceSelectViewModel", "Title: $title")
         }
         verify(mockProcessRepository).uploadCoverImage(any())
-        unmockkStatic(android.util.Base64::class) // 반드시 unmockkStatic 해주어야 합니다.
+        unmockkStatic(android.util.Base64::class)
         assertFalse(viewModel.loading.value)
     }
 }
