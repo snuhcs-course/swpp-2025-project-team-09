@@ -226,12 +226,12 @@ class MainActivity : BaseActivity() {
 
     private fun showDeleteConfirmationDialog(sessionId: String) {
         AlertDialog.Builder(this)
-            .setTitle("삭제 확인")
-            .setMessage("정말로 삭제하시겠습니까?")
-            .setPositiveButton("삭제") { _, _ ->
+            .setTitle(R.string.delete_title)
+            .setMessage(R.string.delete_message)
+            .setPositiveButton(R.string.delete_confirm) { _, _ ->
                 deleteSession(sessionId)
             }
-            .setNegativeButton("취소", null)
+            .setNegativeButton(R.string.delete_cancel, null)
             .show()
     }
 

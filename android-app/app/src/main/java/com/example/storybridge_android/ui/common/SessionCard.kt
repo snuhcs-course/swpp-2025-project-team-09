@@ -27,10 +27,6 @@ class SessionCard @JvmOverloads constructor(
         trashButton = findViewById(R.id.cardTrashButton)
     }
 
-    fun setBookImage(resId: Int) {
-        bookImage.setImageResource(resId)
-    }
-
     fun setBookTitle(title: String) {
         bookTitle.text = title
     }

@@ -4,28 +4,29 @@
     <string name="story_bridge">story bridge</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
 
-    <!-- 메인 화면 -->
+    <!-- Main Activity -->
     <string name="start_new_reading">开始新的阅读</string>
     <string name="previous_readings">读过的故事</string>
     <string name="no_previous_readings">这里没有你读过的故事哦。</string>
 
-    <!-- 세팅 -->
+    <!-- Setting -->
     <string name="language_label">语言</string>
     <string name="english">英语</string>
     <string name="chinese">中文</string>
     <string name="vietnamese">越南语</string>
     <string name="save_settings">保存设置</string>
 
-    <!-- 표지 촬영 -->
+    <!-- Taking cover image -->
     <string name="take_photo_instruction">拍下书本的封面</string>
     <string name="start">开始！</string>
 
+    <!-- Taking content image -->
     <string name="take_content_instruction">现在我们来拍一下书页的照片吧</string>
 
-    <!-- 로딩 -->
+    <!-- Loading -->
     <string name="loading_text">加载中...</string>
 
-    <!-- 음성 선택 -->
+    <!-- Voice Selection -->
     <string name="preferred_voice_question">你喜欢哪种声音？</string>
     <string name="male_voice">男生的声音</string>
     <string name="female_voice">女生的声音</string>
@@ -34,33 +35,22 @@
     <string name="voice_preview_not_available">无法获取%1$s声音预览</string>
     <string name="failed_audio_preview">播放声音预览失败</string>
 
-    <!-- 읽기 -->
+    <!-- Reading -->
     <string name="first_page">这是第一页</string>
     <string name="last_page">这是最后一页</string>
     <string name="current_page">当前页</string>
     <string name="loading_error">加载页面失败</string>
     <string name="audio_error">音频播放错误</string>
     <string name="finish_reading">完成阅读</string>
-    <string name="capture_new_page">拍新的一页</string>
+    <string name="button_add_new_page">添加新页面</string>
+    <string name="page_status_format">第 %1$d/%2$d 页</string>
 
-    <!-- 끝내기 -->
+    <!-- summary -->
     <string name="congratulations">太棒了！</string>
     <string name="you_achieved">你完成啦！</string>
+    <string name="summary_text">你阅读了 %1$d 个单词和 %2$s，花费了 %3$s。太棒了！</string>
 
-    <!-- 저장 -->
-    <string name="save_session_question">要保存这次阅读吗？</string>
-    <string name="save">保存</string>
-    <string name="discard">放弃</string>
-    <string name="go_back_to_main">回到主页</string>
-
-    <!-- exit 팝업 -->
-    <string name="exit_dialog_title">离开</string>
-    <string name="exit_dialog_message">要离开阅读画面吗？</string>
-    <string name="exit_dialog_confirm">离开</string>
-    <string name="exit_dialog_cancel">取消</string>
-    <string name="exit_loading">请等待加载完成。</string>
-
-    <!-- 단위 -->
+    <!-- unit -->
     <string name="unit_minute">分钟</string>
     <string name="unit_minutes">分钟</string>
     <string name="unit_second">秒</string>
@@ -68,14 +58,21 @@
     <string name="unit_page">页</string>
     <string name="unit_pages">页</string>
 
-    <!-- 문장 구성 -->
-    <string name="summary_text">你阅读了 %1$d 个单词和 %2$s，花费了 %3$s。太棒了！</string>
+    <!-- Session Save -->
+    <string name="save_session_question">要保存这次阅读吗？</string>
+    <string name="save">保存</string>
+    <string name="discard">放弃</string>
+    <string name="go_back_to_main">回到主页</string>
 
-    <!-- Exit dialog text (Chinese) -->
+    <!--Exit dialog -->
+    <string name="exit_loading">请等待加载完成。</string>
     <string name="exit_title">你确定要退出吗？</string>
     <string name="exit_confirm">退出</string>
     <string name="exit_cancel">取消</string>
 
-    <string name="button_add_new_page">添加新页面</string>
-    <string name="page_status_format">第 %1$d/%2$d 页</string>
+    <!-- Delete Previous Reading -->
+    <string name="delete_title">确认删除</string>
+    <string name="delete_message">小朋友，你确定要删掉这篇阅读吗？</string>
+    <string name="delete_confirm">删除</string>
+    <string name="delete_cancel">取消</string>
 </resources>

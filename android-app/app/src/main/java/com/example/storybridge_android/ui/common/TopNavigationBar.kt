@@ -16,7 +16,6 @@ class TopNavigationBar @JvmOverloads constructor(
     init {
         LayoutInflater.from(context).inflate(R.layout.top_navigation_bar, this, true)
         findViewById<ImageView>(R.id.navbarSettingsButton)
-
     }
 
     fun setOnSettingsClickListener(listener: () -> Unit) {
