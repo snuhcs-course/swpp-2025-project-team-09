@@ -167,64 +167,6 @@ class EndSessionView(APIView):
             )
 
 
-class GetSessionInfoView(APIView):
-    """
-    [GET] /session/info
-
-    Endpoint: /session/info
-
-    - Request (GET)
-
-        {
-        "session_id": "string",
-        }
-
-    - Response
-
-        Status: 200 OK
-
-        {
-        "session_id": "string",
-        "user_id": "string",
-        "started_at": "datetime",
-        "ended_at": "datetime",
-        "total_pages": "integer",
-        "total_time_spent": "integer",
-        "total_words_read": "integer",
-        // other details to encourage readers
-        ]
-        }
-    """
-
-    def get(self, request):
-        session_id = request.query_params.get("session_id")
-        print("[DEBUG] Fetching info for session_id:", session_id)
-        if not session_id:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            session = Session.objects.get(id=session_id)
-            return Response(
-                {
-                    "session_id": str(session.id),
-                    "user_id": str(session.user.uid),
-                    "voice_style": session.voicePreference,
-                    "isOngoing": session.isOngoing,
-                    "started_at": session.started_at,
-                    "ended_at": session.ended_at,
-                    "total_pages": session.totalPages,
-                    "total_time_spent": ((session.ended_at or timezone.now()) - session.started_at).seconds,
-                    "total_words_read": session.totalWords
-                },
-                status=status.HTTP_200_OK,
-            )
-        except Session.DoesNotExist:
-            return Response(
-                {"error_code": 404, "message": "SESSION__NOT_FOUND"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-
 class GetSessionStatsView(APIView):
     """
     [GET] /session/stats
@@ -249,61 +191,6 @@ class GetSessionStatsView(APIView):
         "started_at": "datetime",
         "ended_at": null
         "total_pages": null
-        }
-    """
-
-    def get(self, request):
-        session_id = request.query_params.get("session_id")
-        print("[DEBUG] Fetching info for session_id:", session_id)
-        if not session_id:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            session = Session.objects.get(id=session_id)
-            duration = None
-            if session.ended_at:
-                duration = (session.ended_at - session.started_at).seconds
-
-            return Response(
-                {
-                    "session_id": str(session.id),
-                    "user_id": str(session.user.uid),
-                    "voice_style": session.voicePreference,
-                    "isOngoing": session.isOngoing,
-                    "started_at": session.started_at,
-                    "ended_at": session.ended_at,
-                    "total_pages": session.totalPages,
-                    "total_time_spent": ((session.ended_at or timezone.now()) - session.started_at).seconds,
-                    "total_words_read": session.totalWords
-                },
-                status=status.HTTP_200_OK,
-            )
-        except Session.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
-
-class SessionReviewView(APIView):
-    """
-    [GET] /session/review
-
-    Endpoint: /session/review
-
-    - Request (GET)
-
-        {
-        "session_id": "string",
-        }
-
-    - Response
-
-        Status: 200 OK
-
-        {
-        "session_id": "string",
-        "user_id": "string",
-        "started_at": "datetime",
-        "ended_at": "datetime",
-        "total_pages": "integer",
         }
     """
 

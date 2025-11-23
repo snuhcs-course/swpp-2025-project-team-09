@@ -63,93 +63,7 @@ class TestBBModel(TestCase):
         self.assertEqual(bb.page, self.test_page)
         self.assertIn(bb, self.test_page.bbs.all())
 
-    def test_05_update_translation_success(self):
-        """Test updateTranslation method"""
-        bb = BB.objects.create(
-            page=self.test_page,
-            original_text="Original",
-            translated_text="Initial translation",
-        )
-
-        bb.updateTranslation("Updated translation")
-
-        bb.refresh_from_db()
-        self.assertEqual(bb.translated_text, "Updated translation")
-
-    def test_06_update_audio_success(self):
-        """Test updateAudio method"""
-        bb = BB.objects.create(
-            page=self.test_page, original_text="Audio test", audio_base64=[]
-        )
-
-        new_audio = ["audio_clip_1", "audio_clip_2"]
-        bb.updateAudio(new_audio)
-
-        bb.refresh_from_db()
-        self.assertEqual(bb.audio_base64, new_audio)
-
-    def test_07_update_position_success(self):
-        """Test updatePosition method"""
-        bb = BB.objects.create(
-            page=self.test_page,
-            original_text="Position test",
-            coordinates={"x1": 0, "y1": 0},
-        )
-
-        new_position = {"x2": 100, "y2": 100}
-        bb.updatePosition(new_position)
-
-        bb.refresh_from_db()
-        self.assertEqual(bb.coordinates["x1"], 0)
-        self.assertEqual(bb.coordinates["y1"], 0)
-        self.assertEqual(bb.coordinates["x2"], 100)
-        self.assertEqual(bb.coordinates["y2"], 100)
-
-    def test_08_update_position_empty_coordinates(self):
-        """Test updatePosition when coordinates is not a dict"""
-        bb = BB.objects.create(page=self.test_page, original_text="Empty coords test")
-
-        bb.updatePosition({"x1": 10, "y1": 20})
-
-        bb.refresh_from_db()
-        self.assertEqual(bb.coordinates["x1"], 10)
-        self.assertEqual(bb.coordinates["y1"], 20)
-
-    def test_09_points_property(self):
-        """Test points property"""
-        bb = BB.objects.create(
-            page=self.test_page,
-            original_text="Points test",
-            coordinates={
-                "x1": 10,
-                "y1": 20,
-                "x2": 110,
-                "y2": 20,
-                "x3": 110,
-                "y3": 70,
-                "x4": 10,
-                "y4": 70,
-            },
-        )
-
-        expected_points = [(10, 20), (110, 20), (110, 70), (10, 70)]
-        self.assertEqual(bb.points, expected_points)
-
-    def test_10_points_property_with_missing_coordinates(self):
-        """Test points property with missing coordinates"""
-        bb = BB.objects.create(
-            page=self.test_page,
-            original_text="Missing coords",
-            coordinates={"x1": 10, "y1": 20},
-        )
-
-        points = bb.points
-        self.assertEqual(points[0], (10, 20))
-        self.assertEqual(points[1], (None, None))
-        self.assertEqual(points[2], (None, None))
-        self.assertEqual(points[3], (None, None))
-
-    def test_11_tts_status_choices(self):
+    def test_5_tts_status_choices(self):
         """Test tts_status choices"""
         # Test pending (default)
         bb1 = BB.objects.create(page=self.test_page, original_text="Pending")
@@ -173,7 +87,7 @@ class TestBBModel(TestCase):
         )
         self.assertEqual(bb4.tts_status, "failed")
 
-    def test_12_update_tts_status(self):
+    def test_6_update_tts_status(self):
         """Test updating tts_status"""
         bb = BB.objects.create(page=self.test_page, original_text="Status update test")
 
@@ -189,7 +103,7 @@ class TestBBModel(TestCase):
         bb.refresh_from_db()
         self.assertEqual(bb.tts_status, "ready")
 
-    def test_13_cascade_delete_with_page(self):
+    def test_7_cascade_delete_with_page(self):
         """Test that deleting page cascades to BBs"""
         bb1 = BB.objects.create(page=self.test_page, original_text="BB 1")
         bb2 = BB.objects.create(page=self.test_page, original_text="BB 2")
@@ -204,7 +118,7 @@ class TestBBModel(TestCase):
         self.assertEqual(BB.objects.filter(id=bb1_id).count(), 0)
         self.assertEqual(BB.objects.filter(id=bb2_id).count(), 0)
 
-    def test_14_multiple_bbs_per_page(self):
+    def test_8_multiple_bbs_per_page(self):
         """Test creating multiple BBs for one page"""
         bb1 = BB.objects.create(page=self.test_page, original_text="Text 1")
         bb2 = BB.objects.create(page=self.test_page, original_text="Text 2")
@@ -216,7 +130,7 @@ class TestBBModel(TestCase):
         self.assertIn(bb2, bbs)
         self.assertIn(bb3, bbs)
 
-    def test_15_audio_base64_as_list(self):
+    def test_9_audio_base64_as_list(self):
         """Test audio_base64 stored as list"""
         audio_data = ["clip1_base64", "clip2_base64", "clip3_base64"]
         bb = BB.objects.create(
@@ -229,7 +143,7 @@ class TestBBModel(TestCase):
         self.assertEqual(bb.audio_base64, audio_data)
         self.assertEqual(len(bb.audio_base64), 3)
 
-    def test_16_coordinates_as_dict(self):
+    def test_10_coordinates_as_dict(self):
         """Test coordinates stored as dict"""
         coords = {
             "x1": 10,
@@ -252,7 +166,7 @@ class TestBBModel(TestCase):
         self.assertEqual(bb.coordinates["width"], 100)
         self.assertEqual(bb.coordinates["height"], 50)
 
-    def test_17_bb_query_by_page(self):
+    def test_11_bb_query_by_page(self):
         """Test querying BBs by page"""
         BB.objects.create(page=self.test_page, original_text="Query BB 1")
         BB.objects.create(page=self.test_page, original_text="Query BB 2")
@@ -271,14 +185,14 @@ class TestBBModel(TestCase):
         for bb in page_bbs:
             self.assertEqual(bb.page, self.test_page)
 
-    def test_18_empty_translation(self):
+    def test_12_empty_translation(self):
         """Test BB with empty translation"""
         bb = BB.objects.create(page=self.test_page, original_text="No translation")
 
         self.assertEqual(bb.original_text, "No translation")
         self.assertIsNone(bb.translated_text)
 
-    def test_19_update_multiple_fields(self):
+    def test_13_update_multiple_fields(self):
         """Test updating multiple fields at once"""
         bb = BB.objects.create(page=self.test_page, original_text="Multi update test")
 

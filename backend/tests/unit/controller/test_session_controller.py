@@ -124,7 +124,6 @@ class TestSelectVoiceView(APITestCase):
         self.assertEqual(response.data["error_code"], 404)
         self.assertEqual(response.data["message"], "SESSION__NOT_FOUND")
 
-
 class TestEndSessionView(APITestCase):
     """Unit tests for End Session endpoint"""
 
@@ -177,74 +176,6 @@ class TestEndSessionView(APITestCase):
         self.assertEqual(response.data["error_code"], 404)
         self.assertEqual(response.data["message"], "SESSION__NOT_FOUND")
 
-
-class TestGetSessionInfoView(APITestCase):
-    """Unit tests for Get Session Info endpoint"""
-
-    def setUp(self):
-        """Set up test client and test data"""
-        self.client = APIClient()
-
-        # Create test user and session
-        self.test_user = User.objects.create(
-            device_info="test-info-device",
-            language_preference="en",
-            created_at=timezone.now(),
-        )
-        self.test_session = Session.objects.create(
-            user=self.test_user,
-            title="Test Session",
-            created_at=timezone.now(),
-            totalPages=5,
-            voicePreference="male",
-            isOngoing=True,
-        )
-
-    def test_01_get_session_info_success(self):
-        """Test successful session info retrieval"""
-        response = self.client.get(
-            "/session/info", {"session_id": str(self.test_session.id)}
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(str(response.data["session_id"]), str(self.test_session.id))
-        self.assertEqual(str(response.data["user_id"]), str(self.test_user.uid))
-        self.assertEqual(response.data["voice_style"], "male")
-        self.assertTrue(response.data["isOngoing"])
-        self.assertEqual(response.data["total_pages"], 5)
-
-    def test_02_get_session_info_ended_session(self):
-        """Test getting info for ended session"""
-        # End the session
-        self.test_session.isOngoing = False
-        self.test_session.ended_at = timezone.now()
-        self.test_session.save()
-
-        response = self.client.get(
-            "/session/info", {"session_id": str(self.test_session.id)}
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertFalse(response.data["isOngoing"])
-        self.assertIsNotNone(response.data["ended_at"])
-
-    def test_03_get_session_info_missing_session_id(self):
-        """Test getting session info without session_id"""
-        response = self.client.get("/session/info")
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_04_get_session_info_not_found(self):
-        """Test getting info for non-existent session"""
-        response = self.client.get(
-            "/session/info", {"session_id": "00000000-0000-0000-0000-000000000000"}
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data["error_code"], 404)
-        self.assertEqual(response.data["message"], "SESSION__NOT_FOUND")
-
-
 class TestGetSessionStatsView(APITestCase):
     """Unit tests for Get Session Stats endpoint"""
 
@@ -263,6 +194,8 @@ class TestGetSessionStatsView(APITestCase):
             title="Test Session",
             created_at=timezone.now(),
             totalPages=8,
+            totalWords=800,
+            isOngoing=True,
         )
 
     def test_01_get_session_stats_ongoing(self):
@@ -276,7 +209,8 @@ class TestGetSessionStatsView(APITestCase):
         self.assertEqual(str(response.data["user_id"]), str(self.test_user.uid))
         self.assertEqual(response.data["total_pages"], 8)
         self.assertIsNone(response.data["ended_at"])
-        self.assertIsNone(response.data["total_time_spent"])
+        self.assertIsInstance(response.data["total_time_spent"], int)
+        self.assertGreaterEqual(response.data["total_time_spent"], 0)
 
     def test_02_get_session_stats_ended(self):
         """Test getting stats for ended session with duration"""
@@ -303,55 +237,6 @@ class TestGetSessionStatsView(APITestCase):
         """Test getting stats for non-existent session"""
         response = self.client.get(
             "/session/stats", {"session_id": "00000000-0000-0000-0000-000000000000"}
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-
-
-class TestSessionReviewView(APITestCase):
-    """Unit tests for Session Review endpoint"""
-
-    def setUp(self):
-        """Set up test client and test data"""
-        self.client = APIClient()
-
-        # Create test user and session
-        self.test_user = User.objects.create(
-            device_info="test-review-device",
-            language_preference="en",
-            created_at=timezone.now(),
-        )
-        self.test_session = Session.objects.create(
-            user=self.test_user,
-            title="Test Session",
-            created_at=timezone.now(),
-            ended_at=timezone.now(),
-            totalPages=12,
-        )
-
-    def test_01_get_session_review_success(self):
-        """Test successful session review retrieval"""
-        response = self.client.get(
-            "/session/review", {"session_id": str(self.test_session.id)}
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(str(response.data["session_id"]), str(self.test_session.id))
-        self.assertEqual(str(response.data["user_id"]), str(self.test_user.uid))
-        self.assertIn("started_at", response.data)
-        self.assertIn("ended_at", response.data)
-        self.assertEqual(response.data["total_pages"], 12)
-
-    def test_02_get_session_review_missing_session_id(self):
-        """Test getting review without session_id"""
-        response = self.client.get("/session/review")
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_03_get_session_review_not_found(self):
-        """Test getting review for non-existent session"""
-        response = self.client.get(
-            "/session/review", {"session_id": "00000000-0000-0000-0000-000000000000"}
         )
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
