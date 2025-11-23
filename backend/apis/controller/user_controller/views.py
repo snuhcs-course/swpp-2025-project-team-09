@@ -10,28 +10,24 @@ import base64
 
 class UserRegisterView(APIView):
     """
+    Register a new user with device information
+    
     [POST] /user/register
-    - 앱 최초 실행 시 단말 정보를 기반으로 사용자 등록
-
-        - Request (POST)
-
-            {
+    
+    Request Body:
+        {
             "device_info": "string",
             "language_preference": "string"
-            }
-
-        - Response
-
-            Status: 200 OK
-
-            {
+        }
+    
+    Response (200 OK):
+        {
             "user_id": "string",
             "language_preference": "string"
-            }
+        }
     """
 
     def post(self, request):
-        """ """
         device_info = request.data.get("device_info")
         lang = request.data.get("language_preference")
 
@@ -66,22 +62,22 @@ class UserRegisterView(APIView):
 
 class UserLoginView(APIView):
     """
-    Endpoint: /user/login
-
-    - Request (POST)
-
+    User login with device information
+    
+    [POST] /user/login
+    
+    Request Body:
         {
-        "device_info": "string",
+            "device_info": "string"
         }
-        Response
-
-    - Status: 200 OK
-
+    
+    Response (200 OK):
         {
-        "user_id": "string",
-        "language_preference": "string"
+            "user_id": "string",
+            "language_preference": "string"
         }
     """
+
 
     def post(self, request):
         device_info = request.data.get("device_info")
@@ -106,26 +102,21 @@ class UserLoginView(APIView):
 
 class UserChangeLangView(APIView):
     """
+    Update user's language preference
+    
     [PATCH] /user/lang
-    - 사용자 언어 설정 변경
-
-    Endpoint: /user/lang
-
-    - Request (PATCH)
-
+    
+    Request Body:
         {
-        "device_info": "string",
-        "language_preference": "string"
+            "device_info": "string",
+            "language_preference": "string"
         }
-
-    - Response
-
-        Status: 200 OK
-
+    
+    Response (200 OK):
         {
-        "user_id": "string",
-        "language_preference": "string",
-        "updated_at": "datetime"
+            "user_id": "string",
+            "language_preference": "string",
+            "updated_at": "datetime"
         }
     """
 
@@ -161,24 +152,24 @@ class UserChangeLangView(APIView):
 
 class UserInfoView(APIView):
     """
-    [GET] /user/info
-    - 사용자의 전체 읽기 기록(책, 이미지, 시작시간) 조회
-
-    Endpoint: /user/info
-
-    - Request Example:
-        GET /user/info?device_info=SM-S901N
-
-    - Response
-
-        Status: 200 OK
-
-        {
-        "user_id": "string",
-        "title": "string",
-        "image_base64": "string",
-        "started_at": "datetime"
-        }
+    Get user's reading history (sessions with cover images)
+    
+    [GET] /user/info?device_info={device_info}
+    
+    Query Parameters:
+        device_info: Device identifier
+    
+    Response (200 OK):
+        [
+            {
+                "user_id": "string",
+                "session_id": "string",
+                "title": "string",
+                "translated_title": "string",
+                "image_base64": "string or null",
+                "started_at": "datetime"
+            }
+        ]
     """
 
     def get(self, request):
@@ -197,7 +188,7 @@ class UserInfoView(APIView):
                 pages = Page.objects.filter(session=session)
                 if pages.exists():
                     first_page = pages.first()
-                    image_path = first_page.img_url  # 필드명 맞게 변경
+                    image_path = first_page.img_url
                     try:
                         with open(image_path, "rb") as img_file:
                             encoded = base64.b64encode(img_file.read())

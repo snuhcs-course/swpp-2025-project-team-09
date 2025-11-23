@@ -12,25 +12,22 @@ import os
 
 class StartSessionView(APIView):
     """
+    Start a new reading session
+    
     [POST] /session/start
-
-    Endpoint: /session/start
-
-        - Request (POST)
-
-            {
+    
+    Request Body:
+        {
             "user_id": "string",
-            "page_index": 0  # first page (0-indexed)
-            }
-            Response
-
-        - Status: 200 OK
-
-            {
+            "page_index": 0
+        }
+    
+    Response (200 OK):
+        {
             "session_id": "string",
             "started_at": "datetime",
             "page_index": 0
-            }
+        }
     """
 
     def post(self, request):
@@ -72,27 +69,23 @@ class StartSessionView(APIView):
 
 class SelectVoiceView(APIView):
     """
+    Set voice preference for session
+    
     [POST] /session/voice
-
-    Endpoint: /session/voice
-
-    - Request (POST)
-
+    
+    Request Body:
         {
-        "session_id": "string",
-        "voice_style": "string"
+            "session_id": "string",
+            "voice_style": "string"
         }
-
-    - Response
-
-        Status: 200 OK
-
+    
+    Response (200 OK):
         {
-        "session_id": "string",
-        "voice_style": "string"
+            "session_id": "string",
+            "voice_style": "string"
         }
     """
-
+    
     def post(self, request):
         session_id = request.data.get("session_id")
         voice_style = request.data.get("voice_style")
@@ -119,24 +112,20 @@ class SelectVoiceView(APIView):
 
 class EndSessionView(APIView):
     """
+    End an ongoing session
+    
     [POST] /session/end
-
-    Endpoint: /session/end
-
-    - Request (POST)
-
+    
+    Request Body:
         {
-        "session_id": "string",
+            "session_id": "string"
         }
-
-    - Response
-
-        Status: 200 OK
-
+    
+    Response (200 OK):
         {
-        "session_id": "string",
-        "ended_at": "datetime",
-        "total_pages": 10
+            "session_id": "string",
+            "ended_at": "datetime",
+            "total_pages": 10
         }
     """
 
@@ -169,28 +158,24 @@ class EndSessionView(APIView):
 
 class GetSessionStatsView(APIView):
     """
-    [GET] /session/stats
-
-    Endpoint: /session/stats
-
-    - Request (GET)
-
+    Get session statistics
+    
+    [GET] /session/stats?session_id={session_id}
+    
+    Query Parameters:
+        session_id: Session identifier
+    
+    Response (200 OK):
         {
-        "session_id": "string",
-        }
-
-    - Response
-
-        Status: 200 OK
-
-        {
-        "session_id": "string",
-        "user_id": "string",
-        "page_index": 5,
-        "voice_style": "string",
-        "started_at": "datetime",
-        "ended_at": null
-        "total_pages": null
+            "session_id": "string",
+            "user_id": "string",
+            "voice_style": "string",
+            "isOngoing": true,
+            "started_at": "datetime",
+            "ended_at": "datetime or null",
+            "total_pages": 5,
+            "total_time_spent": 120,
+            "total_words_read": 500
         }
     """
 
@@ -202,9 +187,6 @@ class GetSessionStatsView(APIView):
 
         try:
             session = Session.objects.get(id=session_id)
-            duration = None
-            if session.ended_at:
-                duration = (session.ended_at - session.started_at).seconds
 
             return Response(
                 {
@@ -225,20 +207,33 @@ class GetSessionStatsView(APIView):
 
 class SessionReloadAllView(APIView):
     """
-    [GET] /session/reload
-    - created_at(=started_at) 기준으로 세션을 찾아
-      session_id 및 첫 페이지 데이터를 반환 (이어보기용)
-
-    - Request Example:
-        GET /session/reload?user_id=xxx&started_at=2025-11-06T04:30:00Z&page_index=0
-
-    - Response Example:
+    Reload all session data for resuming reading
+    
+    [GET] /session/reload?user_id={user_id}&started_at={started_at}
+    
+    Query Parameters:
+        user_id: Device identifier
+        started_at: Session creation time (ISO format)
+    
+    Response (200 OK):
         {
             "session_id": "string",
-            "page_index": 0,
-            "image_base64": "string or null",
-            "translation_text": "string or null",
-            "audio_url": "string or null"
+            "started_at": "datetime",
+            "pages": [
+                {
+                    "page_index": 0,
+                    "img_url": "string",
+                    "translation_text": "string",
+                    "audio_url": "string",
+                    "ocr_results": [
+                        {
+                            "bbox": {},
+                            "original_txt": "string",
+                            "translation_txt": "string"
+                        }
+                    ]
+                }
+            ]
         }
     """
     def get(self, request):
@@ -259,7 +254,6 @@ class SessionReloadAllView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # created_at으로 세션 찾기
         parsed_time = parse_datetime(started_at)
         if not parsed_time:
             return Response(
@@ -313,16 +307,16 @@ class SessionReloadAllView(APIView):
 
 class DiscardSessionView(APIView):
     """
+    Delete session and all associated data
+    
     [POST] /session/discard
-    - 세션과 관련된 모든 데이터를 삭제 (Session, Pages, BBs, image files)
-
-    - Request (POST)
+    
+    Request Body:
         {
             "session_id": "string"
         }
-
-    - Response
-        Status: 200 OK
+    
+    Response (200 OK):
         {
             "message": "Session discarded successfully"
         }

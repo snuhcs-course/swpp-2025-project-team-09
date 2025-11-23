@@ -17,10 +17,24 @@ import threading
 
 class ProcessUploadView(APIView):
     """
-    POST /process/upload
-
-    Handles image upload, OCR, translation, and initiates background TTS.
-    Returns immediately after translation completes.
+    Upload and process a page image with OCR, translation, and TTS
+    
+    [POST] /process/upload
+    
+    Request Body:
+        {
+            "session_id": "string",
+            "lang": "string",
+            "image_base64": "string"
+        }
+    
+    Response (200 OK):
+        {
+            "session_id": "string",
+            "page_index": 0,
+            "status": "ready",
+            "submitted_at": "datetime"
+        }
     """
 
     def post(self, request):
@@ -249,7 +263,25 @@ class ProcessUploadView(APIView):
 
 
 class CheckOCRStatusView(APIView):
-    """GET /process/check_ocr - Check OCR/translation status."""
+    """
+    Check OCR and translation status for a page
+    
+    [GET] /process/check_ocr?session_id={session_id}&page_index={page_index}
+    
+    Query Parameters:
+        session_id: Session identifier
+        page_index: Page number
+    
+    Response (200 OK):
+        {
+            "session_id": "string",
+            "page_index": 0,
+            "status": "ready",
+            "progress": 100,
+            "submitted_at": "datetime",
+            "processed_at": "datetime"
+        }
+    """
 
     def get(self, request):
         session_id = request.query_params.get("session_id")
@@ -280,7 +312,25 @@ class CheckOCRStatusView(APIView):
 
 
 class CheckTTSStatusView(APIView):
-    """GET /process/check_tts - Check TTS progress."""
+    """
+    Check TTS processing progress for a page
+    
+    [GET] /process/check_tts?session_id={session_id}&page_index={page_index}
+    
+    Query Parameters:
+        session_id: Session identifier
+        page_index: Page number
+    
+    Response (200 OK):
+        {
+            "session_id": "string",
+            "page_index": 0,
+            "status": "ready" or "processing",
+            "progress": 75,
+            "submitted_at": "datetime",
+            "processed_at": "datetime or null"
+        }
+    """
 
     def get(self, request):
         session_id = request.query_params.get("session_id")
@@ -344,28 +394,28 @@ class CheckTTSStatusView(APIView):
 
 class ProcessUploadCoverView(APIView):
     """
-    POST /process/upload_cover
-
-    Handles cover image upload, OCR, translation without TTS.
-    Additionally, extracts the book title from the OCR result and saves it in the session.
-    Creates a Page and BB with translated text only.
-    """
-
-    """
-    Input (POST JSON body):
-        - session_id (string): session UUID
-        - lang (string): language code (e.g. "en" or "ko")
-        - image_base64 (string): base64-encoded cover image
-
-    Output (JSON response):
-        - session_id (string): same as input
-        - page_index (int): always 0 for cover
-        - status (string): "ready"
-        - submitted_at (string, ISO8601): submission timestamp
-        - title (string): extracted book title
-        - translated_title (string): translated book title
-        - tts_male (string): null (no TTS for cover)
-        - tts_female (string): null (no TTS for cover)
+    Upload and process cover image with OCR and translation
+    
+    [POST] /process/upload_cover
+    
+    Request Body:
+        {
+            "session_id": "string",
+            "lang": "string",
+            "image_base64": "string"
+        }
+    
+    Response (200 OK):
+        {
+            "session_id": "string",
+            "page_index": 0,
+            "status": "ready",
+            "submitted_at": "datetime",
+            "title": "string",
+            "translated_title": "string",
+            "tts_male": "string or null",
+            "tts_female": "string or null"
+        }
     """
 
     def post(self, request):
