@@ -77,6 +77,11 @@
     <string name="exit_confirm">Exit</string>
     <string name="exit_cancel">Cancel</string>
 
+    <!-- Discard session dialog text -->
+    <string name="discard_session_title">Are you sure you want to delete?</string>
+    <string name="discard_session_confirm">Delete</string>
+    <string name="discard_session_cancel">Cancel</string>
+
     <string name="button_add_new_page">Add New Page</string>
     <string name="page_status_format">Page %1$d/%2$d</string>
 
