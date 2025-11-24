@@ -7,9 +7,11 @@ import android.graphics.Color
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Base64
+import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -37,6 +39,10 @@ class MainActivity : BaseActivity() {
         MainViewModelFactory()
     }
 
+    private lateinit var exitPanel: View
+    private lateinit var exitConfirmBtn: Button
+    private lateinit var exitCancelBtn: Button
+
     private val settingsLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -55,10 +61,26 @@ class MainActivity : BaseActivity() {
             insets
         }
 
+        initExitPanel()
         setupTopNavigationBar()
         setupStartButton()
+        setupBackPressHandler()
         observeUserInfo()
         loadUserInfo()
+    }
+
+    private fun initExitPanel() {
+        exitPanel = findViewById(R.id.exitPanelInclude)
+        exitConfirmBtn = findViewById(R.id.exitConfirmBtn)
+        exitCancelBtn = findViewById(R.id.exitCancelBtn)
+
+        exitConfirmBtn.setOnClickListener {
+            finish()
+        }
+
+        exitCancelBtn.setOnClickListener {
+            exitPanel.visibility = View.GONE
+        }
     }
 
     private fun loadUserInfo() {
@@ -181,6 +203,14 @@ class MainActivity : BaseActivity() {
     private fun setupStartButton() {
         val startButton = findViewById<Button>(R.id.startNewReadingButton)
         startButton.setOnClickListener { navigateToStartSession() }
+    }
+
+    private fun setupBackPressHandler() {
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                exitPanel.visibility = View.VISIBLE
+            }
+        })
     }
 
     private fun navigateToStartSession() {

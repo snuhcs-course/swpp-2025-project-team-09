@@ -88,4 +88,10 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginBottom="100dp"/>
 
+    <include
+        android:id="@+id/exitPanelInclude"
+        layout="@layout/exit_confirm_panel"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
