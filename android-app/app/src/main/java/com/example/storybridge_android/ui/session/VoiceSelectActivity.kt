@@ -106,10 +106,6 @@ class VoiceSelectActivity : BaseActivity() {
                     Log.d("VoiceSelectActivity", "✓ Voice selection saved successfully")
                     // API 완료 후 Next 버튼 활성화
                     nextButton.isEnabled = true
-                    // 커버 이미지 업로드 이 때 실행
-                    if (imagePath != null && lang != null) {
-                        viewModel.uploadCoverInBackground(sessionId!!, lang!!, imagePath!!)
-                    }
                 }
             }
         }
