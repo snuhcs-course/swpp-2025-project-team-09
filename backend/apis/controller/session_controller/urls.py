@@ -5,7 +5,6 @@ from .views import (
     EndSessionView,
     GetSessionInfoView,
     GetSessionStatsView,
-    SessionReviewView,
     SessionReloadView,
     SessionReloadAllView,
     DiscardSessionView,
