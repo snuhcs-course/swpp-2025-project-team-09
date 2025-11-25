@@ -49,7 +49,7 @@ class ProcessUploadView(APIView):
                 {"error_code": 422, "message": "PROCESS__UNABLE_TO_PROCESS_IMAGE"},
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
-        
+
         # Count words from OCR and add to session.totalWords
         total_words = sum(
             len((para.get("text", "") or "").split()) for para in ocr_result
@@ -74,7 +74,9 @@ class ProcessUploadView(APIView):
 
         # Get voice preference with fallback to default
         para_voice = session.voicePreference if session.voicePreference else "shimmer"
-        print("[DEBUG] voice preference:", session.voicePreference, "→ using:", para_voice)
+        print(
+            "[DEBUG] voice preference:", session.voicePreference, "→ using:", para_voice
+        )
 
         # Start background TTS
         self._start_background_tts(
@@ -89,7 +91,7 @@ class ProcessUploadView(APIView):
 
         # Update session (only update specific fields to avoid race condition)
         session.totalPages += 1
-        session.save(update_fields=['totalPages', 'totalWords'])
+        session.save(update_fields=["totalPages", "totalWords"])
         print("[DEBUG] Page index after upload:", page_index)
         return Response(
             {
@@ -409,10 +411,7 @@ class ProcessUploadCoverView(APIView):
             session,
             image_path,
             [{"text": title}],
-            [{
-                "status": "ok",
-                "sentences": [{"translation": translated_text}]
-            }]
+            [{"status": "ok", "sentences": [{"translation": translated_text}]}],
         )
 
         # Update session (only update specific fields to avoid overwriting voicePreference)
@@ -420,7 +419,7 @@ class ProcessUploadCoverView(APIView):
         session.translated_title = translated_text
         print(f"[debug]{session.translated_title}")
         session.totalPages += 1
-        session.save(update_fields=['title', 'translated_title', 'totalPages'])
+        session.save(update_fields=["title", "translated_title", "totalPages"])
 
         return Response(
             {

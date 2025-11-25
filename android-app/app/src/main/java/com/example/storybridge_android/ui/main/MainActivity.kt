@@ -1,6 +1,5 @@
 package com.example.storybridge_android.ui.main
 
-import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.graphics.Color
@@ -43,6 +42,11 @@ class MainActivity : BaseActivity() {
     private lateinit var exitConfirmBtn: Button
     private lateinit var exitCancelBtn: Button
 
+    private lateinit var discardPanel: View
+    private lateinit var discardConfirmBtn: Button
+    private lateinit var discardCancelBtn: Button
+    private var selectedSessionId: String? = null
+
     private val settingsLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -62,6 +66,7 @@ class MainActivity : BaseActivity() {
         }
 
         initExitPanel()
+        initDiscardPanel()
         setupTopNavigationBar()
         setupStartButton()
         setupBackPressHandler()
@@ -80,6 +85,28 @@ class MainActivity : BaseActivity() {
 
         exitCancelBtn.setOnClickListener {
             exitPanel.visibility = View.GONE
+        }
+    }
+
+    private fun initDiscardPanel() {
+        discardPanel = findViewById(R.id.discardPanelInclude)
+        discardConfirmBtn = findViewById(R.id.discardConfirmBtn)
+        discardCancelBtn = findViewById(R.id.discardCancelBtn)
+
+        discardConfirmBtn.setOnClickListener {
+            selectedSessionId?.let { sessionId ->
+                lifecycleScope.launch {
+                    val deviceInfo = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+                    viewModel.discardSession(sessionId, deviceInfo)
+                }
+            }
+            discardPanel.visibility = View.GONE
+            selectedSessionId = null
+        }
+
+        discardCancelBtn.setOnClickListener {
+            discardPanel.visibility = View.GONE
+            selectedSessionId = null
         }
     }
 
@@ -166,17 +193,8 @@ class MainActivity : BaseActivity() {
 
                         // Session card discard
                         sessionCard.setOnTrashClickListener {
-                            AlertDialog.Builder(this@MainActivity)
-                                .setTitle("삭제 확인")
-                                .setMessage("정말로 삭제하시겠습니까?")
-                                .setPositiveButton("삭제") { _, _ ->
-                                    lifecycleScope.launch {
-                                        val deviceInfo = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
-                                        viewModel.discardSession(data.session_id, deviceInfo)
-                                    }
-                                }
-                                .setNegativeButton("취소", null)
-                                .show()
+                            selectedSessionId = data.session_id
+                            discardPanel.visibility = View.VISIBLE
                         }
 
                         container.addView(sessionCard)

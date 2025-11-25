@@ -76,6 +76,11 @@
     <string name="exit_confirm">退出</string>
     <string name="exit_cancel">取消</string>
 
+    <string name="discard_session_title">确定要删除吗？</string>
+    <string name="discard_session_confirm">删除</string>
+    <string name="discard_session_cancel">取消</string>
+
     <string name="button_add_new_page">添加新页面</string>
     <string name="page_status_format">第 %1$d/%2$d 页</string>
+
 </resources>

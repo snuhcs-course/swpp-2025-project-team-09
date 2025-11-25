@@ -33,8 +33,13 @@ jobs:
           export OCR_API_URL=${{ secrets.OCR_API_URL }}
           export OCR_SECRET=${{ secrets.OCR_SECRET }}
           export OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+          export DB_NAME=${{ secrets.DB_NAME }}
+          export DB_USER=${{ secrets.DB_USER }}
+          export DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          export DB_HOST=${{ secrets.DB_HOST }}
+          export DB_PORT=${{ secrets.DB_PORT }}
           export PYTHONUNBUFFERED=1
-          cd /home/${{ secrets.EC2_USER }}/storybridge/swpp-2025-project-team-09
+          cd /home/${{ secrets.EC2_USER }}/swpp-2025-project-team-09
           sleep 2
           chmod +x deploy.sh
           ./deploy.sh
