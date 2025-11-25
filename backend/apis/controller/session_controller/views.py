@@ -213,8 +213,10 @@ class GetSessionInfoView(APIView):
                     "started_at": session.started_at,
                     "ended_at": session.ended_at,
                     "total_pages": session.totalPages,
-                    "total_time_spent": ((session.ended_at or timezone.now()) - session.started_at).seconds,
-                    "total_words_read": session.totalWords
+                    "total_time_spent": (
+                        (session.ended_at or timezone.now()) - session.started_at
+                    ).seconds,
+                    "total_words_read": session.totalWords,
                 },
                 status=status.HTTP_200_OK,
             )
@@ -260,9 +262,9 @@ class GetSessionStatsView(APIView):
 
         try:
             session = Session.objects.get(id=session_id)
-            duration = None
+            total_time_spent = None
             if session.ended_at:
-                duration = (session.ended_at - session.started_at).seconds
+                total_time_spent = (session.ended_at - session.started_at).seconds
 
             return Response(
                 {
@@ -273,8 +275,8 @@ class GetSessionStatsView(APIView):
                     "started_at": session.started_at,
                     "ended_at": session.ended_at,
                     "total_pages": session.totalPages,
-                    "total_time_spent": ((session.ended_at or timezone.now()) - session.started_at).seconds,
-                    "total_words_read": session.totalWords
+                    "total_time_spent": total_time_spent,
+                    "total_words_read": session.totalWords,
                 },
                 status=status.HTTP_200_OK,
             )
@@ -328,8 +330,10 @@ class SessionReviewView(APIView):
                     "started_at": session.started_at,
                     "ended_at": session.ended_at,
                     "total_pages": session.totalPages,
-                    "total_time_spent": ((session.ended_at or timezone.now()) - session.started_at).seconds,
-                    "total_words_read": session.totalWords
+                    "total_time_spent": (
+                        (session.ended_at or timezone.now()) - session.started_at
+                    ).seconds,
+                    "total_words_read": session.totalWords,
                 },
                 status=status.HTTP_200_OK,
             )
