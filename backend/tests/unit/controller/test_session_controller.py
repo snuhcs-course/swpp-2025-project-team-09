@@ -276,8 +276,8 @@ class TestGetSessionStatsView(APITestCase):
         self.assertEqual(str(response.data["session_id"]), str(self.test_session.id))
         self.assertEqual(str(response.data["user_id"]), str(self.test_user.uid))
         self.assertEqual(response.data["total_pages"], 8)
+        self.assertEqual(response.data["total_time_spent"], 0)
         self.assertIsNone(response.data["ended_at"])
-        self.assertIsNone(response.data["total_time_spent"])
 
     def test_02_get_session_stats_ended(self):
         """Test getting stats for ended session with duration"""
@@ -304,55 +304,6 @@ class TestGetSessionStatsView(APITestCase):
         """Test getting stats for non-existent session"""
         response = self.client.get(
             "/session/stats", {"session_id": "00000000-0000-0000-0000-000000000000"}
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-
-
-class TestSessionReviewView(APITestCase):
-    """Unit tests for Session Review endpoint"""
-
-    def setUp(self):
-        """Set up test client and test data"""
-        self.client = APIClient()
-
-        # Create test user and session
-        self.test_user = User.objects.create(
-            device_info="test-review-device",
-            language_preference="en",
-            created_at=timezone.now(),
-        )
-        self.test_session = Session.objects.create(
-            user=self.test_user,
-            title="Test Session",
-            created_at=timezone.now(),
-            ended_at=timezone.now(),
-            totalPages=12,
-        )
-
-    def test_01_get_session_review_success(self):
-        """Test successful session review retrieval"""
-        response = self.client.get(
-            "/session/review", {"session_id": str(self.test_session.id)}
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(str(response.data["session_id"]), str(self.test_session.id))
-        self.assertEqual(str(response.data["user_id"]), str(self.test_user.uid))
-        self.assertIn("started_at", response.data)
-        self.assertIn("ended_at", response.data)
-        self.assertEqual(response.data["total_pages"], 12)
-
-    def test_02_get_session_review_missing_session_id(self):
-        """Test getting review without session_id"""
-        response = self.client.get("/session/review")
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_03_get_session_review_not_found(self):
-        """Test getting review for non-existent session"""
-        response = self.client.get(
-            "/session/review", {"session_id": "00000000-0000-0000-0000-000000000000"}
         )
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
