@@ -71,8 +71,7 @@
     <string name="exit_cancel">Ở Lại</string>
 
     <!-- Delete Previous Reading -->
-    <string name="delete_title">Xác nhận xóa bỏ</string>
-    <string name="delete_message">Bé có chắc là muốn xóa bài đọc này không?</string>
-    <string name="delete_confirm">Xóa đi</string>
-    <string name="delete_cancel">Thôi</string>
+    <string name="discard_session_title">Bạn có chắc chắn muốn xóa không?</string>
+    <string name="discard_session_confirm">Xóa</string>
+    <string name="discard_session_cancel">Hủy</string>
 </resources>

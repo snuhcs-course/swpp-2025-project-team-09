@@ -7,6 +7,7 @@ import android.provider.Settings
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.Espresso.pressBack
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.espresso.action.ViewActions.click
@@ -152,5 +153,133 @@ class MainActivityMockTest {
         }
 
         scenario.close()
+    }
+
+    @Test
+    fun backPress_showsExitPanel() = runTest {
+        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns retrofit2.Response.success(emptyList())
+
+        launchMain()
+        Thread.sleep(500)
+
+        pressBack()
+        Thread.sleep(500)
+
+        onView(withId(R.id.exitPanelInclude)).check(matches(isDisplayed()))
+    }
+
+    @Test
+    fun exitConfirmBtn_finishesActivity() = runTest {
+        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns retrofit2.Response.success(emptyList())
+
+        val scenario = launchMain()
+        Thread.sleep(500)
+
+        pressBack()
+        Thread.sleep(500)
+
+        onView(withId(R.id.exitConfirmBtn)).perform(click())
+        Thread.sleep(500)
+
+        scenario.onActivity { activity ->
+            assert(activity.isFinishing) { "MainActivity should be finishing after exit confirm" }
+        }
+
+        scenario.close()
+    }
+
+    @Test
+    fun exitCancelBtn_hidesExitPanel() = runTest {
+        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns retrofit2.Response.success(emptyList())
+
+        launchMain()
+        Thread.sleep(500)
+
+        pressBack()
+        Thread.sleep(500)
+
+        onView(withId(R.id.exitPanelInclude)).check(matches(isDisplayed()))
+
+        onView(withId(R.id.exitCancelBtn)).perform(click())
+        Thread.sleep(500)
+
+        onView(withId(R.id.exitPanelInclude)).check(matches(withEffectiveVisibility(Visibility.GONE)))
+    }
+
+    @Test
+    fun trashButton_showsDiscardPanel() = runTest {
+        val fakeList = listOf(
+            UserInfoResponse(
+                session_id = "S1",
+                user_id = "DEVICE123",
+                image_base64 = "",
+                started_at = "2025-01-01",
+                title = "A",
+                translated_title = "TestBook"
+            )
+        )
+        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns retrofit2.Response.success(fakeList)
+
+        launchMain()
+        Thread.sleep(800)
+
+        onView(withId(R.id.cardTrashButton)).perform(click())
+        Thread.sleep(500)
+
+        onView(withId(R.id.discardPanelInclude)).check(matches(isDisplayed()))
+    }
+
+    @Test
+    fun discardCancelBtn_hidesDiscardPanel() = runTest {
+        val fakeList = listOf(
+            UserInfoResponse(
+                session_id = "S1",
+                user_id = "DEVICE123",
+                image_base64 = "",
+                started_at = "2025-01-01",
+                title = "A",
+                translated_title = "TestBook"
+            )
+        )
+        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns retrofit2.Response.success(fakeList)
+
+        launchMain()
+        Thread.sleep(800)
+
+        onView(withId(R.id.cardTrashButton)).perform(click())
+        Thread.sleep(500)
+
+        onView(withId(R.id.discardCancelBtn)).perform(click())
+        Thread.sleep(500)
+
+        onView(withId(R.id.discardPanelInclude)).check(matches(withEffectiveVisibility(Visibility.GONE)))
+    }
+
+    @Test
+    fun discardConfirmBtn_deletesSession() = runTest {
+        val fakeList = listOf(
+            UserInfoResponse(
+                session_id = "S1",
+                user_id = "DEVICE123",
+                image_base64 = "",
+                started_at = "2025-01-01",
+                title = "A",
+                translated_title = "TestBook"
+            )
+        )
+        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns retrofit2.Response.success(fakeList)
+        coEvery { mockSessionRepo.discardSession("S1", "DEVICE123") } returns retrofit2.Response.success(Unit)
+
+        launchMain()
+        Thread.sleep(800)
+
+        onView(withId(R.id.cardTrashButton)).perform(click())
+        Thread.sleep(500)
+
+        onView(withId(R.id.discardConfirmBtn)).perform(click())
+        Thread.sleep(500)
+
+        coVerify { mockSessionRepo.discardSession("S1", "DEVICE123") }
+        onView(withId(R.id.discardPanelInclude)).check(matches(withEffectiveVisibility(Visibility.GONE)))
     }
 }

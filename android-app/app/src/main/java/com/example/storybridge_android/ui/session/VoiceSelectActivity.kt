@@ -15,6 +15,8 @@ import androidx.activity.viewModels
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.Lifecycle
 import com.example.storybridge_android.R
 import com.example.storybridge_android.data.SessionRepositoryImpl
 import com.example.storybridge_android.ui.setting.AppSettings
@@ -98,16 +100,21 @@ class VoiceSelectActivity : BaseActivity() {
             goToContentInstruction()
         }
 
-        lifecycleScope.launchWhenStarted {
-            viewModel.success.collectLatest {
-                Log.d("VoiceSelectActivity", "✓ Voice selection saved successfully")
-                nextButton.isEnabled = true
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.success.collectLatest {
+                    Log.d("VoiceSelectActivity", "✓ Voice selection saved successfully")
+                    // API 완료 후 Next 버튼 활성화
+                    nextButton.isEnabled = true
+                }
             }
         }
 
-        lifecycleScope.launchWhenStarted {
-            viewModel.error.collectLatest { msg ->
-                Toast.makeText(this@VoiceSelectActivity, msg, Toast.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.error.collectLatest { msg ->
+                    Toast.makeText(this@VoiceSelectActivity, msg, Toast.LENGTH_SHORT).show()
+                }
             }
         }
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {

@@ -16,7 +16,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def get_audio(text: str, voice: str = "shimmer", language: str = "Korean", output_file: str = "output.mp3", speed: float = 0.9, instructions: str = None):
+def get_audio(
+    text: str,
+    voice: str = "shimmer",
+    language: str = "Korean",
+    output_file: str = "output.mp3",
+    speed: float = 0.9,
+    instructions: str = None,
+):
     """
     Generate audio using OpenAI TTS API
 

@@ -18,16 +18,16 @@ import threading
 class ProcessUploadView(APIView):
     """
     Upload and process a page image with OCR, translation, and TTS
-    
+
     [POST] /process/upload
-    
+
     Request Body:
         {
             "session_id": "string",
             "lang": "string",
             "image_base64": "string"
         }
-    
+
     Response (200 OK):
         {
             "session_id": "string",
@@ -88,7 +88,9 @@ class ProcessUploadView(APIView):
 
         # Get voice preference with fallback to default
         para_voice = session.voicePreference if session.voicePreference else "shimmer"
-        print("[DEBUG] voice preference:", session.voicePreference, "→ using:", para_voice)
+        print(
+            "[DEBUG] voice preference:", session.voicePreference, "→ using:", para_voice
+        )
 
         # Start background TTS
         self._start_background_tts(
@@ -103,7 +105,7 @@ class ProcessUploadView(APIView):
 
         # Update session (only update specific fields to avoid race condition)
         session.totalPages += 1
-        session.save(update_fields=['totalPages', 'totalWords'])
+        session.save(update_fields=["totalPages", "totalWords"])
         print("[DEBUG] Page index after upload:", page_index)
         return Response(
             {
@@ -265,13 +267,13 @@ class ProcessUploadView(APIView):
 class CheckOCRStatusView(APIView):
     """
     Check OCR and translation status for a page
-    
+
     [GET] /process/check_ocr?session_id={session_id}&page_index={page_index}
-    
+
     Query Parameters:
         session_id: Session identifier
         page_index: Page number
-    
+
     Response (200 OK):
         {
             "session_id": "string",
@@ -314,13 +316,13 @@ class CheckOCRStatusView(APIView):
 class CheckTTSStatusView(APIView):
     """
     Check TTS processing progress for a page
-    
+
     [GET] /process/check_tts?session_id={session_id}&page_index={page_index}
-    
+
     Query Parameters:
         session_id: Session identifier
         page_index: Page number
-    
+
     Response (200 OK):
         {
             "session_id": "string",
@@ -395,16 +397,16 @@ class CheckTTSStatusView(APIView):
 class ProcessUploadCoverView(APIView):
     """
     Upload and process cover image with OCR and translation
-    
+
     [POST] /process/upload_cover
-    
+
     Request Body:
         {
             "session_id": "string",
             "lang": "string",
             "image_base64": "string"
         }
-    
+
     Response (200 OK):
         {
             "session_id": "string",
@@ -448,24 +450,19 @@ class ProcessUploadCoverView(APIView):
         lang_map = {"en": "English", "zh": "Chinese", "vi": "Vietnamese"}
         target_lang = lang_map.get(lang, "English")
 
-        # Run translation for title (no TTS needed)
-        translated_text = self._translate_title(title, target_lang)
-        
-        if not translated_text:
-            return Response(
-                {"error_code": 422, "message": "PROCESS__TRANSLATION_FAILED"},
-                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        # Run translation for title synchronously
+        translated_text = self._run_async(
+            TTSModule(target_lang=target_lang).translate_cover(
+                title, session_id, page_index
             )
+        )
 
         # Create page and BB
         page = self._create_page_and_bbs(
             session,
             image_path,
             [{"text": title}],
-            [{
-                "status": "ok",
-                "sentences": [{"translation": translated_text}]
-            }]
+            [{"status": "ok", "sentences": [{"translation": translated_text}]}],
         )
 
         # Update session
@@ -473,7 +470,7 @@ class ProcessUploadCoverView(APIView):
         session.translated_title = translated_text
         print(f"[DEBUG] Translated title: {session.translated_title}")
         session.totalPages += 1
-        session.save(update_fields=['title', 'translated_title', 'totalPages'])
+        session.save(update_fields=["title", "translated_title", "totalPages"])
 
         return Response(
             {
@@ -487,30 +484,33 @@ class ProcessUploadCoverView(APIView):
             status=status.HTTP_200_OK,
         )
 
-    def _translate_title(self, title: str, target_lang: str) -> str:
-        """Translate title using TTS module's translate method"""
-        
-        async def translate_async():
-            tts_module = TTSModule(target_lang=target_lang)
-            trans_response = await tts_module.translate(f"[CURRENT]: {title}")
-            
-            if isinstance(trans_response["result"], Exception):
-                return ""
-            
-            translated = trans_response["result"].translated_text.strip()
-            return translated
-        
+    def _get_all_translations(
+        self, tts_module: TTSModule, ocr_result: list, session_id: str, page_index: int
+    ) -> list:
+        """
+        Get translations and sentiment for all paragraphs (no TTS yet).
+        Runs ALL paragraphs in parallel.
+        Returns list of translation data per paragraph.
+        """
+
+        async def get_para_translation(i: int, para: dict):
+            page_data = {
+                "fileName": f"{session_id}_{page_index}_{i}.jpg",
+                "text": para.get("text", ""),
+            }
+            return await tts_module.get_translations_only(page_data)
+
+        # Run ALL paragraphs in parallel
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        try:
-            result = loop.run_until_complete(translate_async())
-            return result
-        except Exception as e:
-            print(f"[DEBUG] Translation error: {e}")
-            return ""
-        finally:
-            loop.run_until_complete(loop.shutdown_asyncgens())
-            loop.close()
+        translation_data = loop.run_until_complete(
+            asyncio.gather(
+                *[get_para_translation(i, para) for i, para in enumerate(ocr_result)]
+            )
+        )
+        loop.close()
+
+        return translation_data
 
     def _create_page_and_bbs(
         self,
@@ -556,3 +556,17 @@ class ProcessUploadCoverView(APIView):
             f.write(image_bytes)
 
         return image_path
+
+    def _run_async(self, coroutine):
+        """Helper to run async code in sync context."""
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            result = loop.run_until_complete(coroutine)
+            loop.close()
+            return result
+        except Exception as e:
+            import traceback
+
+            traceback.print_exc()
+            return "", ""

@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 class OCRModule:
     """
     OCR processing module using Naver Clova OCR API
@@ -18,7 +19,7 @@ class OCRModule:
     - Group text into paragraphs and lines
     - Calculate bounding boxes
     """
-    
+
     def __init__(self, conf_threshold: float = 0.8):
         self.api_url = os.getenv("OCR_API_URL", "")
         self.secret_key = os.getenv("OCR_SECRET", "")
@@ -71,7 +72,7 @@ class OCRModule:
     def _parse_infer_text(self, result_json: Dict[str, Any]) -> List[str]:
         """
         Parse OCR results into structured paragraphs with bounding boxes
-        
+
         Process:
         1. Filter low-confidence results
         2. Calculate average font size
@@ -79,7 +80,7 @@ class OCRModule:
         4. Cluster into paragraphs (2D DBSCAN)
         5. Cluster into lines within paragraphs (1D DBSCAN on Y)
         6. Sort words by X, lines by Y
-        
+
         Returns:
             List of {"text": str, "bbox": dict}
         """
@@ -188,14 +189,14 @@ class OCRModule:
     def process_page(self, image_path: str) -> List[str]:
         """
         Process a regular page image with OCR
-        
+
         Args:
             image_path: Path to image file
-            
+
         Returns:
             List of paragraphs with text and bounding boxes
         """
-        
+
         request_json = {
             "images": [{"format": "png", "name": Path(image_path).stem}],
             "requestId": str(uuid.uuid4()),
@@ -208,30 +209,30 @@ class OCRModule:
             "file": open(image_path, "rb"),
             "message": (None, json.dumps(request_json), "application/json"),
         }
-        
+
         print(f"[DEBUG] Sending OCR request for {image_path}")
         start = time.time()
         response = requests.post(self.api_url, headers=headers, files=files)
         print(f"[DEBUG] OCR API call took {time.time() - start:.2f}s")
         print(f"[DEBUG] OCR raw response text (first 300 chars): {response.text[:300]}")
-        
+
         result = response.json()
         paragraphs = self._parse_infer_text(result)
 
         return paragraphs
 
-    def process_cover_page(self, image_path: str) -> str:  
+    def process_cover_page(self, image_path: str) -> str:
         """
         Process a cover page image to extract title
         Uses height-based filtering to find the largest/title text
-        
+
         Args:
             image_path: Path to cover image file
-            
+
         Returns:
             Extracted title text (largest text block)
         """
-        
+
         request_json = {
             "images": [{"format": "png", "name": Path(image_path).stem}],
             "requestId": str(uuid.uuid4()),
@@ -267,7 +268,7 @@ class OCRModule:
                 tokens.append(
                     {
                         "text": text,
-                        "field": field, 
+                        "field": field,
                         "x": float(np.mean(xs)),
                         "y": float(np.mean(ys)),
                         "xs": xs,
@@ -284,8 +285,7 @@ class OCRModule:
         max_height = max(heights)
 
         filtered_tokens = [
-            t for t in tokens
-            if (max(t["ys"]) - min(t["ys"])) >= 0.33 * max_height
+            t for t in tokens if (max(t["ys"]) - min(t["ys"])) >= 0.33 * max_height
         ]
 
         if not filtered_tokens:
@@ -294,13 +294,7 @@ class OCRModule:
 
         filtered_fields = [t["field"] for t in filtered_tokens]
 
-        filtered_json_for_fs = {
-            "images": [
-                {
-                    "fields": filtered_fields
-                }
-            ]
-        }
+        filtered_json_for_fs = {"images": [{"fields": filtered_fields}]}
 
         fs = self._font_size(filtered_json_for_fs)
 
@@ -327,7 +321,7 @@ class OCRModule:
         for para in paragraphs:
             if not para:
                 continue
-            
+
             # Line clustering
             Y = np.array([[t["y"]] for t in para])
             line_eps = max(fs * 0.5, 2.0)

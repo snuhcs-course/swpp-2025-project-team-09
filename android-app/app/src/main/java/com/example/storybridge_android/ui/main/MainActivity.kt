@@ -5,13 +5,17 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Base64
+import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.content.res.AppCompatResources
@@ -30,12 +34,22 @@ import com.example.storybridge_android.ui.session.StartSessionActivity
 import com.example.storybridge_android.ui.setting.SettingActivity
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.util.*
+
 
 class MainActivity : BaseActivity() {
-
     private val viewModel: MainViewModel by viewModels {
         MainViewModelFactory()
     }
+
+    private lateinit var exitPanel: View
+    private lateinit var exitConfirmBtn: Button
+    private lateinit var exitCancelBtn: Button
+
+    private lateinit var discardPanel: View
+    private lateinit var discardConfirmBtn: Button
+    private lateinit var discardCancelBtn: Button
+    private var selectedSessionId: String? = null
 
     private val settingsLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -63,10 +77,17 @@ class MainActivity : BaseActivity() {
 
         applyWindowInsets()
         initializeViews()
+        initExitPanel()
+        initDiscardPanel()
         setupTopNavigationBar()
         setupStartButton()
         observeUserInfo()
         loadUserInfo()
+    }
+
+    private fun initializeViews() {
+        cardContainer = findViewById(R.id.cardContainer)
+        emptyContainer = findViewById(R.id.emptyContainer)
     }
 
     private fun applyWindowInsets() {
@@ -77,9 +98,40 @@ class MainActivity : BaseActivity() {
         }
     }
 
-    private fun initializeViews() {
-        cardContainer = findViewById(R.id.cardContainer)
-        emptyContainer = findViewById(R.id.emptyContainer)
+    private fun initExitPanel() {
+        exitPanel = findViewById(R.id.exitPanelInclude)
+        exitConfirmBtn = findViewById(R.id.exitConfirmBtn)
+        exitCancelBtn = findViewById(R.id.exitCancelBtn)
+
+        exitConfirmBtn.setOnClickListener {
+            finish()
+        }
+
+        exitCancelBtn.setOnClickListener {
+            exitPanel.visibility = View.GONE
+        }
+    }
+
+    private fun initDiscardPanel() {
+        discardPanel = findViewById(R.id.discardPanelInclude)
+        discardConfirmBtn = findViewById(R.id.discardConfirmBtn)
+        discardCancelBtn = findViewById(R.id.discardCancelBtn)
+
+        discardConfirmBtn.setOnClickListener {
+            selectedSessionId?.let { sessionId ->
+                lifecycleScope.launch {
+                    val deviceInfo = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+                    viewModel.discardSession(sessionId, deviceInfo)
+                }
+            }
+            discardPanel.visibility = View.GONE
+            selectedSessionId = null
+        }
+
+        discardCancelBtn.setOnClickListener {
+            discardPanel.visibility = View.GONE
+            selectedSessionId = null
+        }
     }
 
     private fun loadUserInfo() {
@@ -219,20 +271,8 @@ class MainActivity : BaseActivity() {
     }
 
     private fun setupTrashClickListener(sessionCard: SessionCard, sessionId: String) {
-        sessionCard.setOnTrashClickListener {
-            showDeleteConfirmationDialog(sessionId)
-        }
-    }
-
-    private fun showDeleteConfirmationDialog(sessionId: String) {
-        AlertDialog.Builder(this)
-            .setTitle(R.string.delete_title)
-            .setMessage(R.string.delete_message)
-            .setPositiveButton(R.string.delete_confirm) { _, _ ->
-                deleteSession(sessionId)
-            }
-            .setNegativeButton(R.string.delete_cancel, null)
-            .show()
+        selectedSessionId = sessionId
+        discardPanel.visibility = View.VISIBLE
     }
 
     private fun deleteSession(sessionId: String) {
@@ -259,6 +299,14 @@ class MainActivity : BaseActivity() {
     private fun navigateToSettings() {
         val intent = Intent(this, SettingActivity::class.java)
         settingsLauncher.launch(intent)
+    }
+
+    private fun setupBackPressHandler() {
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                exitPanel.visibility = View.VISIBLE
+            }
+        })
     }
 
     private fun navigateToStartSession() {

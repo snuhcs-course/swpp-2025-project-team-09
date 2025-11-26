@@ -71,8 +71,7 @@
     <string name="exit_cancel">取消</string>
 
     <!-- Delete Previous Reading -->
-    <string name="delete_title">确认删除</string>
-    <string name="delete_message">小朋友，你确定要删掉这篇阅读吗？</string>
-    <string name="delete_confirm">删除</string>
-    <string name="delete_cancel">取消</string>
+    <string name="discard_session_title">确定要删除吗？</string>
+    <string name="discard_session_confirm">删除</string>
+    <string name="discard_session_cancel">取消</string>
 </resources>

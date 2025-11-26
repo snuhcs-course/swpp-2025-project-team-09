@@ -13,15 +13,15 @@ import os
 class StartSessionView(APIView):
     """
     Start a new reading session
-    
+
     [POST] /session/start
-    
+
     Request Body:
         {
             "user_id": "string",
             "page_index": 0
         }
-    
+
     Response (200 OK):
         {
             "session_id": "string",
@@ -70,22 +70,22 @@ class StartSessionView(APIView):
 class SelectVoiceView(APIView):
     """
     Set voice preference for session
-    
+
     [POST] /session/voice
-    
+
     Request Body:
         {
             "session_id": "string",
             "voice_style": "string"
         }
-    
+
     Response (200 OK):
         {
             "session_id": "string",
             "voice_style": "string"
         }
     """
-    
+
     def post(self, request):
         session_id = request.data.get("session_id")
         voice_style = request.data.get("voice_style")
@@ -113,14 +113,14 @@ class SelectVoiceView(APIView):
 class EndSessionView(APIView):
     """
     End an ongoing session
-    
+
     [POST] /session/end
-    
+
     Request Body:
         {
             "session_id": "string"
         }
-    
+
     Response (200 OK):
         {
             "session_id": "string",
@@ -159,12 +159,12 @@ class EndSessionView(APIView):
 class GetSessionStatsView(APIView):
     """
     Get session statistics
-    
+
     [GET] /session/stats?session_id={session_id}
-    
+
     Query Parameters:
         session_id: Session identifier
-    
+
     Response (200 OK):
         {
             "session_id": "string",
@@ -208,13 +208,13 @@ class GetSessionStatsView(APIView):
 class SessionReloadAllView(APIView):
     """
     Reload all session data for resuming reading
-    
+
     [GET] /session/reload?user_id={user_id}&started_at={started_at}
-    
+
     Query Parameters:
         user_id: Device identifier
         started_at: Session creation time (ISO format)
-    
+
     Response (200 OK):
         {
             "session_id": "string",
@@ -308,14 +308,14 @@ class SessionReloadAllView(APIView):
 class DiscardSessionView(APIView):
     """
     Delete session and all associated data
-    
+
     [POST] /session/discard
-    
+
     Request Body:
         {
             "session_id": "string"
         }
-    
+
     Response (200 OK):
         {
             "message": "Session discarded successfully"
