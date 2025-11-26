@@ -271,14 +271,9 @@ class MainActivity : BaseActivity() {
     }
 
     private fun setupTrashClickListener(sessionCard: SessionCard, sessionId: String) {
-        selectedSessionId = sessionId
-        discardPanel.visibility = View.VISIBLE
-    }
-
-    private fun deleteSession(sessionId: String) {
-        lifecycleScope.launch {
-            val deviceInfo = getAndroidId()
-            viewModel.discardSession(sessionId, deviceInfo)
+        sessionCard.setOnTrashClickListener {
+            selectedSessionId = sessionId
+            discardPanel.visibility = View.VISIBLE
         }
     }
 
