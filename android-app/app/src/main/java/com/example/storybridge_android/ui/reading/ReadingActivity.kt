@@ -195,7 +195,6 @@ class ReadingActivity : BaseActivity() {
             }
         }
 
-        // 썸네일 리스트 Flow 수집 (한 번만 실행)
         lifecycleScope.launch {
             viewModel.thumbnailList.collectLatest { list ->
                 val sortedList = list.sortedBy { it.pageIndex }

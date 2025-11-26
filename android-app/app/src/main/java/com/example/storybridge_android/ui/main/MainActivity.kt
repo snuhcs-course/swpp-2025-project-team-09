@@ -1,11 +1,9 @@
 package com.example.storybridge_android.ui.main
 
 import android.annotation.SuppressLint
-import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Color
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Base64
@@ -15,7 +13,6 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.content.res.AppCompatResources
@@ -34,8 +31,6 @@ import com.example.storybridge_android.ui.session.StartSessionActivity
 import com.example.storybridge_android.ui.setting.SettingActivity
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import java.util.*
-
 
 class MainActivity : BaseActivity() {
     private val viewModel: MainViewModel by viewModels {
@@ -81,7 +76,12 @@ class MainActivity : BaseActivity() {
         initDiscardPanel()
         setupTopNavigationBar()
         setupStartButton()
+        setupBackPressHandler()
         observeUserInfo()
+    }
+
+    override fun onResume() {
+        super.onResume()
         loadUserInfo()
     }
 
