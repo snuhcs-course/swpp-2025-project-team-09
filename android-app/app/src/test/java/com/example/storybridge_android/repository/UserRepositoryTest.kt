@@ -105,6 +105,6 @@ class UserRepositoryTest {
         val list = response.body()
         assertEquals(2, list?.size)
         assertEquals("s1", list?.get(0)?.session_id)
-        assertEquals("다른 책", list?.get(1)?.title)
+        assertEquals("book2", list?.get(1)?.title)
     }
 }
