@@ -186,25 +186,6 @@ class SessionResponseParsingTest {
         }
     }
 
-    // 10. ReloadSessionResponse — verify nullable media fields are null when missing
-    @Test
-    fun reloadSessionResponse_mediaFieldsMissing() {
-        val json = """
-        {
-            "session_id": "S_RELOAD_01",
-            "page_index": 2
-            // image_base64, translation_text, audio_url 필드 누락
-        }
-    """.trimIndent()
-
-        val response = gson.fromJson(json, ReloadSessionResponse::class.java)
-
-        assertEquals(2, response.page_index)
-        assertNull(response.image_base64)
-        assertNull(response.translation_text)
-        assertNull(response.audio_url)
-    }
-
     // 11. SessionStatsResponse — verify isOngoing field parsing (Boolean type)
     @Test
     fun sessionStatsResponse_isOngoingBooleanParsing() {

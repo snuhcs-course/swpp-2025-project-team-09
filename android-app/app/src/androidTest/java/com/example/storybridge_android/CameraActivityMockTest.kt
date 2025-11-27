@@ -16,8 +16,6 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class CameraActivityMockTest {
-
-    // 권한 자동 부여 Rule
     @get:Rule
     val permissionRule: GrantPermissionRule = GrantPermissionRule.grant(
         Manifest.permission.CAMERA
@@ -39,15 +37,15 @@ class CameraActivityMockTest {
 
     @Test
     fun onCreate_googlePlayServicesMissing_finishesActivity() {
-        // GIVEN: Google Play Services가 없음
+        // GIVEN: Google Play Services false
         every { mockViewModel.checkGooglePlayServices() } returns false
         CameraViewModelFactoryHelper.fake = mockViewModel
 
-        // WHEN: Activity 실행
+        // WHEN: Activity is launched
         scenario = ActivityScenario.launch(CameraActivity::class.java)
         Thread.sleep(500)
 
-        // THEN: Activity가 종료됨
+        // THEN: Activity is destroyed
         assert(scenario.state.isAtLeast(Lifecycle.State.DESTROYED)) {
             "Activity should be destroyed when Google Play Services is missing"
         }
@@ -55,23 +53,23 @@ class CameraActivityMockTest {
 
     @Test
     fun onCreate_permissionAlreadyGranted_callsInitScanner() {
-        // GIVEN: Google Play Services 있음 (권한은 Rule로 자동 부여됨)
+        // GIVEN: Google Play Services true, permission already granted
         every { mockViewModel.checkGooglePlayServices() } returns true
         every { mockViewModel.checkModuleAndInitScanner() } just Runs
 
         CameraViewModelFactoryHelper.fake = mockViewModel
 
-        // WHEN: Activity 실행
+        // WHEN: Activity is launched
         scenario = ActivityScenario.launch(CameraActivity::class.java)
         Thread.sleep(1000)
 
-        // THEN: initScanner 호출 확인
+        // THEN: initScanner called
         verify(timeout = 2000) { mockViewModel.checkModuleAndInitScanner() }
     }
 
     @Test
     fun uiState_ready_callsStartScan() {
-        // GIVEN: Ready 상태의 UI
+        // GIVEN: Ready state UI
         every { mockViewModel.checkGooglePlayServices() } returns true
         every { mockViewModel.checkModuleAndInitScanner() } just Runs
 
@@ -83,17 +81,17 @@ class CameraActivityMockTest {
 
         CameraViewModelFactoryHelper.fake = mockViewModel
 
-        // WHEN: Activity 실행
+        // WHEN: Activity is launched
         scenario = ActivityScenario.launch(CameraActivity::class.java)
         Thread.sleep(1000)
 
-        // THEN: consumeReadyFlag 호출 확인
+        // THEN: consumeReadyFlag called
         verify(timeout = 2000) { mockViewModel.consumeReadyFlag() }
     }
 
     @Test
     fun uiState_notReady_doesNotCallStartScan() {
-        // GIVEN: Not ready 상태
+        // GIVEN: Not ready state UI
         every { mockViewModel.checkGooglePlayServices() } returns true
         every { mockViewModel.checkModuleAndInitScanner() } just Runs
 
@@ -104,11 +102,11 @@ class CameraActivityMockTest {
 
         CameraViewModelFactoryHelper.fake = mockViewModel
 
-        // WHEN: Activity 실행
+        // WHEN: Activity is launched
         scenario = ActivityScenario.launch(CameraActivity::class.java)
         Thread.sleep(1000)
 
-        // THEN: consumeReadyFlag 호출 x
+        // THEN: consumeReadyFlag not called
         verify(exactly = 0) { mockViewModel.consumeReadyFlag() }
     }
 }

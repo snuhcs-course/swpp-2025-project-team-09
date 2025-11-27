@@ -3,7 +3,7 @@
 
 """
 Simple OpenAI TTS script
-Usage: python get_audio.py "텍스트 내용" --voice shimmer --lang Korean --output output.mp3
+Usage: python get_audio.py "content of text" --voice shimmer --lang Korean --output output.mp3
 """
 
 import os
@@ -16,7 +16,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def get_audio(text: str, voice: str = "shimmer", language: str = "Korean", output_file: str = "output.mp3", speed: float = 0.9, instructions: str = None):
+def get_audio(
+    text: str,
+    voice: str = "shimmer",
+    language: str = "Korean",
+    output_file: str = "output.mp3",
+    speed: float = 0.9,
+    instructions: str = None,
+):
     """
     Generate audio using OpenAI TTS API
 

@@ -2,6 +2,13 @@ package com.example.storybridge_android.view_model
 
 import android.app.Activity
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import com.example.storybridge_android.data.SessionRepository
+import com.example.storybridge_android.network.DiscardSessionResponse
+import com.example.storybridge_android.network.EndSessionResponse
+import com.example.storybridge_android.network.ReloadAllSessionResponse
+import com.example.storybridge_android.network.SelectVoiceResponse
+import com.example.storybridge_android.network.SessionStatsResponse
+import com.example.storybridge_android.network.StartSessionResponse
 import com.example.storybridge_android.ui.camera.CameraSessionViewModel
 import com.example.storybridge_android.ui.camera.SessionUiState
 import kotlinx.coroutines.Dispatchers
@@ -34,11 +41,42 @@ class CameraSessionViewModelTest {
 
     private lateinit var viewModel: CameraSessionViewModel
 
+    private class FakeSessionRepository : SessionRepository {
+
+        override suspend fun startSession(userId: String) =
+            Result.failure<StartSessionResponse>(NotImplementedError())
+
+        override suspend fun selectVoice(
+            sessionId: String,
+            voiceStyle: String
+        ) = Result.failure<SelectVoiceResponse>(NotImplementedError())
+
+        override suspend fun endSession(sessionId: String) =
+            Result.failure<EndSessionResponse>(NotImplementedError())
+
+        override suspend fun getSessionStats(sessionId: String) =
+            Result.failure<SessionStatsResponse>(NotImplementedError())
+
+        override suspend fun reloadAllSession(
+            userId: String,
+            startedAt: String
+        ) = Result.failure<ReloadAllSessionResponse>(NotImplementedError())
+
+        override suspend fun discardSession(sessionId: String): Result<DiscardSessionResponse> {
+            return Result.success(
+                DiscardSessionResponse(
+                    message = "discard"
+                )
+            )
+        }
+    }
+
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        viewModel = CameraSessionViewModel()
+        viewModel = CameraSessionViewModel(FakeSessionRepository())
     }
+
 
     @After
     fun tearDown() {

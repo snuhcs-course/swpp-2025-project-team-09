@@ -673,8 +673,6 @@ This document contains a comprehensive list of all classes, methods, and relatio
 - `submitted_at: String` - ISO datetime
 - `title: String` - Book title (original)
 - `translated_title: String` - Translated title
-- `tts_male: String` - Base64 audio (male voice)
-- `tts_female: String` - Base64 audio (female voice)
 
 **CheckOcrResponse:**
 - `session_id: String` - UUID
@@ -748,7 +746,7 @@ This document contains a comprehensive list of all classes, methods, and relatio
 
 - **Type:** Singleton object
 - **Properties:**
-  - `BASE_URL: String` - Default: `"http://ec2-3-36-206-206.ap-northeast-2.compute.amazonaws.com:8000"`
+  - `BASE_URL: String` - Default: `"http://ec2-43-203-114-138.ap-northeast-2.compute.amazonaws.com:8000"`
   - `userApi: UserApi` - Lazy singleton instance
   - `sessionApi: SessionApi` - Lazy singleton instance
   - `processApi: ProcessApi` - Lazy singleton instance

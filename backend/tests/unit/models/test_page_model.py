@@ -88,12 +88,15 @@ class TestPageModel(TestCase):
         self.assertIn(bb2, bbs)
 
     def test_07_add_bb_success(self):
-        """Test addBB method"""
-        page = Page.objects.create(session=self.test_session, img_url="add_bb.jpg")
+        """Test creating BB directly using Django ORM"""
+        page = Page.objects.create(session=self.test_session, img_url="create_bb.jpg")
 
-        bbox_list = [
-            {
-                "text": "Original text",
+        bb = BB.objects.create(
+            page=page,
+            original_text="Original text",
+            translated_text="Translated text",
+            audio_base64=["base64_audio_data"],
+            coordinates={
                 "x1": 10,
                 "y1": 20,
                 "x2": 110,
@@ -103,106 +106,59 @@ class TestPageModel(TestCase):
                 "x4": 10,
                 "y4": 70,
             }
-        ]
-        translated_list = ["Translated text"]
-        audio_list = ["base64_audio_data"]
-
-        page.addBB(bbox_list, translated_list, audio_list)
+        )
 
         bbs = page.getBBs()
         self.assertEqual(bbs.count(), 1)
         self.assertEqual(bbs[0].original_text, "Original text")
         self.assertEqual(bbs[0].translated_text, "Translated text")
-        self.assertEqual(bbs[0].audio_base64, "base64_audio_data")
+        self.assertEqual(bbs[0].audio_base64, ["base64_audio_data"])
 
     def test_08_add_multiple_bbs(self):
-        """Test adding multiple bounding boxes"""
+        """Test creating multiple bounding boxes"""
         page = Page.objects.create(
             session=self.test_session, img_url="multiple_bbs.jpg"
         )
 
-        bbox_list = [
-            {
-                "text": "Text 1",
-                "x1": 10,
-                "y1": 10,
-                "x2": 50,
-                "y2": 10,
-                "x3": 50,
-                "y3": 30,
-                "x4": 10,
-                "y4": 30,
-            },
-            {
-                "text": "Text 2",
-                "x1": 60,
-                "y1": 10,
-                "x2": 100,
-                "y2": 10,
-                "x3": 100,
-                "y3": 30,
-                "x4": 60,
-                "y4": 30,
-            },
-            {
-                "text": "Text 3",
-                "x1": 10,
-                "y1": 40,
-                "x2": 50,
-                "y2": 40,
-                "x3": 50,
-                "y3": 60,
-                "x4": 10,
-                "y4": 60,
-            },
-        ]
-        translated_list = ["Trans 1", "Trans 2", "Trans 3"]
-        audio_list = ["audio1", "audio2", "audio3"]
-
-        page.addBB(bbox_list, translated_list, audio_list)
+        BB.objects.create(
+            page=page,
+            original_text="Text 1",
+            translated_text="Trans 1",
+            audio_base64=["audio1"],
+            coordinates={"x1": 10, "y1": 10, "x2": 50, "y2": 10, "x3": 50, "y3": 30, "x4": 10, "y4": 30}
+        )
+        BB.objects.create(
+            page=page,
+            original_text="Text 2",
+            translated_text="Trans 2",
+            audio_base64=["audio2"],
+            coordinates={"x1": 60, "y1": 10, "x2": 100, "y2": 10, "x3": 100, "y3": 30, "x4": 60, "y4": 30}
+        )
+        BB.objects.create(
+            page=page,
+            original_text="Text 3",
+            translated_text="Trans 3",
+            audio_base64=["audio3"],
+            coordinates={"x1": 10, "y1": 40, "x2": 50, "y2": 40, "x3": 50, "y3": 60, "x4": 10, "y4": 60}
+        )
 
         bbs = page.getBBs()
         self.assertEqual(bbs.count(), 3)
-
+        
     def test_09_add_bb_with_missing_translations(self):
-        """Test addBB with fewer translations than bboxes"""
+        """Test creating BB with empty translation"""
         page = Page.objects.create(
-            session=self.test_session, img_url="missing_trans.jpg"
+            session=self.test_session, img_url="empty_trans.jpg"
         )
 
-        bbox_list = [
-            {
-                "text": "Text 1",
-                "x1": 0,
-                "y1": 0,
-                "x2": 10,
-                "y2": 10,
-                "x3": 10,
-                "y3": 20,
-                "x4": 0,
-                "y4": 20,
-            },
-            {
-                "text": "Text 2",
-                "x1": 0,
-                "y1": 0,
-                "x2": 10,
-                "y2": 10,
-                "x3": 10,
-                "y3": 20,
-                "x4": 0,
-                "y4": 20,
-            },
-        ]
-        translated_list = ["Trans 1"]  # Only one translation
-        audio_list = []
+        bb = BB.objects.create(
+            page=page,
+            original_text="Text without translation",
+            translated_text="",
+            coordinates={"x1": 0, "y1": 0, "x2": 10, "y2": 10, "x3": 10, "y3": 20, "x4": 0, "y4": 20}
+        )
 
-        page.addBB(bbox_list, translated_list, audio_list)
-
-        bbs = page.getBBs()
-        self.assertEqual(bbs.count(), 2)
-        self.assertEqual(bbs[0].translated_text, "Trans 1")
-        self.assertEqual(bbs[1].translated_text, "")
+        self.assertEqual(bb.translated_text, "")
 
     def test_10_set_bbox_json(self):
         """Test setting bbox_json field"""

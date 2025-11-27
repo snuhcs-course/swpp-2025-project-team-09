@@ -21,16 +21,10 @@ class SessionCard @JvmOverloads constructor(
 
     init {
         LayoutInflater.from(context).inflate(R.layout.card_item, this, true)
-
-        // 필요한 뷰만 참조
         bookImage = findViewById(R.id.cardBookImage)
         bookTitle = findViewById(R.id.cardBookTitle)
         bookProgress = findViewById(R.id.cardBookDate)
         trashButton = findViewById(R.id.cardTrashButton)
-    }
-
-    fun setBookImage(resId: Int) {
-        bookImage.setImageResource(resId)
     }
 
     fun setBookTitle(title: String) {

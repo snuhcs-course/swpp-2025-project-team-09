@@ -18,7 +18,6 @@ import android.widget.*
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -37,10 +36,8 @@ import com.example.storybridge_android.ui.common.TopNav
 import com.example.storybridge_android.ui.common.BottomNav
 import com.example.storybridge_android.ui.common.LeftOverlay
 import androidx.activity.OnBackPressedCallback
-import androidx.appcompat.app.AlertDialog
 import com.example.storybridge_android.ui.common.BaseActivity
 import kotlin.math.max
-
 
 class ReadingActivity : BaseActivity() {
 
@@ -82,7 +79,7 @@ class ReadingActivity : BaseActivity() {
     private val boundingBoxViewsMap: MutableMap<Int, TextView> = mutableMapOf()
     private var cachedBoundingBoxes: List<BoundingBox> = emptyList()
     private val savedBoxTranslations: MutableMap<Int, Pair<Float, Float>> = mutableMapOf()
-    private val MIN_WIDTH = 500
+    private val minWidth = 500
 
     private lateinit var thumbnailAdapter: ThumbnailAdapter
 
@@ -198,7 +195,6 @@ class ReadingActivity : BaseActivity() {
             }
         }
 
-        // 썸네일 리스트 Flow 수집 (한 번만 실행)
         lifecycleScope.launch {
             viewModel.thumbnailList.collectLatest { list ->
                 val sortedList = list.sortedBy { it.pageIndex }
@@ -230,7 +226,7 @@ class ReadingActivity : BaseActivity() {
     private fun handleOcr(data: GetOcrTranslationResponse) {
         val boxes = data.ocr_results.mapIndexed { i, ocrBox ->
             val box = ocrBox.bbox
-            val adjustedWidth = max(box.width, MIN_WIDTH)
+            val adjustedWidth = max(box.width, minWidth)
             BoundingBox(box.x, box.y, adjustedWidth, box.height, ocrBox.translation_txt, i)
         }
         cachedBoundingBoxes = boxes
@@ -342,8 +338,8 @@ class ReadingActivity : BaseActivity() {
             }
 
             val params = ConstraintLayout.LayoutParams(
-                rect.width().toInt(),  // 너비는 서버 데이터 고정
-                ConstraintLayout.LayoutParams.WRAP_CONTENT  // 높이는 텍스트에 맞춤
+                rect.width().toInt(),  // fixed width
+                ConstraintLayout.LayoutParams.WRAP_CONTENT  // Height tailored to individual text
             )
             params.startToStart = pageImage.id
             params.topToTop = pageImage.id
@@ -492,11 +488,9 @@ class ReadingActivity : BaseActivity() {
     }
 
     private fun fetchAllThumbnails() {
-        // ViewModel에 썸네일 요청 (커버 페이지 제외, 1부터 시작)
         for (i in 1 until totalPages) {
             viewModel.fetchThumbnail(sessionId, i)
         }
-        // Flow 수집은 observeViewModel()에서 한 번만 실행됨
     }
 
     private fun navigateToFinish() {
@@ -511,7 +505,7 @@ class ReadingActivity : BaseActivity() {
     private fun navigateToCamera() {
         val intent = Intent(this, CameraSessionActivity::class.java).apply {
             putExtra("session_id", sessionId)
-            putExtra("page_index", totalPages)  // 새 페이지 인덱스
+            putExtra("page_index", totalPages)
         }
         cameraLauncher.launch(intent)
     }

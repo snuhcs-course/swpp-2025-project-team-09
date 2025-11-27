@@ -13,15 +13,10 @@
         android:layout_height="match_parent"
         app:implementationMode="compatible"/>
 
-    <android.widget.Button
-        android:id="@+id/goReadingButton"
-        android:layout_width="560dp"
-        android:layout_height="120dp"
-        android:text="Go Reading →"
-        android:background="@drawable/round_button"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="48dp"/>
+    <include
+        android:id="@+id/exitPanelInclude"
+        layout="@layout/exit_confirm_panel"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -27,7 +27,6 @@ import org.hamcrest.Matchers.allOf
 
 @RunWith(AndroidJUnit4::class)
 class CameraSessionActivityMockTest {
-    // 권한 자동 부여
     @get:Rule
     val permissionRule: GrantPermissionRule = GrantPermissionRule.grant(
         Manifest.permission.CAMERA
@@ -89,7 +88,7 @@ class CameraSessionActivityMockTest {
         scenario = launchWithExtras(isCover = true)
         Thread.sleep(500)
 
-        // UI 상태 변경
+        // UI state changed
         flow.value = SessionUiState.Success("/tmp/a.jpg")
         Thread.sleep(1000)
 
@@ -104,7 +103,7 @@ class CameraSessionActivityMockTest {
         scenario = launchWithExtras(isCover = false)
         Thread.sleep(500)
 
-        // UI 상태 변경
+        // UI state changed
         flow.value = SessionUiState.Success("/tmp/img.png")
         Thread.sleep(1000)
 
@@ -119,7 +118,7 @@ class CameraSessionActivityMockTest {
         scenario = launchWithExtras()
         Thread.sleep(500)
 
-        // UI 상태 변경
+        // UI state changed
         flow.value = SessionUiState.Cancelled
         Thread.sleep(500)
 
@@ -149,14 +148,14 @@ class CameraSessionActivityMockTest {
         val flow = MutableStateFlow<SessionUiState>(SessionUiState.Idle)
         every { mockViewModel.uiState } returns flow.asStateFlow()
 
-        // WHEN: Cover 모드로 Success
+        // WHEN: Cover mode Success
         scenario = launchWithExtras(isCover = true, sessionId = "S1")
         Thread.sleep(500)
 
         flow.value = SessionUiState.Success("/tmp/cover.jpg")
         Thread.sleep(1000)
 
-        // THEN: 언어 설정이 포함됨
+        // THEN: language setting is passed to VoiceSelectActivity
         Intents.intended(
             IntentMatchers.hasExtra("lang", "zh")
         )
@@ -183,7 +182,7 @@ class CameraSessionActivityMockTest {
         flow.value = SessionUiState.Success("/tmp/page5.jpg")
         Thread.sleep(1000)
 
-        // THEN: LoadingActivity로 이동
+        // THEN: move to LoadingActivity
         Intents.intended(IntentMatchers.hasComponent(LoadingActivity::class.java.name))
 
         val loadingIntents = Intents.getIntents().filter {
@@ -210,11 +209,11 @@ class CameraSessionActivityMockTest {
         scenario = launchWithExtras(isCover = false)
         Thread.sleep(500)
 
-        // WHEN: Success 상태로 변경
+        // WHEN: Change state to Success
         flow.value = SessionUiState.Success("/tmp/final.jpg")
         Thread.sleep(1000)
 
-        // THEN: LoadingActivity로 이동
+        // THEN: Move to LoadingActivity
         val loadingIntents = Intents.getIntents().filter {
             it.component?.className == LoadingActivity::class.java.name
         }

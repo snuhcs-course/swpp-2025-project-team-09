@@ -1,7 +1,6 @@
 package com.example.storybridge_android.ui.reading
 
 import android.annotation.SuppressLint
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Base64
 import android.view.LayoutInflater
@@ -29,7 +28,6 @@ class ThumbnailAdapter(
 
         @SuppressLint("SetTextI18n")
         fun bind(thumbnail: PageThumbnail) {
-            // 커버 페이지(0)는 표시하지 않으므로, pageIndex를 그대로 사용
             pageNumber.text = "Page ${thumbnail.pageIndex}"
 
             // Decode and display image
@@ -66,6 +64,7 @@ class ThumbnailAdapter(
 
     override fun getItemCount(): Int = thumbnails.size
 
+    @SuppressLint("NotifyDataSetChanged")
     fun submitList(newThumbnails: List<PageThumbnail>) {
         thumbnails.clear()
         thumbnails.addAll(newThumbnails)

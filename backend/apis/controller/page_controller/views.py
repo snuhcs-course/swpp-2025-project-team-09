@@ -9,41 +9,24 @@ import json
 
 class PageGetImageView(APIView):
     """
-    [GET] /page/get_image
-    API endpoint for retrieving page img
-
-    Endpoint: /page/get_image
-
-    - Request (GET)
-
+    Retrieve page image as base64
+    
+    [GET] /page/get_image?session_id={session_id}&page_index={page_index}
+    
+    Query Parameters:
+        session_id: Session identifier
+        page_index: Page number
+    
+    Response (200 OK):
         {
-        "session_id": "string",
-        "page_index": integer
-        }
-
-    - Response
-
-        Status: 200 OK
-
-        {
-        "session_id": "string",
-        "page_index": integer,
-        "image_base64": "string",        // Base64-encoded image
-        "stored_at": "string (datetime)" // when image was uploaded/saved
+            "session_id": "string",
+            "page_index": 0,
+            "image_base64": "string",
+            "stored_at": "datetime"
         }
     """
 
     def get(self, request):
-        """
-        Args:
-            request: The incoming HTTP GET request.
-
-        Returns:
-            - rest_framework.response.Response
-                - Status: 200 OK, JSON list including page image
-
-        """
-
         session_id = request.query_params.get("session_id")
         page_index = request.query_params.get("page_index")
 
@@ -82,49 +65,26 @@ class PageGetImageView(APIView):
 
 class PageGetOCRView(APIView):
     """
-    [GET] /page/get_ocr
-    - OCR 결과 (bbox + 원문 + 번역문) 반환
-
-    - Endpoint: /page/get_ocr_translation
-
-    - Request (GET)
-
+    Retrieve OCR results with bounding boxes and translations
+    
+    [GET] /page/get_ocr?session_id={session_id}&page_index={page_index}
+    
+    Query Parameters:
+        session_id: Session identifier
+        page_index: Page number
+    
+    Response (200 OK):
         {
-        "session_id": "string",
-        "page_index": integer,
-        }
-
-    - Response
-
-        Status: 200 OK
-
-        {
-        "session_id": "string",
-        "page_index": integer,
-        "ocr_results": [ # can be empty
-            {
-            "bbox": {
-                "x": integer,
-                "y": integer,
-                "width": integer,
-                "height": integer
-            },
-            "original_txt": "string",
-            "translation_txt": "string"
-            },
-            {
-            "bbox": {
-                "x": integer,
-                "y": integer,
-                "width": integer,
-                "height": integer
-            },
-            "original_txt": "string",
-            "translation_txt": "string"
-            }
-            /* ...more boxes per page */
-        ],
-        "processed_at": "string (datetime)"
+            "session_id": "string",
+            "page_index": 0,
+            "ocr_results": [
+                {
+                    "bbox": {"x": 0, "y": 0, "width": 100, "height": 50},
+                    "original_txt": "string",
+                    "translation_txt": "string"
+                }
+            ],
+            "processed_at": "datetime"
         }
     """
 
@@ -166,35 +126,27 @@ class PageGetOCRView(APIView):
                 {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-
 class PageGetTTSView(APIView):
     """
-    [GET] /page/get_tts
-    - TTS 오디오(base64 리스트) 반환
-
-    Endpoint: /page/get_tts
-
-    - Request (GET)
-
+    Retrieve TTS audio data for a page
+    
+    [GET] /page/get_tts?session_id={session_id}&page_index={page_index}
+    
+    Query Parameters:
+        session_id: Session identifier
+        page_index: Page number
+    
+    Response (200 OK):
         {
-        "session_id": "string",
-        "page_index": Integer,
-        }
-
-    - Response
-
-        Status: 200 OK
-
-        {
-        "session_id": "string",
-        "page_index": "integer",
-        "audio_results": [
-            {
-            "bbox_index": "integer",
-            "audio_base64_list": "list of string"
-            }
-        ],
-        "generated_at": "string (datetime)"
+            "session_id": "string",
+            "page_index": 0,
+            "audio_results": [
+                {
+                    "bbox_index": 0,
+                    "audio_base64_list": ["string", "string"]
+                }
+            ],
+            "generated_at": "datetime"
         }
     """
 
@@ -219,8 +171,6 @@ class PageGetTTSView(APIView):
                 )
 
                 # Only include boxes that have audio
-                # This prevents returning empty audio arrays for boxes
-                # where TTS hasn't completed
                 if audio_list and len(audio_list) > 0:
                     audio_results.append(
                         {"bbox_index": i, "audio_base64_list": audio_list}

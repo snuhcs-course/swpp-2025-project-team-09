@@ -5,8 +5,6 @@ import android.content.ContentResolver
 import android.content.IntentSender
 import android.net.Uri
 import android.os.Handler
-import android.util.Log
-import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.common.ConnectionResult

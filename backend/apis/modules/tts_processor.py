@@ -22,13 +22,20 @@ load_dotenv()
 
 # Prompt Templates.
 TRANSLATION_PROMPT = """
-You are an expert multilingual children's-story adapter.
-You will be given a block of Korean text that may contain up to three
-parts: [PREVIOUS], [CURRENT], and [NEXT].
-Your task is to translate ONLY the [CURRENT] Korean sentence into a
-single, fluent {target_lang} sentence.
-Use the [PREVIOUS] and [NEXT] sentences for context to ensure pronouns,
-flow, and style are correct.
+You are an expert adapter of multilingual children's stories.
+You will receive a block of Korean text that may contain up to three parts:
+[PREVIOUS], [CURRENT], and [NEXT].
+
+Your task is to translate ONLY the [CURRENT] Korean sentence into a single,
+gentle, child-friendly {target_lang} sentence.
+
+Use the [PREVIOUS] and [NEXT] sentences only for context, so that pronouns,
+tone, and flow stay natural.
+
+While translating:
+- Use simple, clear, kind words that children can easily understand.
+- Avoid any harmful, scary, or age-inappropriate expressions.
+- Keep the style warm, friendly, and suitable for young readers.
 """
 
 SENTIMENT_PROMPT = """
@@ -58,6 +65,13 @@ class Sentiment(BaseModel):
 
 
 class TTSModule:
+    """
+    Text-to-Speech module for processing Korean text
+    - Translation to target language
+    - Sentiment analysis
+    - TTS audio generation
+    """
+
     def __init__(
         self, out_dir="out_audio", log_dir="log", target_lang: str = "English"
     ):
@@ -82,20 +96,28 @@ class TTSModule:
         }
 
         # Reset directories
-        if self.OUT_DIR.exists():
-            shutil.rmtree(self.OUT_DIR)
-        if self.LOG_DIR.exists():
-            shutil.rmtree(self.LOG_DIR)
-        self.OUT_DIR.mkdir(parents=True)
-        self.LOG_DIR.mkdir(parents=True)
+        try:
+            if self.OUT_DIR.exists():
+                shutil.rmtree(self.OUT_DIR)
+        except Exception:
+            pass
+        try:
+            if self.LOG_DIR.exists():
+                shutil.rmtree(self.LOG_DIR)
+        except Exception:
+            pass
+        self.OUT_DIR.mkdir(parents=True, exist_ok=True)
+        self.LOG_DIR.mkdir(parents=True, exist_ok=True)
 
     def _create_translation_chain(self):
+        """Create LangChain translation chain"""
         prompt = ChatPromptTemplate.from_messages(
             [("system", TRANSLATION_PROMPT), ("user", "{text_with_context}")]
         )
         return prompt | self.llm.with_structured_output(Translation)
 
     def _create_sentiment_chain(self):
+        """Create LangChain sentiment analysis chain"""
         prompt = ChatPromptTemplate.from_messages(
             [("system", SENTIMENT_PROMPT), ("user", "{korean_text}")]
         )
@@ -141,7 +163,16 @@ class TTSModule:
         return {"result": None, "latency": -1.0}
 
     async def sentiment(self, korean_text: str) -> Dict[str, Any]:
-        """Analyze sentiment with retry logic."""
+        """
+        Analyze sentiment with retry logic
+
+        Args:
+            korean_text: Korean text to analyze
+
+        Returns:
+            {"result": Sentiment, "latency": float}
+        """
+
         for attempt in range(3):
             try:
                 t0 = time.time()
@@ -165,7 +196,20 @@ class TTSModule:
         out_path: Path,
         response_format: str,
     ) -> tuple[float, bytes]:
-        """Synthesize TTS audio."""
+        """
+        Synthesize TTS audio with full model (gpt-4o-mini-tts)
+
+        Args:
+            voice: Voice name (e.g., "shimmer", "echo")
+            text: Text to synthesize
+            instructions: Performance instructions
+            out_path: Output file path
+            response_format: Audio format (e.g., "mp3")
+
+        Returns:
+            (latency, audio_bytes)
+        """
+
         out_path.parent.mkdir(parents=True, exist_ok=True)
         t0 = time.time()
         try:
@@ -190,11 +234,24 @@ class TTSModule:
     async def synthesize_tts_lite(
         self, voice: str, text: str, out_path: Path = None, response_format: str = "mp3"
     ) -> tuple[float, bytes]:
-        """light model for Cover TTS - no sentiments"""
+        """
+        Synthesize TTS audio with lite model (tts-1)
+        Used for cover titles without sentiment analysis
+
+        Args:
+            voice: Voice name
+            text: Text to synthesize
+            out_path: Optional output file path
+            response_format: Audio format
+
+        Returns:
+            (latency, audio_bytes)
+        """
+
         t0 = time.time()
         try:
             response = await self.client.audio.speech.create(
-                model=self.TTS_MODEL_LITE,  # tts-1
+                model=self.TTS_MODEL_LITE,
                 voice=voice,
                 input=text,
                 response_format=response_format,
@@ -214,9 +271,8 @@ class TTSModule:
 
     async def get_translations_only(self, page: Dict[str, str]) -> Dict[str, Any]:
         """
-        Get translations and sentiment for all sentences
-        WITHOUT running TTS.
-        Used by backend to get translations before TTS.
+        Get translations and sentiment for all sentences WITHOUT running TTS
+        Used by backend to get translations before TTS
 
         Args:
             page: {"fileName": "...", "text": "..."}
@@ -231,11 +287,11 @@ class TTSModule:
                         "emotion": "...",
                         "pacing": "...",
                         "korean": "..."
-                    },
-                    ...
+                    }
                 ]
             }
         """
+
         sentences = kss.split_sentences(page["text"].strip())
         if not sentences:
             return {"status": "no_sentences", "sentences": []}
@@ -294,16 +350,20 @@ class TTSModule:
         para_voice: str,
     ) -> List[str]:
         """
-        Run TTS using pre-computed translations.
-        Used by backend background thread.
+        Run TTS using pre-computed translations
+        Used by backend background thread
 
         Args:
             translation_data: Result from get_translations_only()
-            session_id, page_index, para_index: For file naming
+            session_id: Session UUID
+            page_index: Page number
+            para_index: Paragraph number
+            para_voice: Voice to use
 
         Returns:
             List of base64-encoded audio clips
         """
+
         sentences_data = translation_data["sentences"]
         if not sentences_data:
             return []
@@ -354,54 +414,11 @@ class TTSModule:
         # Filter out None results
         return [audio for audio in audio_results if audio is not None]
 
-        # async def translate_and_tts_cover(self, title: str, session_id: str, page_index: int) -> tuple[str, str]:
-        """
-        Translate title and generate TTS for both male and female voices.
-        
-        Args:
-            title: Korean title text
-            session_id: Session UUID
-            page_index: Page index (0 for cover)
-            
-        Returns:
-            (tts_male_base64, tts_female_base64)
-        """
-        # Translate the title
-        trans_response = await self.translate(f"[CURRENT]: {title}")
-
-        if isinstance(trans_response["result"], Exception):
-            return "", ""
-
-        translated_text = trans_response["result"].translated_text.strip()
-        if not translated_text:
-            return "", ""
-
-        # Build translation data structure for TTS
-        translation_data = {
-            "status": "ok",
-            "sentences": [
-                {
-                    "translation": translated_text,
-                    "tone": "",  # Not used for cover
-                    "emotion": "",  # Not used for cover
-                    "pacing": "",  # Not used for cover
-                    "korean": title,
-                }
-            ],
-        }
-
-        # Generate TTS for both voices (now returns tuple directly)
-        tts_male, tts_female = await self.run_tts_cover_only(
-            translation_data, session_id, page_index, 0
-        )
-
-        return tts_male, tts_female
-
-    async def translate_and_tts_cover(
+    async def translate_cover(
         self, title: str, session_id: str, page_index: int
-    ) -> tuple[str, str]:
+    ) -> str:
         """
-        Translate title and generate TTS for both male and female voices.
+        Translate book cover title
 
         Args:
             title: Korean title text
@@ -409,98 +426,20 @@ class TTSModule:
             page_index: Page index (0 for cover)
 
         Returns:
-            (tts_male_base64, tts_female_base64)
+            translated_text
         """
+
         # Translate the title
         trans_response = await self.translate(f"[CURRENT]: {title}")
 
         if isinstance(trans_response["result"], Exception):
-            return "", ""
+            return ""
 
         translated_text = trans_response["result"].translated_text.strip()
         if not translated_text:
-            return "", ""
+            return ""
 
-        # Generate TTS for male voice (echo)
-        male_latency, male_audio = await self.synthesize_tts_lite(
-            voice="echo", text=translated_text
-        )
-
-        # Generate TTS for female voice (shimmer)
-        female_latency, female_audio = await self.synthesize_tts_lite(
-            voice="shimmer", text=translated_text
-        )
-
-        # Convert to base64
-        male_b64 = base64.b64encode(male_audio).decode("utf-8") if male_audio else ""
-        female_b64 = (
-            base64.b64encode(female_audio).decode("utf-8") if female_audio else ""
-        )
-
-        return translated_text, male_b64, female_b64
-
-        # async def run_tts_cover_only(self, translation_data: Dict[str, Any], session_id: str, page_index: int, para_index: int) -> tuple[str, str]:
-        """
-        Run TTS for book cover titles without sentiment analysis.
-        Generates both male (echo) and female (shimmer) voices.
-        Uses a fixed instruction suited for title reading.
-        
-        Returns:
-            (male_audio_base64, female_audio_base64)
-        """
-        sentences_data = translation_data["sentences"]
-        if not sentences_data:
-            return "", ""
-
-        stem = f"{session_id}_{page_index}_{para_index}"
-
-        async def synthesize_sentence(
-            i: int, sentence_data: dict, voice: str, voice_type: str
-        ):
-            out_file = self.OUT_DIR / f"{stem}_cover_{voice_type}_sent{i+1}.mp3"
-
-            # Fixed instruction for cover title reading
-            tts_instr = (
-                "[Affect: Speak clearly and confidently, as if announcing the title of a children's storybook.] "
-                "[Tone: Warm, friendly, and engaging, inviting the listener into a magical world.] "
-                "[Pacing: Steady and clear, with emphasis on key words in the title.]"
-            )
-
-            tts_latency, tts_result = await self.synthesize_tts(
-                voice=voice,
-                text=sentence_data.get("translation", ""),
-                instructions=tts_instr,
-                out_path=out_file,
-                response_format="mp3",
-            )
-
-            if tts_result:
-                return base64.b64encode(tts_result).decode("utf-8")
-            return None
-
-        # Generate male and female voices for all sentences concurrently
-        male_tasks = [
-            synthesize_sentence(i, sent_data, "echo", "male")
-            for i, sent_data in enumerate(sentences_data)
-        ]
-        female_tasks = [
-            synthesize_sentence(i, sent_data, "shimmer", "female")
-            for i, sent_data in enumerate(sentences_data)
-        ]
-
-        # Run all TTS tasks in parallel
-        all_results = await asyncio.gather(*male_tasks, *female_tasks)
-
-        # Split results into male and female
-        mid_point = len(male_tasks)
-        male_results = all_results[:mid_point]
-        female_results = all_results[mid_point:]
-
-        # Filter out None results and join (for cover, typically just one sentence).
-        male_audio = male_results[0] if male_results and male_results[0] else ""
-        female_audio = female_results[0] if female_results and female_results[0] else ""
-
-        return male_audio, female_audio
+        return translated_text
 
     async def process_paragraph(
         self,
@@ -510,8 +449,17 @@ class TTSModule:
         response_format: str = "mp3",
     ):
         """
-        Complete processing: translation + sentiment + TTS.
-        Legacy method - kept for backwards compatibility.
+        Complete processing: translation + sentiment + TTS
+        Legacy method - kept for backwards compatibility
+
+        Args:
+            page: {"fileName": "...", "text": "..."}
+            log_csv: Whether to log to CSV
+            check_latency: Whether to include latency in logs
+            response_format: Audio format
+
+        Returns:
+            {"status": "ok" or "failed", "details": [...]}
         """
         file_name = page["fileName"]
         sentences = kss.split_sentences(page["text"].strip())

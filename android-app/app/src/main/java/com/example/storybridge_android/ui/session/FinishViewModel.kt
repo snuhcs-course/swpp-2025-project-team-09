@@ -25,12 +25,12 @@ class FinishViewModel(private val repository: SessionRepository) : ViewModel() {
                             sessionStats.postValue(stats)
                         },
                         onFailure = {
-                            // 로그만 찍거나 무시 가능
+                            // log
                         }
                     )
                 },
                 onFailure = {
-                    // 로그만 찍거나 무시 가능
+                    // log
                 }
             )
 

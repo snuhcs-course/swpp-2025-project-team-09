@@ -79,24 +79,20 @@ class ReadingViewModel(private val repository: PageRepository) : ViewModel() {
     private fun startTtsPolling(sessionId: String, pageIndex: Int) {
         pollingJob?.cancel()
         pollingJob = viewModelScope.launch {
-            repeat(60) { // 최대 60회 시도 (2분)
+            repeat(60) { // maximum 60 times trying
                 repository.getTtsResults(sessionId, pageIndex)
                     .onSuccess { newData ->
                         _uiState.value = _uiState.value.copy(tts = newData)
                         Log.d("ReadingVM", "TTS polling: fetched ${newData.audio_results.size} items")
-
-                        // 여기서는 BBox 개수와 비교하지 않고 그냥 계속 업데이트
                     }
                     .onFailure { e ->
                         Log.e("ReadingVM", "Polling error", e)
                     }
-
                 delay(pollInterval)
             }
             Log.w("ReadingVM", "TTS polling finished (max attempts reached)")
         }
     }
-
 
     fun fetchThumbnail(sessionId: String, pageIndex: Int) {
         viewModelScope.launch {

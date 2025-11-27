@@ -6,7 +6,6 @@ import android.util.Log
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.ui.common.BaseActivity
@@ -14,6 +13,7 @@ import com.example.storybridge_android.ui.session.LoadingActivity
 import com.example.storybridge_android.ui.session.VoiceSelectActivity
 import com.example.storybridge_android.ui.setting.AppSettings
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 class CameraSessionActivity : BaseActivity() {
 
@@ -24,6 +24,7 @@ class CameraSessionActivity : BaseActivity() {
     private val viewModel: CameraSessionViewModel by viewModels {
         testViewModelFactory ?: CameraSessionViewModelFactory()
     }
+
     companion object {
         private const val TAG = "CameraSessionActivity"
         var testViewModelFactory: ViewModelProvider.Factory? = null
@@ -56,32 +57,46 @@ class CameraSessionActivity : BaseActivity() {
                     is SessionUiState.Idle -> startCamera()
                     is SessionUiState.Success -> {
                         if (isCover) {
-                            // Cover 촬영 시 바로 VoiceSelectActivity로 이동
                             navigateToVoiceSelect(state.imagePath)
                         } else {
-                            // 일반 페이지는 기존대로 LoadingActivity로
                             navigateToLoading(state.imagePath)
                         }
                     }
                     is SessionUiState.Cancelled -> {
-                        // User cancelled - return to previous activity (ReadingActivity)
-                        setResult(RESULT_CANCELED)
-                        finish()
+                        if (shouldDiscardSession()) {
+                            discardSessionAndFinish()
+                        } else {
+                            setResult(RESULT_CANCELED)
+                            finish()
+                        }
                     }
                     is SessionUiState.Error -> {
                         Log.e(TAG, state.message)
-                        setResult(RESULT_CANCELED)
-                        finish()
+                        discardSessionAndFinish()
                     }
                 }
             }
         }
     }
 
+    private fun discardSessionAndFinish() {
+        setResult(RESULT_CANCELED)
+        finish()
+
+        lifecycleScope.launch {
+            sessionId?.let { sid ->
+                viewModel.discardSession(sid)
+            }
+        }
+    }
+
+
     private fun startCamera() {
         if (testMode) return
 
-        val intent = Intent(this, CameraActivity::class.java)
+        val intent = Intent(this, CameraActivity::class.java).apply {
+            putExtra("is_cover", isCover)
+        }
         cameraLauncher.launch(intent)
     }
 
@@ -92,7 +107,6 @@ class CameraSessionActivity : BaseActivity() {
         intent.putExtra("lang", AppSettings.getLanguage(this))
         startActivity(intent)
 
-        // Signal success back to ReadingActivity
         setResult(RESULT_OK, Intent().putExtra("page_added", true))
         finish()
     }
@@ -103,11 +117,14 @@ class CameraSessionActivity : BaseActivity() {
         intent.putExtra("page_index", pageIndex)
         intent.putExtra("image_path", imagePath)
         intent.putExtra("is_cover", isCover)
-        intent.putExtra("lang", AppSettings.getLanguage(this))  // 현재 언어 설정 전달
+        intent.putExtra("lang", AppSettings.getLanguage(this))
         startActivity(intent)
 
-        // Signal success back to ReadingActivity
         setResult(RESULT_OK, Intent().putExtra("page_added", true))
         finish()
+    }
+
+    private fun shouldDiscardSession(): Boolean {
+        return isCover || (!isCover && pageIndex == 1)
     }
 }
