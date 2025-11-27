@@ -12,4 +12,5 @@ class ApisConfig(AppConfig):
         (runserver, shell, tests, etc.)
         """
         from .modules.profanity_check import load_profanity_lists
+
         load_profanity_lists()
