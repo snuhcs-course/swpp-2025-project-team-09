@@ -63,7 +63,12 @@ class CameraSessionActivity : BaseActivity() {
                         }
                     }
                     is SessionUiState.Cancelled -> {
-                        discardSessionAndFinish()
+                        if (shouldDiscardSession()) {
+                            discardSessionAndFinish()
+                        } else {
+                            setResult(RESULT_CANCELED)
+                            finish()
+                        }
                     }
                     is SessionUiState.Error -> {
                         Log.e(TAG, state.message)
@@ -117,5 +122,9 @@ class CameraSessionActivity : BaseActivity() {
 
         setResult(RESULT_OK, Intent().putExtra("page_added", true))
         finish()
+    }
+
+    private fun shouldDiscardSession(): Boolean {
+        return isCover || (!isCover && pageIndex == 1)
     }
 }

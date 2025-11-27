@@ -67,7 +67,6 @@ class VoiceSelectActivity : BaseActivity() {
         val exitConfirm = findViewById<Button>(R.id.exitConfirmBtn)
         val exitCancel = findViewById<Button>(R.id.exitCancelBtn)
 
-        // TODO: cover image upload timing change
         if (imagePath != null && lang != null) {
             viewModel.uploadCoverInBackground(sessionId!!, lang!!, imagePath!!)
         }
@@ -104,7 +103,6 @@ class VoiceSelectActivity : BaseActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.success.collectLatest {
                     Log.d("VoiceSelectActivity", "✓ Voice selection saved successfully")
-                    // API 완료 후 Next 버튼 활성화
                     nextButton.isEnabled = true
                 }
             }
