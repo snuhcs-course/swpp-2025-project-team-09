@@ -5,13 +5,14 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
+import android.view.View
+import android.widget.Button
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.R
@@ -28,6 +29,11 @@ class CameraActivity : BaseActivity() {
     private lateinit var scannerLauncher: ActivityResultLauncher<IntentSenderRequest>
     private lateinit var permissionLauncher: ActivityResultLauncher<String>
 
+    private var isCoverMode: Boolean = false
+    private lateinit var exitPanel: View
+    private lateinit var exitConfirmBtn: Button
+    private lateinit var exitCancelBtn: Button
+
     companion object {
         private const val TAG = "CameraActivity"
     }
@@ -37,6 +43,9 @@ class CameraActivity : BaseActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_camera)
 
+        isCoverMode = intent.getBooleanExtra("is_cover", false)
+
+        initExitPanel()
         initLaunchers()
         observeUiState()
 
@@ -48,6 +57,22 @@ class CameraActivity : BaseActivity() {
         }
 
         checkPermissionAndStart()
+    }
+
+    private fun initExitPanel() {
+        exitPanel = findViewById(R.id.exitPanelInclude)
+        exitConfirmBtn = findViewById(R.id.exitConfirmBtn)
+        exitCancelBtn = findViewById(R.id.exitCancelBtn)
+
+        exitConfirmBtn.setOnClickListener {
+            setResult(RESULT_CANCELED)
+            finish()
+        }
+
+        exitCancelBtn.setOnClickListener {
+            exitPanel.visibility = View.GONE
+            startScan()
+        }
     }
 
     private fun initLaunchers() {
@@ -69,10 +94,13 @@ class CameraActivity : BaseActivity() {
                 val scanningResult = GmsDocumentScanningResult.fromActivityResultIntent(result.data)
                 viewModel.handleScanningResult(scanningResult, contentResolver)
             } else {
-                // User cancelled the scan - return to previous activity
-                Toast.makeText(this, "Scan canceled", Toast.LENGTH_SHORT).show()
-                setResult(RESULT_CANCELED)
-                finish()
+                if (isCoverMode) {
+                    Toast.makeText(this, "Scan canceled", Toast.LENGTH_SHORT).show()
+                    setResult(RESULT_CANCELED)
+                    finish()
+                } else {
+                    exitPanel.visibility = View.VISIBLE
+                }
             }
         }
     }

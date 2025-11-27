@@ -22,9 +22,6 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import kotlin.math.max
 
-data class CoverResult(val title: String, val maleTts: String?, val femaleTts: String?)
-data class SessionResumeResult(val session_id: String, val page_index: Int, val total_pages: Int = page_index + 1)
-
 class LoadingViewModel(
     private val processRepo: ProcessRepository,
     private val userRepo: UserRepository,
@@ -34,6 +31,9 @@ class LoadingViewModel(
 
     private val scope = viewModelScope + dispatcher
 
+    // ========================================
+    // State Flows
+    // ========================================
     private val _progress = MutableStateFlow(0)
     val progress = _progress.asStateFlow()
 
@@ -57,7 +57,77 @@ class LoadingViewModel(
 
     private var rampJob: Job? = null
 
-    // ---------------- 기존 업로드 ----------------
+    // --------------------------
+    // 1. resume session
+    // --------------------------
+    fun loadUserInfo(deviceInfo: String) {
+        scope.launch {
+            val response = userRepo.getUserInfo(deviceInfo)
+            _userInfo.value = response
+        }
+    }
+
+    fun reloadAllSession(startedAt: String, context: Context) {
+        scope.launch {
+            _status.value = "reloading"
+            startRampTo(100, 1000L)
+
+            val deviceInfo = Settings.Secure.getString(
+                context.contentResolver,
+                Settings.Secure.ANDROID_ID
+            )
+
+            val result = sessionRepo.reloadAllSession(deviceInfo, startedAt)
+            result.fold(
+                onSuccess = { data ->
+                    stopRamp()
+                    _progress.value = 100
+                    val totalPages = data.pages.size
+                    _navigateToReading.emit(SessionResumeResult(data.session_id, 0, totalPages))
+                },
+                onFailure = { e ->
+                    stopRamp()
+                    _error.emit("ReloadAll failed: ${e.message}")
+                }
+            )
+        }
+    }
+
+    // --------------------------
+    // 2. new session
+    // --------------------------
+    fun uploadCover(sessionId: String, lang: String, path: String) {
+        scope.launch {
+            _status.value = "uploading_cover"
+
+            val base64 = encodeBase64(path)
+            if (base64 == null) {
+                _error.value = "Failed to process image"
+                return@launch
+            }
+            startRampTo(40, 2000L)
+
+            val req = UploadImageRequest(sessionId, 0, lang, base64)
+            processRepo.uploadCoverImage(req).fold(
+                onSuccess = {
+                    stopRamp()
+                    _progress.value = 100
+
+                    val result = CoverResult(
+                        it.title
+                    )
+                    _cover.value = result
+                    _navigateToVoice.value = result
+                    _status.value = "cover_ready"
+                },
+                onFailure = {
+                    stopRamp()
+                    _error.value = it.message
+                }
+            )
+        }
+    }
+
     fun uploadImage(sessionId: String, pageIndex: Int, lang: String, path: String) {
         scope.launch {
             _status.value = "uploading"
@@ -82,65 +152,6 @@ class LoadingViewModel(
         }
     }
 
-    fun uploadCover(sessionId: String, lang: String, path: String) {
-        scope.launch {
-            _status.value = "uploading_cover"
-
-            val base64 = encodeBase64(path)
-            if (base64 == null) {
-                _error.value = "Failed to process image"
-                return@launch
-            }
-            startRampTo(40, 2000L)
-
-            val req = UploadImageRequest(sessionId, 0, lang, base64)
-            processRepo.uploadCoverImage(req).fold(
-                onSuccess = {
-                    stopRamp()
-                    _progress.value = 100
-
-                    val result = CoverResult(
-                        it.title,
-                        it.tts_male.takeIf { t -> t.isNotEmpty() },
-                        it.tts_female.takeIf { t -> t.isNotEmpty() }
-                    )
-                    _cover.value = result
-                    _navigateToVoice.value = result
-                    _status.value = "cover_ready"
-                },
-                onFailure = {
-                    stopRamp()
-                    _error.value = it.message
-                }
-            )
-        }
-    }
-
-    // ---------------- OCR Polling ----------------
-    /*
-    private suspend fun pollOcr(sessionId: String, pageIndex: Int) {
-        _status.value = "polling"
-        repeat(60) {
-            val res = processRepo.checkOcrStatus(sessionId, pageIndex)
-            var done = false
-            res.fold(
-                onSuccess = {
-                    val p = it.progress
-                    _progress.value = 40 + (p * 60 / 100)
-                    if (it.status == "ready") {
-                        _progress.value = 100
-                        _status.value = "ready"
-                        done = true
-                    }
-                },
-                onFailure = { _error.value = it.message }
-            )
-            if (done) return
-            delay(1000)
-        }
-        _error.value = "Timeout while waiting for OCR"
-    }
-     */
     private suspend fun pollOcr(sessionId: String, pageIndex: Int) {
         _status.value = "polling"
 
@@ -183,7 +194,9 @@ class LoadingViewModel(
         _error.value = "Timeout while waiting for OCR"
     }
 
-    // ---------------- Progress ----------------
+    // --------------------
+    // Utility Functions
+    // --------------------
     private fun startRampTo(target: Int, durationMs: Long) {
         stopRamp()
         rampJob = scope.launch {
@@ -207,7 +220,6 @@ class LoadingViewModel(
         rampJob = null
     }
 
-    // ---------------- Bitmap ----------------
     private fun encodeBase64(path: String): String? {
         val file = File(path)
         if (!file.exists()) return null
@@ -230,40 +242,8 @@ class LoadingViewModel(
         val newH = (bitmap.height / ratio).toInt()
         return Bitmap.createScaledBitmap(bitmap, newW, newH, true)
     }
-
-    // ---------------- 사용자 정보 ----------------
-    fun loadUserInfo(deviceInfo: String) {
-        scope.launch {
-            val response = userRepo.getUserInfo(deviceInfo)
-            _userInfo.value = response
-        }
-    }
-
-    // ---------------- 이어보기 ----------------
-    fun reloadAllSession(startedAt: String, context: Context) {
-        scope.launch {
-            _status.value = "reloading"
-            startRampTo(100, 1000L)
-
-            val deviceInfo = Settings.Secure.getString(
-                context.contentResolver,
-                Settings.Secure.ANDROID_ID
-            )
-
-            val result = sessionRepo.reloadAllSession(deviceInfo, startedAt)
-            result.fold(
-                onSuccess = { data ->
-                    stopRamp()
-                    _progress.value = 100
-                    val totalPages = data.pages.size
-                    _navigateToReading.emit(SessionResumeResult(data.session_id, 0, totalPages))
-                },
-                onFailure = { e ->
-                    stopRamp()
-                    _error.emit("ReloadAll failed: ${e.message}")
-                }
-            )
-        }
-    }
-
 }
+
+// Data classes
+data class CoverResult(val title: String)
+data class SessionResumeResult(val session_id: String, val page_index: Int, val total_pages: Int = page_index + 1)

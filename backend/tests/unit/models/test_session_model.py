@@ -64,14 +64,15 @@ class TestSessionModel(TestCase):
         self.assertIn(session, self.test_user.sessions.all())
 
     def test_06_get_pages_empty(self):
-        """Test getPages with no pages"""
+        """Test querying pages when session has no pages"""
         session = Session.objects.create(user=self.test_user, title="Empty Pages Test")
 
-        pages = session.getPages()
+        pages = Page.objects.filter(session=session)
         self.assertEqual(pages.count(), 0)
 
+
     def test_07_get_pages_with_pages(self):
-        """Test getPages with multiple pages"""
+        """Test querying pages with multiple pages"""
         session = Session.objects.create(user=self.test_user, title="Pages Test")
 
         # Create pages
@@ -82,34 +83,34 @@ class TestSessionModel(TestCase):
             session=session, img_url="image2.jpg", created_at=timezone.now()
         )
 
-        pages = session.getPages()
+        pages = Page.objects.filter(session=session)
         self.assertEqual(pages.count(), 2)
         self.assertIn(page1, pages)
         self.assertIn(page2, pages)
 
     def test_08_add_page_success(self):
-        """Test addPage method"""
-        session = Session.objects.create(user=self.test_user, title="Add Page Test")
+        """Test creating a page using Django ORM"""
+        session = Session.objects.create(user=self.test_user, title="Create Page Test")
 
-        session.addPage("test_image.jpg", 0)
+        page = Page.objects.create(session=session, img_url="test_image.jpg")
 
-        pages = session.getPages()
+        pages = Page.objects.filter(session=session)
         self.assertEqual(pages.count(), 1)
         self.assertEqual(pages[0].img_url, "test_image.jpg")
 
     def test_09_add_multiple_pages(self):
-        """Test adding multiple pages"""
+        """Test creating multiple pages"""
         session = Session.objects.create(
             user=self.test_user, title="Multiple Pages Test"
         )
 
-        session.addPage("page1.jpg", 0)
-        session.addPage("page2.jpg", 1)
-        session.addPage("page3.jpg", 2)
+        Page.objects.create(session=session, img_url="page1.jpg")
+        Page.objects.create(session=session, img_url="page2.jpg")
+        Page.objects.create(session=session, img_url="page3.jpg")
 
-        pages = session.getPages()
+        pages = Page.objects.filter(session=session)
         self.assertEqual(pages.count(), 3)
-
+        
     def test_10_session_end(self):
         """Test ending a session"""
         session = Session.objects.create(user=self.test_user, title="End Session Test")

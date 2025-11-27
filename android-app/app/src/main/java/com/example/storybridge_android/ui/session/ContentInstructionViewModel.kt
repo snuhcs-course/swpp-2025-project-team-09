@@ -5,9 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 
 class ContentInstructionViewModel : ViewModel() {
-
     private var sessionId: String? = null
-
     private val _navigateToCamera = MutableLiveData<Boolean>()
     val navigateToCamera: LiveData<Boolean> = _navigateToCamera
 

@@ -82,7 +82,7 @@ class UserRepositoryTest {
             {
                 "user_id": "u123",
                 "session_id": "s1",
-                "title": "책 제목",
+                "title": "book1",
                 "translated_title": "Book Title",
                 "image_base64": "base64image",
                 "started_at": "2025-11-14T09:00:00"
@@ -90,7 +90,7 @@ class UserRepositoryTest {
             {
                 "user_id": "u123",
                 "session_id": "s2",
-                "title": "다른 책",
+                "title": "book2",
                 "translated_title": "Another Book",
                 "image_base64": "base64image2",
                 "started_at": "2025-11-14T10:00:00"
@@ -105,6 +105,6 @@ class UserRepositoryTest {
         val list = response.body()
         assertEquals(2, list?.size)
         assertEquals("s1", list?.get(0)?.session_id)
-        assertEquals("다른 책", list?.get(1)?.title)
+        assertEquals("book2", list?.get(1)?.title)
     }
 }

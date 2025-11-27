@@ -1,7 +1,9 @@
 import android.content.Context
 import android.content.SharedPreferences
+import com.example.storybridge_android.StoryBridgeApplication
 import com.example.storybridge_android.ui.setting.AppSettings
 import io.mockk.*
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -13,6 +15,10 @@ class AppSettingsTest {
 
     @Before
     fun setup() {
+        // Mock the static companion object method
+        mockkObject(StoryBridgeApplication.Companion)
+        every { StoryBridgeApplication.applyLanguage(any()) } just Runs
+
         context = mockk()
         prefs = mockk()
         editor = mockk()
@@ -28,12 +34,27 @@ class AppSettingsTest {
         every { prefs.getString(any(), any()) } answers { secondArg() }
     }
 
+    @After
+    fun tearDown() {
+        unmockkObject(StoryBridgeApplication.Companion)
+    }
+
     @Test
     fun setLanguage_savesCorrectValue() {
         AppSettings.setLanguage(context, "zh")
 
         verify { editor.putString("language", "zh") }
         verify { editor.apply() }
+        verify { StoryBridgeApplication.applyLanguage(context) }
+    }
+
+    @Test
+    fun setLanguage_savesVietnamese() {
+        AppSettings.setLanguage(context, "vi")
+
+        verify { editor.putString("language", "vi") }
+        verify { editor.apply() }
+        verify { StoryBridgeApplication.applyLanguage(context) }
     }
 
     @Test
@@ -43,6 +64,15 @@ class AppSettingsTest {
         val lang = AppSettings.getLanguage(context)
 
         assertEquals("zh", lang)
+    }
+
+    @Test
+    fun getLanguage_returnsVietnamese() {
+        every { prefs.getString("language", "en") } returns "vi"
+
+        val lang = AppSettings.getLanguage(context)
+
+        assertEquals("vi", lang)
     }
 
     @Test

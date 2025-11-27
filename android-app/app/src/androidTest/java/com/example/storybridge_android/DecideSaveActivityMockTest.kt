@@ -23,6 +23,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class DecideSaveActivityMockTest {
+
     private fun launch(): ActivityScenario<DecideSaveActivity> {
         val intent = Intent(
             ApplicationProvider.getApplicationContext(),
@@ -45,12 +46,9 @@ class DecideSaveActivityMockTest {
         unmockkAll()
     }
 
-    //--------------------------------------------------------------------
-    // 1) SAVE 버튼 클릭 → SaveSuccess → mainButton 보임
-    //--------------------------------------------------------------------
     @Test
     fun clickSave_showMainButton_onSaveSuccess() {
-
+        // GIVEN: Mock successful endSession
         val fakeRepo = object : SessionRepository {
 
             override suspend fun startSession(userId: String): Result<StartSessionResponse> {
@@ -64,7 +62,6 @@ class DecideSaveActivityMockTest {
                 return Result.failure(Exception("unused"))
             }
 
-            // ★ endSession 성공 (SAVE 버튼은 endSession을 호출)
             override suspend fun endSession(sessionId: String): Result<EndSessionResponse> {
                 return Result.success(
                     EndSessionResponse(
@@ -95,24 +92,22 @@ class DecideSaveActivityMockTest {
 
         ServiceLocator.sessionRepository = fakeRepo
 
+        // WHEN: Launch activity and click Save button
         val scenario = launch()
         Thread.sleep(500)
 
         onView(withId(R.id.btnSave)).perform(click())
-
         Thread.sleep(1000)
 
+        // THEN: Verify main button is displayed
         onView(withId(R.id.mainButton)).check(matches(isDisplayed()))
 
         scenario.close()
     }
 
-    //--------------------------------------------------------------------
-    // 2) DISCARD 버튼 클릭 → DiscardSuccess → mainButton 보임
-    //--------------------------------------------------------------------
     @Test
     fun clickDiscard_showMainButton_onDiscardSuccess() {
-
+        // GIVEN: Mock successful discardSession
         val fakeRepo = object : SessionRepository {
 
             override suspend fun startSession(userId: String): Result<StartSessionResponse> {
@@ -135,7 +130,6 @@ class DecideSaveActivityMockTest {
                 return Result.failure(Exception("unused"))
             }
 
-            // ★ discard 성공
             override suspend fun discardSession(sessionId: String): Result<DiscardSessionResponse> {
                 return Result.success(DiscardSessionResponse("discarded"))
             }
@@ -143,24 +137,22 @@ class DecideSaveActivityMockTest {
 
         ServiceLocator.sessionRepository = fakeRepo
 
+        // WHEN: Launch activity and click Discard button
         val scenario = launch()
         Thread.sleep(500)
 
         onView(withId(R.id.btnDiscard)).perform(click())
-
         Thread.sleep(1000)
 
+        // THEN: Verify main button is displayed
         onView(withId(R.id.mainButton)).check(matches(isDisplayed()))
 
         scenario.close()
     }
 
-    //--------------------------------------------------------------------
-    // 3) DISCARD 실패 → 버튼 unselect + 다시 클릭 가능
-    //--------------------------------------------------------------------
     @Test
     fun discardError_buttonsReset_andClickableAgain() {
-
+        // GIVEN: Mock failed discardSession
         val fakeRepo = object : SessionRepository {
 
             override suspend fun startSession(userId: String): Result<StartSessionResponse> {
@@ -183,7 +175,6 @@ class DecideSaveActivityMockTest {
                 return Result.failure(Exception("unused"))
             }
 
-            // ★ discard 실패
             override suspend fun discardSession(sessionId: String): Result<DiscardSessionResponse> {
                 return Result.failure(Exception("DISCARD FAIL"))
             }
@@ -191,14 +182,14 @@ class DecideSaveActivityMockTest {
 
         ServiceLocator.sessionRepository = fakeRepo
 
+        // WHEN: Launch activity and attempt discard (fails)
         val scenario = launch()
         Thread.sleep(500)
 
-        // 첫번째 discard 클릭 → 실패
         onView(withId(R.id.btnDiscard)).perform(click())
         Thread.sleep(1000)
 
-        // 버튼 다시 누를 수 있어야 함 (selected = false)
+        // THEN: Verify button is clickable again after failure
         onView(withId(R.id.btnDiscard)).perform(click())
 
         scenario.close()

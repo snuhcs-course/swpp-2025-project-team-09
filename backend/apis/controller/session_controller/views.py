@@ -12,25 +12,22 @@ import os
 
 class StartSessionView(APIView):
     """
+    Start a new reading session
+
     [POST] /session/start
 
-    Endpoint: /session/start
-
-        - Request (POST)
-
-            {
+    Request Body:
+        {
             "user_id": "string",
-            "page_index": 0  # first page (0-indexed)
-            }
-            Response
+            "page_index": 0
+        }
 
-        - Status: 200 OK
-
-            {
+    Response (200 OK):
+        {
             "session_id": "string",
             "started_at": "datetime",
             "page_index": 0
-            }
+        }
     """
 
     def post(self, request):
@@ -72,24 +69,20 @@ class StartSessionView(APIView):
 
 class SelectVoiceView(APIView):
     """
+    Set voice preference for session
+
     [POST] /session/voice
 
-    Endpoint: /session/voice
-
-    - Request (POST)
-
+    Request Body:
         {
-        "session_id": "string",
-        "voice_style": "string"
+            "session_id": "string",
+            "voice_style": "string"
         }
 
-    - Response
-
-        Status: 200 OK
-
+    Response (200 OK):
         {
-        "session_id": "string",
-        "voice_style": "string"
+            "session_id": "string",
+            "voice_style": "string"
         }
     """
 
@@ -119,24 +112,20 @@ class SelectVoiceView(APIView):
 
 class EndSessionView(APIView):
     """
+    End an ongoing session
+
     [POST] /session/end
 
-    Endpoint: /session/end
-
-    - Request (POST)
-
+    Request Body:
         {
-        "session_id": "string",
+            "session_id": "string"
         }
 
-    - Response
-
-        Status: 200 OK
-
+    Response (200 OK):
         {
-        "session_id": "string",
-        "ended_at": "datetime",
-        "total_pages": 10
+            "session_id": "string",
+            "ended_at": "datetime",
+            "total_pages": 10
         }
     """
 
@@ -167,277 +156,86 @@ class EndSessionView(APIView):
             )
 
 
-class GetSessionInfoView(APIView):
-    """
-    [GET] /session/info
-
-    Endpoint: /session/info
-
-    - Request (GET)
-
-        {
-        "session_id": "string",
-        }
-
-    - Response
-
-        Status: 200 OK
-
-        {
-        "session_id": "string",
-        "user_id": "string",
-        "started_at": "datetime",
-        "ended_at": "datetime",
-        "total_pages": "integer",
-        "total_time_spent": "integer",
-        "total_words_read": "integer",
-        // other details to encourage readers
-        ]
-        }
-    """
-
-    def get(self, request):
-        session_id = request.query_params.get("session_id")
-        print("[DEBUG] Fetching info for session_id:", session_id)
-        if not session_id:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            session = Session.objects.get(id=session_id)
-            return Response(
-                {
-                    "session_id": str(session.id),
-                    "user_id": str(session.user.uid),
-                    "voice_style": session.voicePreference,
-                    "isOngoing": session.isOngoing,
-                    "started_at": session.started_at,
-                    "ended_at": session.ended_at,
-                    "total_pages": session.totalPages,
-                    "total_time_spent": (
-                        (session.ended_at or timezone.now()) - session.started_at
-                    ).seconds,
-                    "total_words_read": session.totalWords,
-                },
-                status=status.HTTP_200_OK,
-            )
-        except Session.DoesNotExist:
-            return Response(
-                {"error_code": 404, "message": "SESSION__NOT_FOUND"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-
 class GetSessionStatsView(APIView):
     """
-    [GET] /session/stats
+    Get session statistics
 
-    Endpoint: /session/stats
+    [GET] /session/stats?session_id={session_id}
 
-    - Request (GET)
+    Query Parameters:
+        session_id: Session identifier
 
-        {
-        "session_id": "string",
-        }
-
-    - Response
-
-        Status: 200 OK
-
-        {
-        "session_id": "string",
-        "user_id": "string",
-        "page_index": 5,
-        "voice_style": "string",
-        "started_at": "datetime",
-        "ended_at": null
-        "total_pages": null
-        }
-    """
-
-    def get(self, request):
-        session_id = request.query_params.get("session_id")
-        print("[DEBUG] Fetching info for session_id:", session_id)
-        if not session_id:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            session = Session.objects.get(id=session_id)
-            total_time_spent = None
-            if session.ended_at:
-                total_time_spent = (session.ended_at - session.started_at).seconds
-
-            return Response(
-                {
-                    "session_id": str(session.id),
-                    "user_id": str(session.user.uid),
-                    "voice_style": session.voicePreference,
-                    "isOngoing": session.isOngoing,
-                    "started_at": session.started_at,
-                    "ended_at": session.ended_at,
-                    "total_pages": session.totalPages,
-                    "total_time_spent": total_time_spent,
-                    "total_words_read": session.totalWords,
-                },
-                status=status.HTTP_200_OK,
-            )
-        except Session.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
-
-class SessionReviewView(APIView):
-    """
-    [GET] /session/review
-
-    Endpoint: /session/review
-
-    - Request (GET)
-
-        {
-        "session_id": "string",
-        }
-
-    - Response
-
-        Status: 200 OK
-
-        {
-        "session_id": "string",
-        "user_id": "string",
-        "started_at": "datetime",
-        "ended_at": "datetime",
-        "total_pages": "integer",
-        }
-    """
-
-    def get(self, request):
-        session_id = request.query_params.get("session_id")
-        print("[DEBUG] Fetching info for session_id:", session_id)
-        if not session_id:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            session = Session.objects.get(id=session_id)
-            duration = None
-            if session.ended_at:
-                duration = (session.ended_at - session.started_at).seconds
-
-            return Response(
-                {
-                    "session_id": str(session.id),
-                    "user_id": str(session.user.uid),
-                    "voice_style": session.voicePreference,
-                    "isOngoing": session.isOngoing,
-                    "started_at": session.started_at,
-                    "ended_at": session.ended_at,
-                    "total_pages": session.totalPages,
-                    "total_time_spent": (
-                        (session.ended_at or timezone.now()) - session.started_at
-                    ).seconds,
-                    "total_words_read": session.totalWords,
-                },
-                status=status.HTTP_200_OK,
-            )
-        except Session.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
-
-class SessionReloadView(APIView):
-    """
-    [GET] /session/reload
-    - created_at(=started_at) 기준으로 세션을 찾아
-      session_id 및 첫 페이지 데이터를 반환 (이어보기용)
-
-    - Request Example:
-        GET /session/reload?user_id=xxx&started_at=2025-11-06T04:30:00Z&page_index=0
-
-    - Response Example:
+    Response (200 OK):
         {
             "session_id": "string",
-            "page_index": 0,
-            "image_base64": "string or null",
-            "translation_text": "string or null",
-            "audio_url": "string or null"
+            "user_id": "string",
+            "voice_style": "string",
+            "isOngoing": true,
+            "started_at": "datetime",
+            "ended_at": "datetime or null",
+            "total_pages": 5,
+            "total_time_spent": 120,
+            "total_words_read": 500
         }
     """
 
     def get(self, request):
-        user_id = request.query_params.get("user_id")
-        started_at = request.query_params.get("started_at")
-        page_index = int(request.query_params.get("page_index", 0))
-
-        if not user_id or not started_at:
-            return Response(
-                {"error": "Missing user_id or started_at"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        session_id = request.query_params.get("session_id")
+        print("[DEBUG] Fetching info for session_id:", session_id)
+        if not session_id:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            user = User.objects.get(uid=user_id)
-        except User.DoesNotExist:
-            return Response(
-                {"error_code": 404, "message": "USER__NOT_FOUND"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        # created_at으로 세션 찾기
-        parsed_time = parse_datetime(started_at)
-        if not parsed_time:
-            return Response(
-                {"error": "Invalid started_at format"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        try:
-            session = Session.objects.filter(user=user, created_at=parsed_time).first()
-            if not session:
-                return Response(
-                    {"error_code": 404, "message": "SESSION__NOT_FOUND"},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-            session.started_at = timezone.now()
-            session.save(update_fields=["started_at"])
-            pages = Page.objects.filter(session=session).order_by("created_at")
-            if not pages.exists():
-                return Response(
-                    {
-                        "session_id": str(session.id),
-                        "page_index": page_index,
-                        "image_base64": None,
-                        "translation_text": None,
-                        "audio_url": None,
-                    },
-                    status=status.HTTP_200_OK,
-                )
-
-            page = pages[page_index] if page_index < len(pages) else pages.first()
-
-            # 이미지 base64 변환
-            try:
-                with open(page.img_url, "rb") as f:
-                    encoded = base64.b64encode(f.read()).decode("utf-8")
-            except Exception:
-                encoded = None
+            session = Session.objects.get(id=session_id)
 
             return Response(
                 {
                     "session_id": str(session.id),
-                    "page_index": page_index,
-                    "image_base64": encoded,
-                    "translation_text": page.translation_text,
-                    "audio_url": page.audio_url,
+                    "user_id": str(session.user.uid),
+                    "voice_style": session.voicePreference,
+                    "isOngoing": session.isOngoing,
+                    "started_at": session.started_at,
+                    "ended_at": session.ended_at,
+                    "total_pages": session.totalPages,
+                    "total_time_spent": ((session.ended_at or timezone.now()) - session.started_at).seconds,
+                    "total_words_read": session.totalWords
                 },
                 status=status.HTTP_200_OK,
             )
-
-        except Exception as e:
-            print("[DEBUG] Reload error:", e)
-            return Response(
-                {"error": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-
+        except Session.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
 class SessionReloadAllView(APIView):
+    """
+    Reload all session data for resuming reading
+
+    [GET] /session/reload?user_id={user_id}&started_at={started_at}
+
+    Query Parameters:
+        user_id: Device identifier
+        started_at: Session creation time (ISO format)
+
+    Response (200 OK):
+        {
+            "session_id": "string",
+            "started_at": "datetime",
+            "pages": [
+                {
+                    "page_index": 0,
+                    "img_url": "string",
+                    "translation_text": "string",
+                    "audio_url": "string",
+                    "ocr_results": [
+                        {
+                            "bbox": {},
+                            "original_txt": "string",
+                            "translation_txt": "string"
+                        }
+                    ]
+                }
+            ]
+        }
+    """
     def get(self, request):
         user_id = request.query_params.get("user_id")
         started_at = request.query_params.get("started_at")
@@ -456,7 +254,6 @@ class SessionReloadAllView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # created_at으로 세션 찾기
         parsed_time = parse_datetime(started_at)
         if not parsed_time:
             return Response(
@@ -510,16 +307,16 @@ class SessionReloadAllView(APIView):
 
 class DiscardSessionView(APIView):
     """
-    [POST] /session/discard
-    - 세션과 관련된 모든 데이터를 삭제 (Session, Pages, BBs, image files)
+    Delete session and all associated data
 
-    - Request (POST)
+    [POST] /session/discard
+
+    Request Body:
         {
             "session_id": "string"
         }
 
-    - Response
-        Status: 200 OK
+    Response (200 OK):
         {
             "message": "Session discarded successfully"
         }

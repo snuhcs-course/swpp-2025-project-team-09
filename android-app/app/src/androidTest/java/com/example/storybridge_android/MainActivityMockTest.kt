@@ -138,12 +138,12 @@ class MainActivityMockTest {
             Instrumentation.ActivityResult(RESULT_OK, Intent())
         )
 
-        // WHEN: Settings 버튼 클릭
+        // WHEN: Settings button clicked
         onView(withId(R.id.navbarSettingsButton)).perform(click())
 
         Thread.sleep(1000)
 
-        // THEN: SettingActivity가 실행되었는지 확인
+        // THEN: SettingActivity activated
         Intents.intended(
             IntentMatchers.hasComponent("com.example.storybridge_android.ui.setting.SettingActivity")
         )
@@ -204,5 +204,82 @@ class MainActivityMockTest {
         Thread.sleep(500)
 
         onView(withId(R.id.exitPanelInclude)).check(matches(withEffectiveVisibility(Visibility.GONE)))
+    }
+
+    @Test
+    fun trashButton_showsDiscardPanel() = runTest {
+        val fakeList = listOf(
+            UserInfoResponse(
+                session_id = "S1",
+                user_id = "DEVICE123",
+                image_base64 = "",
+                started_at = "2025-01-01",
+                title = "A",
+                translated_title = "TestBook"
+            )
+        )
+        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns retrofit2.Response.success(fakeList)
+
+        launchMain()
+        Thread.sleep(800)
+
+        onView(withId(R.id.cardTrashButton)).perform(click())
+        Thread.sleep(500)
+
+        onView(withId(R.id.discardPanelInclude)).check(matches(isDisplayed()))
+    }
+
+    @Test
+    fun discardCancelBtn_hidesDiscardPanel() = runTest {
+        val fakeList = listOf(
+            UserInfoResponse(
+                session_id = "S1",
+                user_id = "DEVICE123",
+                image_base64 = "",
+                started_at = "2025-01-01",
+                title = "A",
+                translated_title = "TestBook"
+            )
+        )
+        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns retrofit2.Response.success(fakeList)
+
+        launchMain()
+        Thread.sleep(800)
+
+        onView(withId(R.id.cardTrashButton)).perform(click())
+        Thread.sleep(500)
+
+        onView(withId(R.id.discardCancelBtn)).perform(click())
+        Thread.sleep(500)
+
+        onView(withId(R.id.discardPanelInclude)).check(matches(withEffectiveVisibility(Visibility.GONE)))
+    }
+
+    @Test
+    fun discardConfirmBtn_deletesSession() = runTest {
+        val fakeList = listOf(
+            UserInfoResponse(
+                session_id = "S1",
+                user_id = "DEVICE123",
+                image_base64 = "",
+                started_at = "2025-01-01",
+                title = "A",
+                translated_title = "TestBook"
+            )
+        )
+        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns retrofit2.Response.success(fakeList)
+        coEvery { mockSessionRepo.discardSession("S1", "DEVICE123") } returns retrofit2.Response.success(Unit)
+
+        launchMain()
+        Thread.sleep(800)
+
+        onView(withId(R.id.cardTrashButton)).perform(click())
+        Thread.sleep(500)
+
+        onView(withId(R.id.discardConfirmBtn)).perform(click())
+        Thread.sleep(500)
+
+        coVerify { mockSessionRepo.discardSession("S1", "DEVICE123") }
+        onView(withId(R.id.discardPanelInclude)).check(matches(withEffectiveVisibility(Visibility.GONE)))
     }
 }

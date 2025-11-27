@@ -1,31 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">STORY BRIDGE</string>
     <string name="story_bridge">STORY BRIDGE</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
 
-    <!-- 메인 화면 -->
+    <!-- Main Activity -->
     <string name="start_new_reading">Start New Reading</string>
     <string name="previous_readings">Previous Readings</string>
     <string name="no_previous_readings">No previous readings found.</string>
 
-    <!-- 세팅 -->
+    <!-- Setting -->
     <string name="language_label">Language</string>
     <string name="english">English</string>
     <string name="chinese">Chinese</string>
     <string name="vietnamese">Vietnamese</string>
     <string name="save_settings">Save Settings</string>
 
-    <!-- 표지 촬영 -->
+    <!-- Taking cover image -->
     <string name="take_photo_instruction">Take a photo of\nyour book cover</string>
     <string name="start">Start!</string>
 
-    <!-- 본문 촬영 -->
+    <!-- Taking content image -->
     <string name="take_content_instruction">Now, take photos of\nthe book pages</string>
 
-    <!-- 로딩 -->
+    <!-- Loading -->
     <string name="loading_text">Loading...</string>
 
-    <!-- 음성 선택 -->
+    <!-- Voice Selection -->
     <string name="preferred_voice_question">What is your&#10;preferred voice?</string>
     <string name="male_voice">Man</string>
     <string name="female_voice">Woman</string>
@@ -34,34 +35,22 @@
     <string name="voice_preview_not_available">%1$s voice preview not available</string>
     <string name="failed_audio_preview">Failed to play audio preview</string>
 
-    <!-- 읽기 -->
+    <!-- Reading -->
     <string name="first_page">This is the first page</string>
     <string name="last_page">This is the last page</string>
     <string name="current_page">This is the current page</string>
     <string name="loading_error">Failed to load page</string>
     <string name="audio_error">Audio playback error</string>
     <string name="finish_reading">Finish Reading</string>
-    <string name="capture_new_page">CAPTURE NEW PAGE</string>
+    <string name="button_add_new_page">Add New Page</string>
+    <string name="page_status_format">Page %1$d/%2$d</string>
 
-    <!-- 끝내기 -->
+    <!-- summary -->
     <string name="congratulations">Congratulations!</string>
     <string name="you_achieved">You achieved ...</string>
+    <string name="summary_text">You read %1$d words and %2$s\nfor %3$s. Amazing!</string>
 
-    <!-- 저장 -->
-    <string name="save_session_question">Do you want to\nsave this session?</string>
-    <string name="save">Save</string>
-    <string name="discard">Discard</string>
-    <string name="go_back_to_main">Go back to Main</string>
-
-    <!--exit 다이얼로그 -->
-    <string name="exit_dialog_title">Exit</string>
-    <string name="exit_dialog_message">Do you want to leave the reading screen?</string>
-    <string name="exit_dialog_confirm">Exit</string>
-    <string name="exit_dialog_cancel">Cancel</string>
-    <string name="exit_loading">Please wait until loading is complete.</string>
-
-
-    <!-- 단위 -->
+    <!-- unit -->
     <string name="unit_minute">minute</string>
     <string name="unit_minutes">minutes</string>
     <string name="unit_second">second</string>
@@ -69,15 +58,20 @@
     <string name="unit_page">page</string>
     <string name="unit_pages">pages</string>
 
-    <!-- 문장 구성 -->
-    <string name="summary_text">You read %1$d words and %2$s\nfor %3$s. Amazing!</string>
+    <!-- Session Save -->
+    <string name="save_session_question">Do you want to\nsave this session?</string>
+    <string name="save">Save</string>
+    <string name="discard">Discard</string>
+    <string name="go_back_to_main">Go back to Main</string>
 
-    <!-- Exit dialog text -->
+    <!--Exit dialog -->
+    <string name="exit_loading">Please wait until loading is complete.</string>
     <string name="exit_title">Are you sure you want to exit?</string>
     <string name="exit_confirm">Exit</string>
     <string name="exit_cancel">Cancel</string>
 
-    <string name="button_add_new_page">Add New Page</string>
-    <string name="page_status_format">Page %1$d/%2$d</string>
-
+    <!-- Delete Previous Reading -->
+    <string name="discard_session_title">Are you sure you want to delete?</string>
+    <string name="discard_session_confirm">Delete</string>
+    <string name="discard_session_cancel">Cancel</string>
 </resources>

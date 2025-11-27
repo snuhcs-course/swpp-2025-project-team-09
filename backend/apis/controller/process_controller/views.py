@@ -17,10 +17,24 @@ import threading
 
 class ProcessUploadView(APIView):
     """
-    POST /process/upload
+    Upload and process a page image with OCR, translation, and TTS
 
-    Handles image upload, OCR, translation, and initiates background TTS.
-    Returns immediately after translation completes.
+    [POST] /process/upload
+
+    Request Body:
+        {
+            "session_id": "string",
+            "lang": "string",
+            "image_base64": "string"
+        }
+
+    Response (200 OK):
+        {
+            "session_id": "string",
+            "page_index": 0,
+            "status": "ready",
+            "submitted_at": "datetime"
+        }
     """
 
     def post(self, request):
@@ -49,7 +63,7 @@ class ProcessUploadView(APIView):
                 {"error_code": 422, "message": "PROCESS__UNABLE_TO_PROCESS_IMAGE"},
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
-
+        
         # Count words from OCR and add to session.totalWords
         total_words = sum(
             len((para.get("text", "") or "").split()) for para in ocr_result
@@ -251,7 +265,25 @@ class ProcessUploadView(APIView):
 
 
 class CheckOCRStatusView(APIView):
-    """GET /process/check_ocr - Check OCR/translation status."""
+    """
+    Check OCR and translation status for a page
+
+    [GET] /process/check_ocr?session_id={session_id}&page_index={page_index}
+
+    Query Parameters:
+        session_id: Session identifier
+        page_index: Page number
+
+    Response (200 OK):
+        {
+            "session_id": "string",
+            "page_index": 0,
+            "status": "ready",
+            "progress": 100,
+            "submitted_at": "datetime",
+            "processed_at": "datetime"
+        }
+    """
 
     def get(self, request):
         session_id = request.query_params.get("session_id")
@@ -282,7 +314,25 @@ class CheckOCRStatusView(APIView):
 
 
 class CheckTTSStatusView(APIView):
-    """GET /process/check_tts - Check TTS progress."""
+    """
+    Check TTS processing progress for a page
+
+    [GET] /process/check_tts?session_id={session_id}&page_index={page_index}
+
+    Query Parameters:
+        session_id: Session identifier
+        page_index: Page number
+
+    Response (200 OK):
+        {
+            "session_id": "string",
+            "page_index": 0,
+            "status": "ready" or "processing",
+            "progress": 75,
+            "submitted_at": "datetime",
+            "processed_at": "datetime or null"
+        }
+    """
 
     def get(self, request):
         session_id = request.query_params.get("session_id")
@@ -346,28 +396,26 @@ class CheckTTSStatusView(APIView):
 
 class ProcessUploadCoverView(APIView):
     """
-    POST /process/upload_cover
+    Upload and process cover image with OCR and translation
 
-    Handles cover image upload, OCR, translation without TTS.
-    Additionally, extracts the book title from the OCR result and saves it in the session.
-    Creates a Page and BB with translated text only.
-    """
+    [POST] /process/upload_cover
 
-    """
-    Input (POST JSON body):
-        - session_id (string): session UUID
-        - lang (string): language code (e.g. "en" or "ko")
-        - image_base64 (string): base64-encoded cover image
+    Request Body:
+        {
+            "session_id": "string",
+            "lang": "string",
+            "image_base64": "string"
+        }
 
-    Output (JSON response):
-        - session_id (string): same as input
-        - page_index (int): always 0 for cover
-        - status (string): "ready"
-        - submitted_at (string, ISO8601): submission timestamp
-        - title (string): extracted book title
-        - translated_title (string): translated book title
-        - tts_male (string): null (no TTS for cover)
-        - tts_female (string): null (no TTS for cover)
+    Response (200 OK):
+        {
+            "session_id": "string",
+            "page_index": 0,
+            "status": "ready",
+            "submitted_at": "datetime",
+            "title": "string",
+            "translated_title": "string"
+        }
     """
 
     def post(self, request):
@@ -384,9 +432,9 @@ class ProcessUploadCoverView(APIView):
         except Session.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        page_index = 0  # Cover page is always index 0
+        page_index = 0
 
-        # Save cover image (to a different path)
+        # Save cover image
         image_path = self._save_image(image_base64, session_id, page_index)
 
         # Run OCR to get title
@@ -398,17 +446,18 @@ class ProcessUploadCoverView(APIView):
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
 
-        # Map language codes to full names for TTS
+        # Map language codes to full names
         lang_map = {"en": "English", "zh": "Chinese", "vi": "Vietnamese"}
         target_lang = lang_map.get(lang, "English")
 
         # Run translation for title synchronously
-        translated_text, tts_male, tts_female = self._run_async(
-            TTSModule(target_lang=target_lang).translate_and_tts_cover(
+        translated_text = self._run_async(
+            TTSModule(target_lang=target_lang).translate_cover(
                 title, session_id, page_index
             )
         )
 
+        # Create page and BB
         page = self._create_page_and_bbs(
             session,
             image_path,
@@ -416,10 +465,10 @@ class ProcessUploadCoverView(APIView):
             [{"status": "ok", "sentences": [{"translation": translated_text}]}],
         )
 
-        # Update session (only update specific fields to avoid overwriting voicePreference)
+        # Update session
         session.title = title
         session.translated_title = translated_text
-        print(f"[debug]{session.translated_title}")
+        print(f"[DEBUG] Translated title: {session.translated_title}")
         session.totalPages += 1
         session.save(update_fields=["title", "translated_title", "totalPages"])
 
@@ -431,8 +480,6 @@ class ProcessUploadCoverView(APIView):
                 "submitted_at": timezone.now().isoformat(),
                 "title": session.title,
                 "translated_title": session.translated_title,
-                "tts_male": tts_male,
-                "tts_female": tts_female,
             },
             status=status.HTTP_200_OK,
         )
@@ -472,7 +519,7 @@ class ProcessUploadCoverView(APIView):
         ocr_result: list,
         translation_data: list,
     ) -> Page:
-        """Create Page and BoundingBox objects with translations."""
+        """Create Page and BoundingBox objects with translations"""
         page = Page.objects.create(
             session=session,
             img_url=image_path,
@@ -488,7 +535,6 @@ class ProcessUploadCoverView(APIView):
             else:
                 translated_text = ""
 
-            # Create BB with translation but no audio yet
             BB.objects.create(
                 page=page,
                 original_text=para.get("text", ""),
@@ -500,7 +546,7 @@ class ProcessUploadCoverView(APIView):
         return page
 
     def _save_image(self, image_base64: str, session_id: str, page_index: int) -> str:
-        """Decode and save uploaded image."""
+        """Decode and save uploaded image"""
         image_bytes = base64.b64decode(image_base64)
         image_filename = f"{uuid.uuid4().hex}.jpg"
         image_path = f"media/images/{session_id}_{page_index}_{image_filename}"

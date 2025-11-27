@@ -630,10 +630,8 @@ class VoiceSelectViewModelTest {
             page_index = 0,
             status = "complete",
             submitted_at = "2025-01-01T00:00:00Z",
-            title = title, // 테스트에서 검증할 제목 필드
+            title = title,
             translated_title = "Translated Title",
-            tts_male = "url/male",
-            tts_female = "url/female"
         )
 
         mockkStatic(android.util.Base64::class)
@@ -654,7 +652,7 @@ class VoiceSelectViewModelTest {
             Log.d("VoiceSelectViewModel", "Title: $title")
         }
         verify(mockProcessRepository).uploadCoverImage(any())
-        unmockkStatic(android.util.Base64::class) // 반드시 unmockkStatic 해주어야 합니다.
+        unmockkStatic(android.util.Base64::class)
         assertFalse(viewModel.loading.value)
     }
 }

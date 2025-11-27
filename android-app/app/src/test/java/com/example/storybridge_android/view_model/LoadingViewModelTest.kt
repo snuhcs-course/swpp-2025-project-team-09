@@ -217,18 +217,8 @@ class LoadingViewModelTest {
 
     @Test
     fun `CoverResult data class works correctly`() {
-        val result = CoverResult("Test Title", "male.mp3", "female.mp3")
+        val result = CoverResult("Test Title")
         assertEquals("Test Title", result.title)
-        assertEquals("male.mp3", result.maleTts)
-        assertEquals("female.mp3", result.femaleTts)
-    }
-
-    @Test
-    fun `CoverResult with null TTS values`() {
-        val result = CoverResult("Test Title", null, null)
-        assertEquals("Test Title", result.title)
-        assertNull(result.maleTts)
-        assertNull(result.femaleTts)
     }
 
     @Test
@@ -486,48 +476,6 @@ class LoadingViewModelTest {
         verify(mockSessionRepo).reloadAllSession(any(), eq(startedAt))
 
         unmockkStatic(Settings.Secure::class)
-    }
-
-    @Test
-    fun `uploadCover with empty TTS values sets null`() = runTest {
-        // Given
-        mockkStatic(android.util.Base64::class)
-        mockkStatic(BitmapFactory::class)
-        mockkStatic(Bitmap::class)
-
-        val mockBitmap = mockk<Bitmap>(relaxed = true)
-        every { BitmapFactory.decodeFile(any()) } returns mockBitmap
-        every { Bitmap.createScaledBitmap(any(), any(), any(), any()) } returns mockBitmap
-        every { mockBitmap.width } returns 100
-        every { mockBitmap.height } returns 100
-        every { mockBitmap.recycle() } just Runs
-        every { mockBitmap.compress(any(), any(), any()) } returns true
-        every { android.util.Base64.encodeToString(any(), any()) } returns "base64string"
-
-        val coverResponse = UploadCoverResponse(
-            session_id = "session_123",
-            page_index = 0,
-            status = "ready",
-            submitted_at = "2023-01-01T00:00:00",
-            title = "Test Title",
-            translated_title = "Translated",
-            tts_male = "",  // 빈 문자열
-            tts_female = ""  // 빈 문자열
-        )
-        whenever(mockProcessRepo.uploadCoverImage(any())).thenReturn(Result.success(coverResponse))
-
-        // When
-        viewModel.uploadCover("session_123", "en", testImageFile.absolutePath)
-        advanceUntilIdle()
-
-        // Then
-        val result = viewModel.cover.value
-        assertNotNull(result)
-        assertEquals("Test Title", result.title)
-        assertNull(result.maleTts)  // 빈 문자열은 null로 변환
-        assertNull(result.femaleTts)
-
-        unmockkStatic(android.util.Base64::class)
     }
 
     @Test

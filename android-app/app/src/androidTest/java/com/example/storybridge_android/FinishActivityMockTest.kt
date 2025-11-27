@@ -224,7 +224,7 @@ class FinishActivityMockTest {
         val scenario = ActivityScenario.launch<FinishActivity>(createIntent())
         Thread.sleep(3500)
 
-        // THEN: "0 seconds" 표시
+        // THEN: "0 seconds"
         onView(withId(com.example.storybridge_android.R.id.sessionSummary))
             .check(matches(withText(org.hamcrest.Matchers.containsString("0 seconds"))))
 
@@ -299,7 +299,7 @@ class FinishActivityMockTest {
 
     @Test
     fun sessionStats_onlySeconds_displaysSecondsOnly() {
-        // GIVEN: 45초 (1분 미만)
+        // GIVEN: 45 sec
         mockSessionRepo = object : SessionRepository {
             override suspend fun startSession(userId: String): Result<StartSessionResponse> {
                 return Result.failure(Exception("unused"))
@@ -353,7 +353,7 @@ class FinishActivityMockTest {
         val scenario = ActivityScenario.launch<FinishActivity>(createIntent())
         Thread.sleep(3500)
 
-        // THEN: "45 seconds" 표시 (minutes 없음)
+        // THEN: "45 seconds"
         onView(withId(com.example.storybridge_android.R.id.sessionSummary))
             .check(matches(withText(org.hamcrest.Matchers.allOf(
                 org.hamcrest.Matchers.containsString("45 seconds"),
@@ -419,7 +419,7 @@ class FinishActivityMockTest {
         val scenario = ActivityScenario.launch<FinishActivity>(createIntent())
         Thread.sleep(3500)
 
-        // THEN: "1 minute 30 seconds" 표시
+        // THEN: "1 minute 30 seconds"
         onView(withId(com.example.storybridge_android.R.id.sessionSummary))
             .check(matches(withText(org.hamcrest.Matchers.allOf(
                 org.hamcrest.Matchers.containsString("1 minute"),
@@ -494,7 +494,7 @@ class FinishActivityMockTest {
 
     @Test
     fun sessionStats_oneMinute_displaysSingularMinute() {
-        // GIVEN: 정확히 1분 (60초)
+        // GIVEN: 1 min
         mockSessionRepo = object : SessionRepository {
             override suspend fun startSession(userId: String): Result<StartSessionResponse> {
                 return Result.failure(Exception("unused"))
@@ -557,7 +557,7 @@ class FinishActivityMockTest {
 
     @Test
     fun sessionStats_oneSecond_displaysSingularSecond() {
-        // GIVEN: 1초
+        // GIVEN: 1 sec
         mockSessionRepo = object : SessionRepository {
             override suspend fun startSession(userId: String): Result<StartSessionResponse> {
                 return Result.failure(Exception("unused"))

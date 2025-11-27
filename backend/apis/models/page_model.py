@@ -6,7 +6,7 @@ from apis.models.session_model import Session
 class Page(models.Model):
     """
     Page entity
-    - OCR, Translation, TTS 결과를 한 페이지 단위로 관리
+    - Manages OCR, Translation, and TTS results per page
     """
 
     id = models.AutoField(primary_key=True)
@@ -21,34 +21,5 @@ class Page(models.Model):
         return f"Page {self.id} of Session {self.session.id}"
 
     def getBBs(self):
-        """해당 페이지의 BoundingBox 리스트 반환"""
+        """Returns all bounding boxes for this page"""
         return self.bbs.all()
-
-    def addBB(self, bbox_list, translated_list, audio_list):
-        """
-        Bounding Box 데이터 추가
-        bbox_list: [{x, y, width, height, text}, ...]
-        translated_list: 번역문 리스트 (동일 인덱스 기준)
-        audio_list: base64 또는 경로 리스트
-        """
-        from apis.models.bb_model import BB
-
-        for i, bbox in enumerate(bbox_list):
-            trans = translated_list[i] if i < len(translated_list) else ""
-            audio = audio_list[i] if i < len(audio_list) else ""
-            BB.objects.create(
-                page=self,
-                original_text=bbox.get("text", ""),
-                translated_text=trans,
-                audio_base64=audio,
-                coordinates={
-                    "x1": bbox.get("x1"),
-                    "y1": bbox.get("y1"),
-                    "x2": bbox.get("x2"),
-                    "y2": bbox.get("y2"),
-                    "x3": bbox.get("x3"),
-                    "y3": bbox.get("y3"),
-                    "x4": bbox.get("x4"),
-                    "y4": bbox.get("y4"),
-                },
-            )

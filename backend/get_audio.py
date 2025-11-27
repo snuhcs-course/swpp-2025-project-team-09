@@ -3,7 +3,7 @@
 
 """
 Simple OpenAI TTS script
-Usage: python get_audio.py "텍스트 내용" --voice shimmer --lang Korean --output output.mp3
+Usage: python get_audio.py "content of text" --voice shimmer --lang Korean --output output.mp3
 """
 
 import os

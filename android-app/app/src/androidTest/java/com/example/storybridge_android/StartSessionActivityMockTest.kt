@@ -8,7 +8,6 @@ import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.matcher.IntentMatchers
-import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.storybridge_android.R
@@ -17,16 +16,13 @@ import com.example.storybridge_android.data.SessionRepository
 import com.example.storybridge_android.network.DiscardSessionResponse
 import com.example.storybridge_android.network.EndSessionResponse
 import com.example.storybridge_android.network.ReloadAllSessionResponse
-import com.example.storybridge_android.network.ReloadSessionResponse
 import com.example.storybridge_android.network.SelectVoiceResponse
 import com.example.storybridge_android.network.SessionStatsResponse
 import com.example.storybridge_android.network.StartSessionResponse
 import io.mockk.coEvery
-import io.mockk.every
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import org.hamcrest.Matchers.not
 import org.junit.*
 import org.junit.runner.RunWith
 
