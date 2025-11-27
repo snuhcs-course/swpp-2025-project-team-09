@@ -6,6 +6,7 @@ import time
 import asyncio
 import base64
 import shutil
+import re
 from pathlib import Path
 from typing import Dict, List, Any
 from openai import AsyncOpenAI
@@ -14,6 +15,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 import kss
+from .profanity_check import is_clean
 
 load_dotenv()
 
@@ -85,6 +87,14 @@ class TTSModule:
         self.translation_chain = self._create_translation_chain()
         self.sentiment_chain = self._create_sentiment_chain()
 
+        # Map target language to profanity check language code
+        # Note: profanity lists are loaded once at server startup in manage.py
+        self.profanity_lang_map = {
+            "English": "en",
+            "Chinese": "zh",
+            "Vietnamese": "vi",
+        }
+
         # Reset directories
         try:
             if self.OUT_DIR.exists():
@@ -113,17 +123,23 @@ class TTSModule:
         )
         return prompt | self.llm.with_structured_output(Sentiment)
 
+    def _remove_profanity(self, text: str) -> str:
+        lang_code = self.profanity_lang_map.get(self.target_lang)
+        clean, found_words = is_clean(text, lang_code)
+        if clean:
+            return text
+
+        result = text
+        for word in found_words:
+            pattern = r'\b' + re.escape(word) + r'\b'
+            result = re.sub(pattern, '', result, flags=re.IGNORECASE)
+
+        result = re.sub(r'\s+', ' ', result).strip()
+
+        return result
+
     async def translate(self, text_with_context: str) -> Dict[str, Any]:
-        """
-        Translate text with retry logic
-
-        Args:
-            text_with_context: Korean text with context markers
-
-        Returns:
-            {"result": Translation, "latency": float}
-        """
-
+        """Translate text with retry logic and profanity filtering."""
         for attempt in range(3):
             try:
                 t0 = time.time()
@@ -133,6 +149,10 @@ class TTSModule:
                         "target_lang": self.target_lang,
                     }
                 )
+                # Remove profanity from translated text
+                cleaned_text = self._remove_profanity(response.translated_text)
+                response.translated_text = cleaned_text
+
                 latency = time.time() - t0
                 return {"result": response, "latency": round(latency, 3)}
             except Exception as e:
