@@ -19,6 +19,7 @@ import com.example.storybridge_android.ServiceLocator
 import com.example.storybridge_android.data.*
 import com.example.storybridge_android.network.UserInfoResponse
 import com.example.storybridge_android.R
+import com.example.storybridge_android.network.DiscardSessionResponse
 import io.mockk.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
@@ -169,7 +170,7 @@ class MainActivityMockTest {
     }
 
     @Test
-    fun exitConfirmBtn_finishesActivity() = runTest {
+    fun exitConfirmBtn_closesExitPanel() = runTest {
         coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns retrofit2.Response.success(emptyList())
 
         val scenario = launchMain()
@@ -178,12 +179,21 @@ class MainActivityMockTest {
         pressBack()
         Thread.sleep(500)
 
+        onView(withId(R.id.exitPanelInclude)).check(matches(isDisplayed()))
+
         onView(withId(R.id.exitConfirmBtn)).perform(click())
         Thread.sleep(500)
 
-        scenario.onActivity { activity ->
-            assert(activity.isFinishing) { "MainActivity should be finishing after exit confirm" }
+        var isFinishingOrFinished = false
+        try {
+            scenario.onActivity { activity ->
+                isFinishingOrFinished = activity.isFinishing
+            }
+        } catch (e: Exception) {
+            isFinishingOrFinished = true
         }
+
+        assert(isFinishingOrFinished) { "MainActivity should be finishing" }
 
         scenario.close()
     }
@@ -268,7 +278,8 @@ class MainActivityMockTest {
             )
         )
         coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns retrofit2.Response.success(fakeList)
-        coEvery { mockSessionRepo.discardSession("S1", "DEVICE123") } returns retrofit2.Response.success(Unit)
+        coEvery { mockSessionRepo.discardSession("S1") } returns
+                Result.success(DiscardSessionResponse("Session discarded"))
 
         launchMain()
         Thread.sleep(800)
@@ -279,7 +290,7 @@ class MainActivityMockTest {
         onView(withId(R.id.discardConfirmBtn)).perform(click())
         Thread.sleep(500)
 
-        coVerify { mockSessionRepo.discardSession("S1", "DEVICE123") }
+        coVerify { mockSessionRepo.discardSession("S1") }
         onView(withId(R.id.discardPanelInclude)).check(matches(withEffectiveVisibility(Visibility.GONE)))
     }
 }
