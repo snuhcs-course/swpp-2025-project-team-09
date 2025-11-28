@@ -9,6 +9,12 @@ import com.example.storybridge_android.network.ReloadAllSessionResponse
 import com.example.storybridge_android.network.SelectVoiceResponse
 import com.example.storybridge_android.network.SessionStatsResponse
 import com.example.storybridge_android.network.StartSessionResponse
+import com.example.storybridge_android.data.ProcessRepository
+import com.example.storybridge_android.network.CheckOcrResponse
+import com.example.storybridge_android.network.CheckTtsResponse
+import com.example.storybridge_android.network.UploadCoverResponse
+import com.example.storybridge_android.network.UploadImageRequest
+import com.example.storybridge_android.network.UploadImageResponse
 import com.example.storybridge_android.ui.camera.CameraSessionViewModel
 import com.example.storybridge_android.ui.camera.SessionUiState
 import kotlinx.coroutines.Dispatchers
@@ -71,10 +77,36 @@ class CameraSessionViewModelTest {
         }
     }
 
+    class FakeProcessRepository : ProcessRepository {
+
+        override suspend fun uploadImage(req: UploadImageRequest): Result<UploadImageResponse> {
+            return Result.failure(NotImplementedError())
+        }
+
+        override suspend fun uploadCoverImage(req: UploadImageRequest): Result<UploadCoverResponse> {
+            return Result.failure(NotImplementedError())
+        }
+
+        override suspend fun checkOcrStatus(
+            sessionId: String,
+            pageIndex: Int
+        ): Result<CheckOcrResponse> {
+            return Result.failure(NotImplementedError())
+        }
+
+        override suspend fun checkTtsStatus(
+            sessionId: String,
+            pageIndex: Int
+        ): Result<CheckTtsResponse> {
+            return Result.failure(NotImplementedError())
+        }
+    }
+
+
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        viewModel = CameraSessionViewModel(FakeSessionRepository())
+        viewModel = CameraSessionViewModel(FakeSessionRepository(), FakeProcessRepository())
     }
 
 
