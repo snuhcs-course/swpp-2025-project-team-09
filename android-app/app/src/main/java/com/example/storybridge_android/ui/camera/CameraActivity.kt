@@ -50,7 +50,7 @@ class CameraActivity : BaseActivity() {
         observeUiState()
 
         if (!viewModel.checkGooglePlayServices()) {
-            Toast.makeText(this, "Google Play Services required", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.error_google_play_service), Toast.LENGTH_LONG).show()
             setResult(RESULT_CANCELED)
             finish()
             return
@@ -81,7 +81,7 @@ class CameraActivity : BaseActivity() {
         ) { granted ->
             if (granted) viewModel.checkModuleAndInitScanner()
             else {
-                Toast.makeText(this, "Camera permission denied", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.error_camera_permission), Toast.LENGTH_SHORT).show()
                 setResult(RESULT_CANCELED)
                 finish()
             }
@@ -95,7 +95,7 @@ class CameraActivity : BaseActivity() {
                 viewModel.handleScanningResult(scanningResult, contentResolver)
             } else {
                 if (isCoverMode) {
-                    Toast.makeText(this, "Scan canceled", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.scan_canceled), Toast.LENGTH_SHORT).show()
                     setResult(RESULT_CANCELED)
                     finish()
                 } else {
@@ -133,7 +133,11 @@ class CameraActivity : BaseActivity() {
                         finish()
                     }
                     state.error != null -> {
-                        Toast.makeText(this@CameraActivity, state.error, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            this@CameraActivity,
+                            getString(R.string.error_processing, state.error),
+                            Toast.LENGTH_LONG
+                        ).show()
                         setResult(RESULT_CANCELED)
                         finish()
                     }
@@ -150,7 +154,12 @@ class CameraActivity : BaseActivity() {
                 scannerLauncher.launch(request)
             },
             onError = { err ->
-                Toast.makeText(this, err, Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this,
+                    getString(R.string.error_scanner_launch, err),
+                    Toast.LENGTH_LONG
+                ).show()
+
                 setResult(RESULT_CANCELED)
                 finish()
             }

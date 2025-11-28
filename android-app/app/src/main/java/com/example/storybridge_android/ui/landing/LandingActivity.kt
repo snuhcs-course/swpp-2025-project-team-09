@@ -79,7 +79,7 @@ class LandingActivity : BaseActivity() {
             if (selectedLang != null) {
                 navigateToMain()
             } else {
-                Toast.makeText(this, "Please select a language first!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.error_select_language), Toast.LENGTH_SHORT).show()
             }
         }
     }

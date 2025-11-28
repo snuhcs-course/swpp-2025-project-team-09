@@ -74,4 +74,25 @@
     <string name="discard_session_title">Are you sure you want to delete?</string>
     <string name="discard_session_confirm">Delete</string>
     <string name="discard_session_cancel">Cancel</string>
+
+    <!-- Error msg -->
+    <string name="error_google_play_service"> Google Play Services are required to use this feature. Please update or install Google Play Services and try again. </string>
+    <string name="error_camera_permission"> Camera access is required to continue scanning. Please enable the camera permission in Settings &gt; Apps &gt; Permissions. </string>
+    <string name="scan_canceled"> The scan was not completed. You can try again. </string>
+    <string name="error_processing"> An issue occurred while processing: %1$s. Please check internet connection or try again later. </string>
+    <string name="error_scanner_launch"> An error occurred while launching the scanner: %1$s. Please try again in a moment. </string>
+    <string name="error_select_language"> Please select a language first. </string>
+    <string name="info_current_page"> This is the current page. </string>
+    <string name="error_generic"> Please check internet connection or try again later: %1$s </string>
+    <string name="error_image_decode"> Failed to load image. Please check internet connection or try again later. </string>
+    <string name="info_session_saved"> Session saved successfully. </string>
+    <string name="info_session_discarded"> Session discarded. </string>
+    <string name="error_session_action_failed"> Failed to complete the action: %1$s </string>
+    <string name="error_session_not_found"> Session not found. Please try different session. </string>
+    <string name="error_invalid_session_or_image"> Invalid session information. Please try different session.</string>
+    <string name="error_session_start_failed"> Failed to start session: %1$s. Please check internet connection or try again later. </string>
+    <string name="error_session_invalid"> There was a problem with the session. Please try again. </string>
+    <string name="error_discard_session_failed"> Failed to discard the session. Please check internet connection or try again later. </string>
+    <string name="error_audio_preview_failed"> Failed to play the audio preview. Please restart the app or try again later. </string>
+
 </resources>
