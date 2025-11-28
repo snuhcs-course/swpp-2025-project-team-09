@@ -47,8 +47,8 @@ class DecideSaveActivityMockTest {
     }
 
     @Test
-    fun clickSave_showMainButton_onSaveSuccess() {
-        // GIVEN: Mock successful endSession
+    fun clickSave_showMainButton_thenNavigateOnConfirm() {
+        // GIVEN: Mock successful endSession (not needed for save, but required for interface)
         val fakeRepo = object : SessionRepository {
 
             override suspend fun startSession(userId: String): Result<StartSessionResponse> {
@@ -96,17 +96,23 @@ class DecideSaveActivityMockTest {
         val scenario = launch()
         Thread.sleep(500)
 
-        onView(withId(R.id.btnSave)).perform(click())
-        Thread.sleep(1000)
+        // Main button should be disabled initially
+        onView(withId(R.id.mainButton)).check(matches(isNotEnabled()))
 
-        // THEN: Verify main button is displayed
-        onView(withId(R.id.mainButton)).check(matches(isDisplayed()))
+        // Click Save button
+        onView(withId(R.id.btnSave)).perform(click())
+        Thread.sleep(500)
+
+        // THEN: Verify main button is displayed and enabled
+        onView(withId(R.id.mainButton))
+            .check(matches(isDisplayed()))
+            .check(matches(isEnabled()))
 
         scenario.close()
     }
 
     @Test
-    fun clickDiscard_showMainButton_onDiscardSuccess() {
+    fun clickDiscard_showMainButton_thenNavigateOnConfirm() {
         // GIVEN: Mock successful discardSession
         val fakeRepo = object : SessionRepository {
 
@@ -141,11 +147,17 @@ class DecideSaveActivityMockTest {
         val scenario = launch()
         Thread.sleep(500)
 
-        onView(withId(R.id.btnDiscard)).perform(click())
-        Thread.sleep(1000)
+        // Main button should be disabled initially
+        onView(withId(R.id.mainButton)).check(matches(isNotEnabled()))
 
-        // THEN: Verify main button is displayed
-        onView(withId(R.id.mainButton)).check(matches(isDisplayed()))
+        // Click Discard button
+        onView(withId(R.id.btnDiscard)).perform(click())
+        Thread.sleep(500)
+
+        // THEN: Verify main button is displayed and enabled
+        onView(withId(R.id.mainButton))
+            .check(matches(isDisplayed()))
+            .check(matches(isEnabled()))
 
         scenario.close()
     }
@@ -186,11 +198,20 @@ class DecideSaveActivityMockTest {
         val scenario = launch()
         Thread.sleep(500)
 
+        // Click Discard button → mainButton shows
         onView(withId(R.id.btnDiscard)).perform(click())
+        Thread.sleep(500)
+        onView(withId(R.id.mainButton)).check(matches(isDisplayed()))
+
+        // Click mainButton → discard fails → mainButton hidden
+        onView(withId(R.id.mainButton)).perform(click())
         Thread.sleep(1000)
+        onView(withId(R.id.mainButton)).check(matches(isNotEnabled()))
 
         // THEN: Verify button is clickable again after failure
         onView(withId(R.id.btnDiscard)).perform(click())
+        Thread.sleep(500)
+        onView(withId(R.id.mainButton)).check(matches(isDisplayed()))
 
         scenario.close()
     }
