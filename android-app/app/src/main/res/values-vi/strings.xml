@@ -74,4 +74,11 @@
     <string name="discard_session_title">Bạn có chắc chắn muốn xóa không?</string>
     <string name="discard_session_confirm">Xóa</string>
     <string name="discard_session_cancel">Hủy</string>
+    <string name="back">Quay lại trang chính</string>
+
+    <!-- Retake Panel -->
+    <string name="retake_no_text_title">Ảnh quá mờ!</string>
+    <string name="retake_no_text_message">Vui lòng chụp lại rõ ràng.</string>
+    <string name="retake_button_retake">Chụp lại</string>
+    <string name="retake_button_cancel">Hủy</string>
 </resources>

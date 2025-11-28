@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/retakePanel"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#80000000"
+    android:visibility="gone"
+    android:clickable="true"
+    android:focusable="true"
+    android:elevation="20dp">
+
+    <LinearLayout
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:gravity="center"
+        android:layout_gravity="center"
+        android:elevation="8dp"
+        android:background="@drawable/panel_shape">
+
+        <TextView
+            android:id="@+id/retakePanelTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/retake_no_text_title"
+            style="@style/text40pt"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:id="@+id/retakePanelMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/retake_no_text_message"
+            style="@style/text24pt"
+            android:gravity="center"
+            android:layout_marginBottom="24dp" />
+
+        <Button
+            android:id="@+id/retakeConfirmBtn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/text24pt"
+            android:text="@string/retake_button_retake"
+            android:backgroundTint="@color/white" />
+
+        <Button
+            android:id="@+id/retakeCancelBtn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/text24pt"
+            android:text="@string/retake_button_cancel"
+            android:backgroundTint="@color/white"
+            android:layout_marginTop="12dp" />
+
+    </LinearLayout>
+</FrameLayout>

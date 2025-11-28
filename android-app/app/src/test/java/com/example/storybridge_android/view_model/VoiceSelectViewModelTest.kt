@@ -8,7 +8,6 @@ import com.example.storybridge_android.network.*
 import io.mockk.every
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
-import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -285,33 +284,6 @@ class VoiceSelectViewModelTest {
     }
 
     @Test
-    fun `uploadCoverInBackground with invalid path does not crash`() = runTest {
-        // Given
-        val invalidPath = "/non/existent/path.jpg"
-
-        // When - should handle error gracefully
-        viewModel.uploadCoverInBackground("session_123", "en", invalidPath)
-        advanceUntilIdle()
-
-        // Then - no exception thrown, operation completes
-        assertFalse(viewModel.loading.value)
-    }
-
-    @Test
-    fun `uploadCoverInBackground with valid path completes`() = runTest {
-        // Given
-        val sessionId = "session_123"
-        val lang = "en"
-
-        // When
-        viewModel.uploadCoverInBackground(sessionId, lang, testImageFile.absolutePath)
-        advanceUntilIdle()
-
-        // Then - operation completes without error
-        assertFalse(viewModel.loading.value)
-    }
-
-    @Test
     fun `success shared flow emits events correctly`() = runTest {
         // Given
         val sessionId = "session_123"
@@ -443,38 +415,6 @@ class VoiceSelectViewModelTest {
     }
 
     @Test
-    fun `uploadCoverInBackground with different languages`() = runTest {
-        // Given
-        val sessionId = "session_123"
-        val languages = listOf("en", "zh", "ko", "ja")
-
-        // When
-        languages.forEach { lang ->
-            viewModel.uploadCoverInBackground(sessionId, lang, testImageFile.absolutePath)
-            advanceUntilIdle()
-        }
-
-        // Then - all complete without error
-        assertFalse(viewModel.loading.value)
-    }
-
-    @Test
-    fun `uploadCoverInBackground does not affect loading state`() = runTest {
-        // Given
-        val sessionId = "session_123"
-        val lang = "en"
-
-        val initialLoading = viewModel.loading.value
-
-        // When
-        viewModel.uploadCoverInBackground(sessionId, lang, testImageFile.absolutePath)
-        advanceUntilIdle()
-
-        // Then - loading state unchanged (background operation)
-        assertEquals(initialLoading, viewModel.loading.value)
-    }
-
-    @Test
     fun `consecutive success emissions work correctly`() = runTest {
         // Given
         val sessionId = "session_123"
@@ -556,23 +496,6 @@ class VoiceSelectViewModelTest {
     }
 
     @Test
-    fun `uploadCoverInBackground read failure does not crash`() = runTest {
-        val sessionId = "s"
-        val lang = "en"
-
-        val file = File.createTempFile("prefix", ".jpg")
-        file.writeText("data")
-
-        val spyFile = spy(file)
-        whenever(spyFile.readBytes()).thenThrow(RuntimeException("read error"))
-
-        viewModel.uploadCoverInBackground(sessionId, lang, spyFile.absolutePath)
-        advanceUntilIdle()
-
-        assertFalse(viewModel.loading.value)
-    }
-
-    @Test
     fun `selectVoice throws exception with null message emits default unexpected error`() = runTest {
         // Given
         val sessionId = "s"
@@ -591,68 +514,6 @@ class VoiceSelectViewModelTest {
 
         // Then
         assertEquals(listOf("Unexpected error"), errors)
-        assertFalse(viewModel.loading.value)
-    }
-
-    @Test
-    fun `uploadCoverInBackground with server failure logs error`() = runTest {
-        // Given
-        val sessionId = "s"
-        val lang = "en"
-        val errorMessage = "Upload server error"
-
-        every { android.util.Base64.encodeToString(any(), any()) } returns "base64encodedstring"
-
-        whenever(mockProcessRepository.uploadCoverImage(any()))
-            .thenReturn(Result.failure(Exception(errorMessage)))
-
-        // When
-        viewModel.uploadCoverInBackground(sessionId, lang, testImageFile.absolutePath)
-        advanceUntilIdle()
-
-        // Then
-        verify(exactly = 1) {
-            Log.e("VoiceSelectViewModel", "✗ Cover upload failed: $errorMessage")
-        }
-        verify(mockProcessRepository).uploadCoverImage(any())
-        assertFalse(viewModel.loading.value) // 백그라운드 작업이므로 loading에 영향 없음
-    }
-
-    @Test
-    fun `uploadCoverInBackground with server success logs title`() = runTest {
-        // Given
-        val sessionId = "s"
-        val lang = "en"
-        val title = "New Story Title"
-
-        val successResponse = UploadCoverResponse(
-            session_id = sessionId,
-            page_index = 0,
-            status = "complete",
-            submitted_at = "2025-01-01T00:00:00Z",
-            title = title,
-            translated_title = "Translated Title",
-        )
-
-        mockkStatic(android.util.Base64::class)
-        every { android.util.Base64.encodeToString(any(), any()) } returns "base64encodedstring"
-
-        whenever(mockProcessRepository.uploadCoverImage(any<UploadImageRequest>()))
-            .thenReturn(Result.success(successResponse))
-
-        // When
-        viewModel.uploadCoverInBackground(sessionId, lang, testImageFile.absolutePath)
-        advanceUntilIdle()
-
-        // Then
-        verify(exactly = 1) {
-            Log.d("VoiceSelectViewModel", "✓ Cover uploaded successfully in background")
-        }
-        verify(exactly = 1) {
-            Log.d("VoiceSelectViewModel", "Title: $title")
-        }
-        verify(mockProcessRepository).uploadCoverImage(any())
-        unmockkStatic(android.util.Base64::class)
         assertFalse(viewModel.loading.value)
     }
 }

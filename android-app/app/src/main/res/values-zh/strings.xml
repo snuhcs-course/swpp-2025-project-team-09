@@ -74,4 +74,11 @@
     <string name="discard_session_title">确定要删除吗？</string>
     <string name="discard_session_confirm">删除</string>
     <string name="discard_session_cancel">取消</string>
+    <string name="back">返回主页</string>
+
+    <!-- Retake Panel -->
+    <string name="retake_no_text_title">照片模糊!</string>
+    <string name="retake_no_text_message">请重新清晰拍摄。</string>
+    <string name="retake_button_retake">重拍</string>
+    <string name="retake_button_cancel">取消</string>
 </resources>

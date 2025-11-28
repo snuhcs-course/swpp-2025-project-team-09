@@ -75,4 +75,10 @@
     <string name="discard_session_confirm">Delete</string>
     <string name="discard_session_cancel">Cancel</string>
     <string name="back">Go back to Main</string>
+
+    <!-- Retake Panel -->
+    <string name="retake_no_text_title">Photo is Too Blurry!</string>
+    <string name="retake_no_text_message">Please retake clearly</string>
+    <string name="retake_button_retake">Retake</string>
+    <string name="retake_button_cancel">Cancel</string>
 </resources>
