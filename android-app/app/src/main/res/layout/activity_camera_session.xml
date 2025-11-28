@@ -1,8 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/black">
 
-    <include layout="@layout/retake_panel" />
+    <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:id="@+id/loadingSpinner"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="center"
+        app:indicatorSize="48dp"
+        app:indicatorInset="0dp"
+        app:indicatorDirectionCircular="clockwise"
+        app:trackThickness="4dp"
+        app:indicatorColor="@color/white"
+        app:trackColor="@color/gray_dark" />
+
+    <include
+        layout="@layout/retake_panel"
+        android:id="@+id/retakePanel"
+        android:visibility="gone" />
 
 </FrameLayout>
