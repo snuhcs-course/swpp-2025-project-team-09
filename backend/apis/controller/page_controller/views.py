@@ -10,13 +10,13 @@ import json
 class PageGetImageView(APIView):
     """
     Retrieve page image as base64
-    
+
     [GET] /page/get_image?session_id={session_id}&page_index={page_index}
-    
+
     Query Parameters:
         session_id: Session identifier
         page_index: Page number
-    
+
     Response (200 OK):
         {
             "session_id": "string",
@@ -66,13 +66,13 @@ class PageGetImageView(APIView):
 class PageGetOCRView(APIView):
     """
     Retrieve OCR results with bounding boxes and translations
-    
+
     [GET] /page/get_ocr?session_id={session_id}&page_index={page_index}
-    
+
     Query Parameters:
         session_id: Session identifier
         page_index: Page number
-    
+
     Response (200 OK):
         {
             "session_id": "string",
@@ -126,16 +126,17 @@ class PageGetOCRView(APIView):
                 {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+
 class PageGetTTSView(APIView):
     """
     Retrieve TTS audio data for a page
-    
+
     [GET] /page/get_tts?session_id={session_id}&page_index={page_index}
-    
+
     Query Parameters:
         session_id: Session identifier
         page_index: Page number
-    
+
     Response (200 OK):
         {
             "session_id": "string",
