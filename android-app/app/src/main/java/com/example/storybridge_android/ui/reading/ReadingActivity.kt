@@ -80,6 +80,7 @@ class ReadingActivity : BaseActivity() {
     private var cachedBoundingBoxes: List<BoundingBox> = emptyList()
     private val savedBoxTranslations: MutableMap<Int, Pair<Float, Float>> = mutableMapOf()
     private val minWidth = 500
+    private var viewportWidth: Int = 0
 
     private lateinit var thumbnailAdapter: ThumbnailAdapter
 
@@ -225,9 +226,21 @@ class ReadingActivity : BaseActivity() {
     )
 
     private fun handleOcr(data: GetOcrTranslationResponse) {
+        // Get viewport width from pageImage (90% of actual width)
+        if (viewportWidth == 0) {
+            viewportWidth = (pageImage.width * 0.9).toInt()
+            Log.d(TAG, "Viewport width set to: $viewportWidth (90% of ${pageImage.width})")
+        }
+
         val boxes = data.ocr_results.mapIndexed { i, ocrBox ->
             val box = ocrBox.bbox
-            val adjustedWidth = max(box.width, minWidth)
+            // Apply min-width and max-width constraints
+            val adjustedWidth = if (viewportWidth > 0) {
+                max(box.width, minWidth).coerceAtMost(viewportWidth)
+            } else {
+                max(box.width, minWidth)
+            }
+            Log.d(TAG, "BBox[$i] original width: ${box.width}, adjusted width: $adjustedWidth")
             BoundingBox(box.x, box.y, adjustedWidth, box.height, ocrBox.translation_txt, i)
         }
         cachedBoundingBoxes = boxes
@@ -312,6 +325,12 @@ class ReadingActivity : BaseActivity() {
     }
 
     private fun displayBB(bboxes: List<BoundingBox>) {
+        // Update viewport width if not set (90% of actual width)
+        if (viewportWidth == 0) {
+            viewportWidth = (pageImage.width * 0.9).toInt()
+            Log.d(TAG, "Viewport width set to: $viewportWidth (90% of ${pageImage.width})")
+        }
+
         for (i in mainLayout.childCount - 1 downTo 0) {
             val child = mainLayout.getChildAt(i)
             if (child.tag == "bbox" || child.tag == "play_button") mainLayout.removeViewAt(i)
@@ -338,16 +357,41 @@ class ReadingActivity : BaseActivity() {
                 tag = "bbox"
             }
 
+            // Apply viewport width constraint to layout params
+            val constrainedWidth = if (viewportWidth > 0) {
+                rect.width().toInt().coerceAtMost(viewportWidth)
+            } else {
+                rect.width().toInt()
+            }
+
             val params = ConstraintLayout.LayoutParams(
-                rect.width().toInt(),  // fixed width
+                constrainedWidth,  // width constrained by viewport
                 ConstraintLayout.LayoutParams.WRAP_CONTENT  // Height tailored to individual text
             )
             params.startToStart = pageImage.id
             params.topToTop = pageImage.id
             boxView.layoutParams = params
 
-            boxView.translationX = rect.left
-            boxView.translationY = rect.top
+            // Adjust initial position to keep bounding box within viewport
+            var initialX = rect.left
+            var initialY = rect.top
+
+            // Ensure the bounding box doesn't overflow horizontally
+            if (initialX + constrainedWidth > viewportWidth) {
+                initialX = (viewportWidth - constrainedWidth).toFloat().coerceAtLeast(0f)
+                Log.d(TAG, "BBox[${box.index}] adjusted X from ${rect.left} to $initialX to fit viewport")
+            }
+
+            // Ensure the bounding box doesn't overflow to the left
+            if (initialX < 0) {
+                initialX = 0f
+                Log.d(TAG, "BBox[${box.index}] adjusted X from ${rect.left} to 0 (was negative)")
+            }
+
+            boxView.translationX = initialX
+            boxView.translationY = initialY
+
+            Log.d(TAG, "BBox[${box.index}] positioned at ($initialX, $initialY) with width $constrainedWidth")
 
             mainLayout.addView(boxView)
             boundingBoxViewsMap[box.index] = boxView
@@ -382,9 +426,20 @@ class ReadingActivity : BaseActivity() {
         val boxView = boundingBoxViewsMap[bboxIndex]
         val boxTranslationX = boxView?.translationX ?: rect.left
         val boxTranslationY = boxView?.translationY ?: rect.top
-        playButton.translationX = boxTranslationX + rect.width() - size / 2
-        playButton.translationY = boxTranslationY + rect.height() - size / 2
+
+        // Get the actual width of the bounding box view (constrained width)
+        val boxActualWidth = boxView?.layoutParams?.width ?: rect.width().toInt()
+
+        // Position icon center at top-right corner of bounding box
+        val buttonX = boxTranslationX + boxActualWidth - size / 2
+        val buttonY = boxTranslationY - size / 2
+
+        playButton.translationX = buttonX
+        playButton.translationY = buttonY
         playButton.elevation = 8f
+
+        Log.d(TAG, "PlayButton[$bboxIndex] positioned at ($buttonX, $buttonY) for bbox at ($boxTranslationX, $boxTranslationY) with width $boxActualWidth")
+
         playButton.setOnClickListener { playAudioForBox(bboxIndex) }
         mainLayout.addView(playButton)
         playButtonsMap[bboxIndex] = playButton
