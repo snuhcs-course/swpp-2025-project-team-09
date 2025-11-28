@@ -24,6 +24,7 @@ class LandingViewModel(private val repository: UserRepository) : ViewModel() {
     fun checkUser(deviceId: String) {
         viewModelScope.launch {
             try {
+                /* UAT용 - 항상 언어 선택 뜨도록 변경
                 val loginRes = repository.login(UserLoginRequest(deviceId))
                 if (loginRes.isSuccessful && loginRes.body() != null) {
                     _uiState.value = LandingUiState.NavigateMain
@@ -35,6 +36,15 @@ class LandingViewModel(private val repository: UserRepository) : ViewModel() {
                         _uiState.value = LandingUiState.Error("Register failed")
                     }
                 }
+                 */
+                val loginRes = repository.login(UserLoginRequest(deviceId))
+                if (loginRes.isSuccessful && loginRes.body() != null) {
+                    _uiState.value = LandingUiState.ShowLanguageSelect
+                } else {
+                    repository.register(UserRegisterRequest(deviceId, "en"))
+                    _uiState.value = LandingUiState.ShowLanguageSelect
+                }
+
             } catch (e: Exception) {
                 _uiState.value = LandingUiState.Error(e.message ?: "Network error")
             }
