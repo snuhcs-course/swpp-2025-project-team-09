@@ -66,11 +66,11 @@ class ProcessUploadView(APIView):
                 bbox_json=json.dumps([]),
                 created_at=timezone.now(),
             )
-            
+
             # Update session
             session.totalPages += 1
             session.save(update_fields=["totalPages"])
-            
+
             return Response(
                 {
                     "session_id": session_id,

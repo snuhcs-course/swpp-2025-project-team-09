@@ -119,8 +119,8 @@ class TestProcessUploadView(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     @patch("apis.controller.process_controller.views.OCRModule")
-    def test_06_upload_ocr_failure(self, mock_ocr_class):
-        """Test upload when OCR fails to process image"""
+    def test_06_upload_empty_page(self, mock_ocr_class):
+        """Test upload with no text (picture page)"""
         # Mock OCR to return empty result
         mock_ocr_instance = MagicMock()
         mock_ocr_instance.process_page.return_value = []
@@ -133,9 +133,11 @@ class TestProcessUploadView(APITestCase):
         }
         response = self.client.post("/process/upload/", data, format="json")
 
-        self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
-        self.assertEqual(response.data["error_code"], 422)
-        self.assertEqual(response.data["message"], "PROCESS__UNABLE_TO_PROCESS_IMAGE")
+        # Change 422 failure to 200 ok
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["status"], "no_text")
+
+        self.assertEqual(self.test_session.getPages().count(), 1)
 
 
 class TestCheckOCRStatusView(APITestCase):
