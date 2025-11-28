@@ -13,12 +13,20 @@ load_dotenv()
 
 
 class OCRModule:
+    """
+    OCR processing module using Naver Clova OCR API
+    - Extract text from images
+    - Group text into paragraphs and lines
+    - Calculate bounding boxes
+    """
+
     def __init__(self, conf_threshold: float = 0.8):
         self.api_url = os.getenv("OCR_API_URL", "")
         self.secret_key = os.getenv("OCR_SECRET", "")
         self.conf_threshold = conf_threshold
 
     def _filter_low_confidence(self, result_json: Dict[str, Any]) -> Dict[str, Any]:
+        """Filter out OCR results below confidence threshold"""
         images = result_json.get("images", [])
         if not images:
             return result_json
@@ -41,9 +49,10 @@ class OCRModule:
         new_first["fields"] = filtered_fields
         new_images[0] = new_first
         new_json["images"] = new_images
-        return new_json  # return shallow copied result
+        return new_json
 
     def _font_size(self, result_json: Dict[str, Any]) -> float:
+        """Calculate average font size from bounding box heights"""
         images = result_json.get("images", [])
         if not images:
             return 0.0
@@ -61,12 +70,24 @@ class OCRModule:
         return sum(heights) / len(heights) if heights else 0.0
 
     def _parse_infer_text(self, result_json: Dict[str, Any]) -> List[str]:
+        """
+        Parse OCR results into structured paragraphs with bounding boxes
 
-        # 1) Filter out low-confidence fields before computing
-        # font size or tokens
+        Process:
+        1. Filter low-confidence results
+        2. Calculate average font size
+        3. Extract tokens (text + coordinates)
+        4. Cluster into paragraphs (2D DBSCAN)
+        5. Cluster into lines within paragraphs (1D DBSCAN on Y)
+        6. Sort words by X, lines by Y
+
+        Returns:
+            List of {"text": str, "bbox": dict}
+        """
+        # Filter low-confidence fields
         filtered_json = self._filter_low_confidence(result_json)
 
-        # 2) Compute font size from filtered fields
+        # Calculate font size from filtered fields
         fs = self._font_size(filtered_json)
 
         images_f = filtered_json.get("images", [])
@@ -74,7 +95,7 @@ class OCRModule:
             return []
         fields = images_f[0].get("fields", [])
 
-        # 3) Build tokens from filtered fields
+        # Build tokens from filtered fields
         tokens = []
         for field in fields:
             text = field.get("inferText", "")
@@ -95,7 +116,7 @@ class OCRModule:
         if not tokens:
             return []
 
-        # 4) Paragraph clustering (2D DBSCAN on x, y)
+        # Paragraph clustering (2D DBSCAN on x, y)
         X = np.array([[t["x"], t["y"]] for t in tokens])
         para_eps = max(fs * 6.0, 15.0)
         para_db = DBSCAN(eps=para_eps, min_samples=2)
@@ -113,7 +134,7 @@ class OCRModule:
 
         results: List[str] = []
 
-        # 5) For each paragraph, cluster lines by Y and sort words by X.
+        # For each paragraph, cluster lines by Y and sort words by X
         for para in paragraphs:
             if not para:
                 continue
@@ -166,6 +187,16 @@ class OCRModule:
         return results
 
     def process_page(self, image_path: str) -> List[str]:
+        """
+        Process a regular page image with OCR
+
+        Args:
+            image_path: Path to image file
+
+        Returns:
+            List of paragraphs with text and bounding boxes
+        """
+
         request_json = {
             "images": [{"format": "png", "name": Path(image_path).stem}],
             "requestId": str(uuid.uuid4()),
@@ -178,19 +209,30 @@ class OCRModule:
             "file": open(image_path, "rb"),
             "message": (None, json.dumps(request_json), "application/json"),
         }
-        # 디버깅용...
+
         print(f"[DEBUG] Sending OCR request for {image_path}")
         start = time.time()
         response = requests.post(self.api_url, headers=headers, files=files)
-        # 디버깅용
         print(f"[DEBUG] OCR API call took {time.time() - start:.2f}s")
         print(f"[DEBUG] OCR raw response text (first 300 chars): {response.text[:300]}")
+
         result = response.json()
         paragraphs = self._parse_infer_text(result)
 
         return paragraphs
 
     def process_cover_page(self, image_path: str) -> str:
+        """
+        Process a cover page image to extract title
+        Uses height-based filtering to find the largest/title text
+
+        Args:
+            image_path: Path to cover image file
+
+        Returns:
+            Extracted title text (largest text block)
+        """
+
         request_json = {
             "images": [{"format": "png", "name": Path(image_path).stem}],
             "requestId": str(uuid.uuid4()),
@@ -238,6 +280,7 @@ class OCRModule:
             print(f"[DEBUG] OCR parse: no tokens extracted. Field count: {len(fields)}")
             return []
 
+        # Filter by height (keep only large text, likely titles)
         heights = [max(t["ys"]) - min(t["ys"]) for t in tokens]
         max_height = max(heights)
 
@@ -257,6 +300,7 @@ class OCRModule:
 
         tokens = filtered_tokens
 
+        # Paragraph clustering
         X = np.array([[t["x"], t["y"]] for t in tokens])
         para_eps = max(fs * 6.0, 15.0)
         para_db = DBSCAN(eps=para_eps, min_samples=1)
@@ -277,6 +321,8 @@ class OCRModule:
         for para in paragraphs:
             if not para:
                 continue
+
+            # Line clustering
             Y = np.array([[t["y"]] for t in para])
             line_eps = max(fs * 0.5, 2.0)
             line_db = DBSCAN(eps=line_eps, min_samples=1)
@@ -305,5 +351,7 @@ class OCRModule:
 
             results.append({"text": paragraph_text.strip(), "height": height})
 
+        # Return the tallest text block (likely the title)
         results.sort(key=lambda r: r["height"], reverse=True)
         return results[0]["text"] if results else None
+
