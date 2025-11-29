@@ -48,9 +48,16 @@
     <!-- summary -->
     <string name="congratulations">Congratulations!</string>
     <string name="you_achieved">You achieved ...</string>
+    <string name="amazing">Amazing!</string>
     <string name="summary_text">You read %1$d words and %2$s\nfor %3$s. Amazing!</string>
+    <string name="summary_line1">You read %1$d %2$s</string>
+    <string name="summary_line2">and %1$d %2$s</string>
+    <string name="summary_line3">for %1$s.</string>
+    <string name="tap_balloons">Tap the balloons! 🎈</string>
 
     <!-- unit -->
+    <string name="unit_word">word</string>
+    <string name="unit_words">words</string>
     <string name="unit_minute">minute</string>
     <string name="unit_minutes">minutes</string>
     <string name="unit_second">second</string>

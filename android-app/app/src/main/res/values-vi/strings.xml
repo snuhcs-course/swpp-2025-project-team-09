@@ -48,9 +48,16 @@
     <!-- summary -->
     <string name="congratulations">Giỏi Lắm Con!</string>
     <string name="you_achieved">Con đã hoàn thành...</string>
+    <string name="amazing">Giỏi Lắm!</string>
     <string name="summary_text">Con đã đọc %1$d từ và %2$s\ntrong %3$s. Giỏi lắm!</string>
+    <string name="summary_line1">Con đã đọc %1$d %2$s</string>
+    <string name="summary_line2">và %1$d %2$s</string>
+    <string name="summary_line3">trong %1$s.</string>
+    <string name="tap_balloons">Chạm vào bóng bay nhé! 🎈</string>
 
     <!-- unit -->
+    <string name="unit_word">từ</string>
+    <string name="unit_words">từ</string>
     <string name="unit_minute">phút</string>
     <string name="unit_minutes">phút</string>
     <string name="unit_second">giây</string>

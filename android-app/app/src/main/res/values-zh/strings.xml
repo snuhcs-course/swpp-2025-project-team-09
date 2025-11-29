@@ -48,9 +48,16 @@
     <!-- summary -->
     <string name="congratulations">太棒了！</string>
     <string name="you_achieved">你完成啦！</string>
+    <string name="amazing">太棒了！</string>
     <string name="summary_text">你阅读了 %1$d 个单词和 %2$s，花费了 %3$s。太棒了！</string>
+    <string name="summary_line1">你阅读了 %1$d %2$s</string>
+    <string name="summary_line2">和 %1$d %2$s</string>
+    <string name="summary_line3">花费了 %1$s。</string>
+    <string name="tap_balloons">点击气球吧！🎈</string>
 
     <!-- unit -->
+    <string name="unit_word">个单词</string>
+    <string name="unit_words">个单词</string>
     <string name="unit_minute">分钟</string>
     <string name="unit_minutes">分钟</string>
     <string name="unit_second">秒</string>

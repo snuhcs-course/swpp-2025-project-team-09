@@ -14,28 +14,62 @@
         style="@style/text80pt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="40dp"
+        android:layout_marginTop="80dp"
         android:text="@string/congratulations"
-        app:layout_constraintBottom_toTopOf="@id/sessionSummary"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_chainStyle="packed" />
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Session summary -->
+    <!-- Balloon result text -->
     <TextView
-        android:id="@+id/sessionSummary"
-        style="@style/text40pt"
+        android:id="@+id/balloonResultText"
+        style="@style/text64pt"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="80dp"
-        android:gravity="center"
+        android:layout_marginStart="40dp"
+        android:layout_marginEnd="40dp"
+        android:layout_marginTop="20dp"
+        android:minLines="3"
         android:text=""
-        android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@id/mainButton"
+        android:gravity="center"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/congText" />
+
+    <!-- Balloon interaction view -->
+    <com.example.storybridge_android.ui.session.BalloonInteractionView
+        android:id="@+id/balloonView"
+        android:layout_width="0dp"
+        android:layout_height="400dp"
+        android:layout_marginTop="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/balloonResultText" />
+
+    <!-- Amazing text -->
+    <TextView
+        android:id="@+id/amazingText"
+        style="@style/text64pt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="@string/amazing"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/balloonView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- Tap balloon hint -->
+    <TextView
+        android:id="@+id/tapBalloonHint"
+        style="@style/text64pt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="@string/tap_balloons"
+        app:layout_constraintTop_toBottomOf="@id/balloonView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <!-- Next button -->
     <android.widget.Button
@@ -43,15 +77,16 @@
         style="@style/text64pt"
         android:layout_width="400dp"
         android:layout_height="120dp"
+        android:layout_marginTop="20dp"
         android:background="@drawable/grad_button"
         android:backgroundTint="@color/white"
         android:elevation="8dp"
         android:text="@string/next"
         android:textAllCaps="false"
         android:translationZ="8dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:visibility="invisible"
+        app:layout_constraintTop_toBottomOf="@id/amazingText"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/sessionSummary" />
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
