@@ -66,7 +66,7 @@ class LoadingActivity : BaseActivity() {
                 if (match != null) {
                     viewModel.reloadAllSession(match.started_at, this@LoadingActivity)
                 } else {
-                    showError("Session not found")
+                    showError(getString(R.string.error_session_not_found))
                 }
             }
         }
@@ -95,7 +95,7 @@ class LoadingActivity : BaseActivity() {
         val pageIndex = intent.getIntExtra("page_index", 0)
 
         if (sessionId == null || imagePath == null) {
-            showError("Invalid session or image path")
+            showError(getString(R.string.error_invalid_session_or_image))
             return
         }
 
@@ -162,7 +162,12 @@ class LoadingActivity : BaseActivity() {
     }
 
     private fun showError(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        Toast.makeText(
+            this,
+            getString(R.string.error_generic, message),
+            Toast.LENGTH_LONG
+        ).show()
+
         finish()
     }
 }

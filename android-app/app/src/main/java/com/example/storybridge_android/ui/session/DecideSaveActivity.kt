@@ -12,6 +12,7 @@ import com.example.storybridge_android.databinding.ActivityDecideSaveBinding
 import com.example.storybridge_android.ui.common.BaseActivity
 import com.example.storybridge_android.ui.main.MainActivity
 import kotlinx.coroutines.flow.collectLatest
+import com.example.storybridge_android.R
 
 class DecideSaveActivity : BaseActivity() {
     private lateinit var binding: ActivityDecideSaveBinding
@@ -58,17 +59,29 @@ class DecideSaveActivity : BaseActivity() {
                     is DecideSaveUiState.Idle -> Unit
 
                     is DecideSaveUiState.Saved -> {
-                        Toast.makeText(this@DecideSaveActivity, "Session saved!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            this@DecideSaveActivity,
+                            getString(R.string.info_session_saved),
+                            Toast.LENGTH_SHORT
+                        ).show()
                         showMainButton()
                     }
 
                     is DecideSaveUiState.Discarded -> {
-                        Toast.makeText(this@DecideSaveActivity, "Session discarded", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            this@DecideSaveActivity,
+                            getString(R.string.info_session_discarded),
+                            Toast.LENGTH_SHORT
+                        ).show()
                         showMainButton()
                     }
 
                     is DecideSaveUiState.Error -> {
-                        Toast.makeText(this@DecideSaveActivity, "Failed: ${state.message}", Toast.LENGTH_LONG).show()
+                        Toast.makeText(
+                            this@DecideSaveActivity,
+                            getString(R.string.error_session_action_failed, state.message),
+                            Toast.LENGTH_LONG
+                        ).show()
                         decisionMade = false
                     }
 

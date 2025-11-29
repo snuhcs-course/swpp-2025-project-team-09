@@ -74,4 +74,25 @@
     <string name="discard_session_title">Bạn có chắc chắn muốn xóa không?</string>
     <string name="discard_session_confirm">Xóa</string>
     <string name="discard_session_cancel">Hủy</string>
+
+    <!-- Error msg -->
+    <string name="error_google_play_service"> Cần Google Play Services để sử dụng tính năng này. Vui lòng cập nhật hoặc cài đặt Google Play Services và thử lại. </string>
+    <string name="error_camera_permission"> Cần quyền truy cập camera để tiếp tục quét. Hãy bật quyền camera trong Cài đặt &gt; Ứng dụng &gt; Quyền. </string>
+    <string name="scan_canceled"> Quá trình quét chưa hoàn tất. Bạn có thể thử lại. </string>
+    <string name="error_processing"> Đã xảy ra lỗi trong quá trình xử lý: %1$s. Vui lòng kiểm tra kết nối internet hoặc thử lại sau. </string>
+    <string name="error_scanner_launch"> Đã xảy ra lỗi khi khởi chạy trình quét: %1$s. Vui lòng thử lại sau. </string>
+    <string name="error_select_language"> Vui lòng chọn ngôn ngữ trước. </string>
+    <string name="info_current_page"> Đây là trang hiện tại. </string>
+    <string name="error_generic"> Đã xảy ra lỗi: %1$s </string>
+    <string name="error_image_decode"> Không thể tải hình ảnh. Vui lòng kiểm tra kết nối internet hoặc thử lại sau. </string>
+    <string name="info_session_saved"> Phiên làm việc đã được lưu thành công. </string>
+    <string name="info_session_discarded"> Phiên làm việc đã bị hủy. </string>
+    <string name="error_session_action_failed"> Không thể hoàn thành thao tác: %1$s </string>
+    <string name="error_session_not_found"> Không tìm thấy phiên làm việc. Vui lòng thử một phiên khác. </string>
+    <string name="error_invalid_session_or_image"> Thông tin phiên làm việc không hợp lệ. Vui lòng thử một phiên khác. </string>
+    <string name="error_session_start_failed"> Không thể bắt đầu phiên làm việc: %1$s. Vui lòng kiểm tra kết nối internet hoặc thử lại sau. </string>
+    <string name="error_session_invalid"> Đã xảy ra sự cố với phiên làm việc. Vui lòng thử lại. </string>
+    <string name="error_discard_session_failed"> Không thể hủy phiên làm việc. Vui lòng kiểm tra kết nối internet hoặc thử lại sau. </string>
+    <string name="error_audio_preview_failed"> Không thể phát bản xem trước âm thanh. Vui lòng khởi động lại ứng dụng hoặc thử lại sau. </string>
+
 </resources>

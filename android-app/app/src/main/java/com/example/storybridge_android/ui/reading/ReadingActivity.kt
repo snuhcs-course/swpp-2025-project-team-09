@@ -191,7 +191,7 @@ class ReadingActivity : BaseActivity() {
                 state.image?.let { displayPage(it) }
                 state.ocr?.let { handleOcr(it) }
                 state.tts?.let { handleTts(it) }
-                state.error?.let { Toast.makeText(this@ReadingActivity, it, Toast.LENGTH_SHORT).show() }
+                state.error?.let { Toast.makeText(this@ReadingActivity, getString(R.string.error_generic, it), Toast.LENGTH_LONG).show() }
             }
         }
 
@@ -215,6 +215,7 @@ class ReadingActivity : BaseActivity() {
             pageImage.setImageBitmap(bmp)
         } catch (e: Exception) {
             Log.e(TAG, "Image decode failed", e)
+            Toast.makeText(this, getString(R.string.error_image_decode), Toast.LENGTH_LONG).show()
         }
     }
 
@@ -461,7 +462,7 @@ class ReadingActivity : BaseActivity() {
 
     private fun onThumbnailClick(index: Int) {
         if (index != pageIndex) loadPage(index)
-        else Toast.makeText(this, "This is the current page", Toast.LENGTH_SHORT).show()
+        else Toast.makeText(this, getString(R.string.info_current_page), Toast.LENGTH_SHORT).show()
     }
 
     private fun loadPage(newIndex: Int) {

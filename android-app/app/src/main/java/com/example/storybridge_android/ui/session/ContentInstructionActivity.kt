@@ -35,7 +35,7 @@ class ContentInstructionActivity : BaseActivity() {
 
         val sessionId = intent.getStringExtra("session_id")
         if (sessionId == null) {
-            Toast.makeText(this, "Session error. Please try again.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.error_session_invalid), Toast.LENGTH_LONG).show()
             finish()
             return
         }
