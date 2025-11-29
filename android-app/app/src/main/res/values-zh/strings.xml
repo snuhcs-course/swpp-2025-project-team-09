@@ -74,6 +74,13 @@
     <string name="discard_session_title">确定要删除吗？</string>
     <string name="discard_session_confirm">删除</string>
     <string name="discard_session_cancel">取消</string>
+    <string name="back">回主页</string>
+
+    <!-- Retake Panel -->
+    <string name="retake_no_text_title">照片糊啦！</string>
+    <string name="retake_no_text_message">再拍一张吧！</string>
+    <string name="retake_button_retake">再拍</string>
+    <string name="retake_button_cancel">不要</string>
 
     <!-- Error msg -->
     <string name="error_google_play_service"> 使用此功能需要 Google Play 服务。请更新或安装 Google Play 服务后重试。 </string>

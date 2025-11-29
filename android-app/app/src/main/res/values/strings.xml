@@ -74,6 +74,12 @@
     <string name="discard_session_title">Delete this?</string>
     <string name="discard_session_confirm">Delete</string>
     <string name="discard_session_cancel">Cancel</string>
+    <string name="back">Back to Main</string>
+
+    <string name="retake_no_text_title">Too blurry!</string>
+    <string name="retake_no_text_message">Let’s take it again!</string>
+    <string name="retake_button_retake">Try Again</string>
+    <string name="retake_button_cancel">Cancel</string>
 
     <!-- Error msg -->
     <string name="error_google_play_service"> Google Play Services are required to use this feature. Please update or install Google Play Services and try again. </string>

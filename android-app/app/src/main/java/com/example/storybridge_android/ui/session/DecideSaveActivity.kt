@@ -26,6 +26,8 @@ class DecideSaveActivity : BaseActivity() {
         SAVE, DISCARD
     }
 
+    private var decisionMade: Boolean = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
