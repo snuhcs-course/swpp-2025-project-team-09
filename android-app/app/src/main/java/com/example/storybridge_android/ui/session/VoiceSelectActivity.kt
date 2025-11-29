@@ -58,7 +58,12 @@ class VoiceSelectActivity : BaseActivity() {
         Log.d("VoiceSelectActivity", "lang=$lang")
 
         if (sessionId == null) {
-            Toast.makeText(this, "Session error. Please try again.", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                this,
+                getString(R.string.error_session_invalid),
+                Toast.LENGTH_LONG
+            ).show()
+
             finish()
             return
         }
@@ -107,7 +112,12 @@ class VoiceSelectActivity : BaseActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.error.collectLatest { msg ->
-                    Toast.makeText(this@VoiceSelectActivity, msg, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@VoiceSelectActivity,
+                        getString(R.string.error_generic, msg),
+                        Toast.LENGTH_SHORT
+                    ).show()
+
                 }
             }
         }
@@ -124,7 +134,12 @@ class VoiceSelectActivity : BaseActivity() {
                 result.onSuccess {
                     finish()
                 }.onFailure {
-                    Toast.makeText(this@VoiceSelectActivity, "Failed to discard session", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@VoiceSelectActivity,
+                        getString(R.string.error_discard_session_failed),
+                        Toast.LENGTH_SHORT
+                    ).show()
+
                     finish()
                 }
             }
@@ -161,7 +176,12 @@ class VoiceSelectActivity : BaseActivity() {
             }
         } catch (e: Exception) {
             Log.e("VoiceSelectActivity", "✗ Error playing audio: ${e.message}", e)
-            Toast.makeText(this, "Failed to play audio preview", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                this,
+                getString(R.string.error_audio_preview_failed),
+                Toast.LENGTH_SHORT
+            ).show()
+
         }
     }
 

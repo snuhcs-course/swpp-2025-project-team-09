@@ -53,7 +53,12 @@ class StartSessionActivity : BaseActivity() {
                         navigateToCameraForCover(state.sessionId)
                     }
                     is StartSessionUiState.Error -> {
-                        Toast.makeText(this@StartSessionActivity, state.message, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            this@StartSessionActivity,
+                            getString(R.string.error_session_start_failed, state.message),
+                            Toast.LENGTH_LONG
+                        ).show()
+
                         finish()
                     }
                 }
