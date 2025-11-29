@@ -25,6 +25,7 @@ import io.mockk.unmockkAll
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.*
 import org.junit.runner.RunWith
+import org.hamcrest.CoreMatchers.allOf
 
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -98,16 +99,16 @@ class StartSessionActivityMockTest {
         Thread.sleep(700)
 
         onView(withId(R.id.startSessionButton)).perform(click())
-
         Thread.sleep(1500)
 
-        Intents.intended(IntentMatchers.hasComponent(
-            "com.example.storybridge_android.ui.camera.CameraSessionActivity"
-        ))
-
-        Intents.intended(IntentMatchers.hasExtra("session_id", "S1"))
-        Intents.intended(IntentMatchers.hasExtra("page_index", 0))
-        Intents.intended(IntentMatchers.hasExtra("is_cover", true))
+        Intents.intended(
+            allOf(
+                IntentMatchers.hasComponent("com.example.storybridge_android.ui.camera.CameraSessionActivity"),
+                IntentMatchers.hasExtra("session_id", "S1"),
+                IntentMatchers.hasExtra("page_index", 0),
+                IntentMatchers.hasExtra("is_cover", true)
+            )
+        )
 
         scenario.close()
     }

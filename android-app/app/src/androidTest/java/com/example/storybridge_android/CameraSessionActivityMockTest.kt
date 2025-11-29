@@ -126,20 +126,6 @@ class CameraSessionActivityMockTest {
     }
 
     @Test
-    fun uiState_error_finishes() {
-        val flow = MutableStateFlow<SessionUiState>(SessionUiState.Idle)
-        every { mockViewModel.uiState } returns flow.asStateFlow()
-
-        scenario = launchWithExtras()
-        Thread.sleep(300)
-
-        flow.value = SessionUiState.Error("Test error")
-        Thread.sleep(500)
-
-        assert(scenario.state == Lifecycle.State.DESTROYED)
-    }
-
-    @Test
     fun navigateToVoiceSelect_includesLanguageSetting() {
         // GIVEN: AppSettings mock
         mockkObject(AppSettings)

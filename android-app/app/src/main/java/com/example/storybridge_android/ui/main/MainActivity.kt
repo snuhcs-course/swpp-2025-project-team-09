@@ -172,6 +172,14 @@ class MainActivity : BaseActivity() {
 
         val reversedSessions = sessions.reversed()
         reversedSessions.forEachIndexed { index, sessionData ->
+
+            val title = sessionData.translated_title?.trim()?.lowercase()
+            val image = sessionData.image_base64?.trim()
+
+            if ((title.isNullOrEmpty() || title == "null") && image.isNullOrEmpty()) {
+                return@forEachIndexed
+            }
+
             val sessionCard = createSessionCard(sessionData, index, reversedSessions.size)
             cardContainer.addView(sessionCard)
         }

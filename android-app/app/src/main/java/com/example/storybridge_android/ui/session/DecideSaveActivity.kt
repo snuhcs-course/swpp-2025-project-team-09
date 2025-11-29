@@ -20,7 +20,11 @@ class DecideSaveActivity : BaseActivity() {
     private val viewModel: DecideSaveActivityViewModel by viewModels {
         DecideSaveActivityViewModelFactory()
     }
-    private var decisionMade = false
+    private var selectedAction: SaveAction? = null
+
+    private enum class SaveAction {
+        SAVE, DISCARD
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,21 +39,31 @@ class DecideSaveActivity : BaseActivity() {
     }
 
     private fun initListener() {
+        binding.mainButton.isEnabled = false
+
         binding.btnSave.setOnClickListener {
-            if (!decisionMade) {
-                decisionMade = true
-                viewModel.saveSession()
-            }
+            selectedAction = SaveAction.SAVE
+            updateButtonState(binding.btnSave)
+            showMainButton()
         }
 
         binding.btnDiscard.setOnClickListener {
-            if (!decisionMade) {
-                decisionMade = true
-                viewModel.discardSession(sessionId)
-            }
+            selectedAction = SaveAction.DISCARD
+            updateButtonState(binding.btnDiscard)
+            showMainButton()
         }
 
-        binding.mainButton.setOnClickListener { navigateToMain() }
+        binding.mainButton.setOnClickListener {
+            when (selectedAction) {
+                SaveAction.SAVE -> viewModel.saveSession()
+                SaveAction.DISCARD -> viewModel.discardSession(sessionId)
+                null -> return@setOnClickListener
+            }
+        }
+    }
+
+    private fun updateButtonState(selected: android.widget.Button) {
+        listOf(binding.btnSave, binding.btnDiscard).forEach { it.isSelected = it == selected }
     }
 
     private fun observeViewModel() {

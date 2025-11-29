@@ -282,7 +282,7 @@ class ReadingActivityMockTest {
         Thread.sleep(1500)
         onView(withId(R.id.main)).perform(click())
         Thread.sleep(500)
-        onView(withId(R.id.statusText)).check(matches(withText("page 2/2")))
+        onView(withId(R.id.statusText)).check(matches(withText("Page 2/2")))
     }
 
     @Test

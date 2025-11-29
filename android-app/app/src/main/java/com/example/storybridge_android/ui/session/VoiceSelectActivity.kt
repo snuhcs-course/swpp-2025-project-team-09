@@ -72,10 +72,6 @@ class VoiceSelectActivity : BaseActivity() {
         val exitConfirm = findViewById<Button>(R.id.exitConfirmBtn)
         val exitCancel = findViewById<Button>(R.id.exitCancelBtn)
 
-        if (imagePath != null && lang != null) {
-            viewModel.uploadCoverInBackground(sessionId!!, lang!!, imagePath!!)
-        }
-
         val manButton = findViewById<Button>(R.id.manButton)
         val womanButton = findViewById<Button>(R.id.womanButton)
         val nextButton = findViewById<Button>(R.id.nextButton)

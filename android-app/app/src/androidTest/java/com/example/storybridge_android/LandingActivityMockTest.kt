@@ -2,6 +2,7 @@ package com.example.storybridge_android
 
 import android.widget.Button
 import androidx.test.core.app.ActivityScenario
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
@@ -221,6 +222,9 @@ class LandingActivityMockTest {
         verify { AppSettings.setLanguage(any(), "zh") }
 
         unmockkObject(AppSettings)
+
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        AppSettings.setLanguage(context, "en")
     }
 
     @Test
@@ -289,6 +293,9 @@ class LandingActivityMockTest {
             assert(!btnEnglish.isSelected) { "English button should not be selected" }
             assert(btnChinese.isSelected) { "Chinese button should be selected" }
         }
+
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        AppSettings.setLanguage(context, "en")
     }
 
     /***
@@ -358,13 +365,13 @@ class LandingActivityMockTest {
         scenario = ActivityScenario.launch(LandingActivity::class.java)
         Thread.sleep(1500)
 
-        // WHEN: Chinese 선택 후 Start
+        // WHEN: Start after Chinese selected
         onView(withId(R.id.btnChinese)).perform(click())
         Thread.sleep(300)
         onView(withId(R.id.startButton)).perform(click())
         Thread.sleep(1000)
 
-        // THEN: MainActivity로 이동 (Activity 종료)
+        // THEN: Move to MainActivity
         var isFinishing = false
         try {
             scenario.onActivity { activity ->
@@ -374,6 +381,9 @@ class LandingActivityMockTest {
             isFinishing = true
         }
         assert(isFinishing) { "Activity should finish after clicking start" }
+
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        AppSettings.setLanguage(context, "en")
     }
 
 

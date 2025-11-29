@@ -58,21 +58,18 @@ class LandingActivity : BaseActivity() {
             selectedLang = "en"
             AppSettings.setLanguage(this, "en")
             updateButtonState(btnEnglish)
-            recreate()
         }
 
         btnChinese.setOnClickListener {
             selectedLang = "zh"
             AppSettings.setLanguage(this, "zh")
             updateButtonState(btnChinese)
-            recreate()
         }
 
         btnVietnamese.setOnClickListener {
             selectedLang = "vi"
             AppSettings.setLanguage(this, "vi")
             updateButtonState(btnVietnamese)
-            recreate()
         }
 
         findViewById<Button>(R.id.startButton).setOnClickListener {

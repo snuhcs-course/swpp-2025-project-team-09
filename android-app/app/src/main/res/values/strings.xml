@@ -71,7 +71,7 @@
     <string name="exit_cancel">Cancel</string>
 
     <!-- Delete Previous Reading -->
-    <string name="discard_session_title">Are you sure you want to delete?</string>
+    <string name="discard_session_title">Delete this?</string>
     <string name="discard_session_confirm">Delete</string>
     <string name="discard_session_cancel">Cancel</string>
 
