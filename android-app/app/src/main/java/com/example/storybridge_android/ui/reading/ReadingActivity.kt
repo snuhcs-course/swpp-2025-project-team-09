@@ -226,22 +226,10 @@ class ReadingActivity : BaseActivity() {
     )
 
     private fun handleOcr(data: GetOcrTranslationResponse) {
-        // Get viewport width from pageImage (90% of actual width)
-        if (viewportWidth == 0) {
-            viewportWidth = (pageImage.width * 0.9).toInt()
-            Log.d(TAG, "Viewport width set to: $viewportWidth (90% of ${pageImage.width})")
-        }
-
         val boxes = data.ocr_results.mapIndexed { i, ocrBox ->
             val box = ocrBox.bbox
-            // Apply min-width and max-width constraints
-            val adjustedWidth = if (viewportWidth > 0) {
-                max(box.width, minWidth).coerceAtMost(viewportWidth)
-            } else {
-                max(box.width, minWidth)
-            }
-            Log.d(TAG, "BBox[$i] original width: ${box.width}, adjusted width: $adjustedWidth")
-            BoundingBox(box.x, box.y, adjustedWidth, box.height, ocrBox.translation_txt, i)
+            // Don't apply scaling here - just store original coordinates
+            BoundingBox(box.x, box.y, box.width, box.height, ocrBox.translation_txt, i)
         }
         cachedBoundingBoxes = boxes
         if (boxes.isNotEmpty()) pageImage.post { displayBB(boxes) }
@@ -325,12 +313,37 @@ class ReadingActivity : BaseActivity() {
     }
 
     private fun displayBB(bboxes: List<BoundingBox>) {
-        // Update viewport width if not set (90% of actual width)
-        if (viewportWidth == 0) {
-            viewportWidth = (pageImage.width * 0.9).toInt()
-            Log.d(TAG, "Viewport width set to: $viewportWidth (90% of ${pageImage.width})")
-        }
+        val bitmap = pageBitmap ?: return
 
+        // Get ImageView dimensions
+        val viewWidth = pageImage.width.toFloat()
+        val viewHeight = pageImage.height.toFloat()
+
+        // Get original bitmap dimensions
+        val bitmapWidth = bitmap.width.toFloat()
+        val bitmapHeight = bitmap.height.toFloat()
+
+        // Calculate scale factor (fitCenter uses the smaller scale to fit entirely)
+        val scaleX = viewWidth / bitmapWidth
+        val scaleY = viewHeight / bitmapHeight
+        val scale = minOf(scaleX, scaleY)
+
+        // Calculate the actual displayed size after scaling
+        val displayedWidth = bitmapWidth * scale
+        val displayedHeight = bitmapHeight * scale
+
+        // Calculate offset (image is centered in ImageView)
+        val offsetX = (viewWidth - displayedWidth) / 2f
+        val offsetY = (viewHeight - displayedHeight) / 2f
+
+        Log.d(TAG, "ImageView: ${viewWidth}x${viewHeight}, Bitmap: ${bitmapWidth}x${bitmapHeight}")
+        Log.d(TAG, "Scale: $scale, Displayed: ${displayedWidth}x${displayedHeight}, Offset: ($offsetX, $offsetY)")
+
+        // Update viewport width based on displayed size (90% of displayed width)
+        viewportWidth = (displayedWidth * 0.9).toInt()
+        Log.d(TAG, "Viewport width set to: $viewportWidth (90% of displayed width)")
+
+        // Clear existing bounding boxes and buttons
         for (i in mainLayout.childCount - 1 downTo 0) {
             val child = mainLayout.getChildAt(i)
             if (child.tag == "bbox" || child.tag == "play_button") mainLayout.removeViewAt(i)
@@ -340,58 +353,65 @@ class ReadingActivity : BaseActivity() {
         boundingBoxViewsMap.clear()
 
         for (box in bboxes) {
+            // Scale the coordinates from original image space to display space
+            val scaledX = box.x * scale + offsetX
+            val scaledY = box.y * scale + offsetY
+            val scaledWidth = box.width * scale
+            val scaledHeight = box.height * scale
+
             val rect = RectF(
-                box.x.toFloat(),
-                box.y.toFloat(),
-                (box.x + box.width).toFloat(),
-                (box.y + box.height).toFloat()
+                scaledX,
+                scaledY,
+                scaledX + scaledWidth,
+                scaledY + scaledHeight
             )
 
             val boxView = TextView(this).apply {
                 text = box.text
                 setBackgroundResource(R.drawable.bbox_background)
                 setTextAppearance(R.style.BBoxText)
-                setLineSpacing(0f, 0.8f)  // 줄 간격 설정 (multiplier = 0.8)
+                setLineSpacing(0f, 0.8f)
                 gravity = Gravity.START or Gravity.TOP
                 setPadding(24, 16, 24, 16)
                 tag = "bbox"
             }
 
-            // Apply viewport width constraint to layout params
+            // Apply viewport width constraint to scaled width
             val constrainedWidth = if (viewportWidth > 0) {
-                rect.width().toInt().coerceAtMost(viewportWidth)
+                scaledWidth.toInt().coerceAtLeast(minWidth).coerceAtMost(viewportWidth)
             } else {
-                rect.width().toInt()
+                scaledWidth.toInt().coerceAtLeast(minWidth)
             }
 
             val params = ConstraintLayout.LayoutParams(
-                constrainedWidth,  // width constrained by viewport
-                ConstraintLayout.LayoutParams.WRAP_CONTENT  // Height tailored to individual text
+                constrainedWidth,
+                ConstraintLayout.LayoutParams.WRAP_CONTENT
             )
             params.startToStart = pageImage.id
             params.topToTop = pageImage.id
             boxView.layoutParams = params
 
             // Adjust initial position to keep bounding box within viewport
-            var initialX = rect.left
-            var initialY = rect.top
+            var initialX = scaledX
+            var initialY = scaledY
 
             // Ensure the bounding box doesn't overflow horizontally
-            if (initialX + constrainedWidth > viewportWidth) {
-                initialX = (viewportWidth - constrainedWidth).toFloat().coerceAtLeast(0f)
-                Log.d(TAG, "BBox[${box.index}] adjusted X from ${rect.left} to $initialX to fit viewport")
+            if (initialX + constrainedWidth > offsetX + displayedWidth) {
+                initialX = (offsetX + displayedWidth - constrainedWidth).coerceAtLeast(offsetX)
+                Log.d(TAG, "BBox[${box.index}] adjusted X from $scaledX to $initialX to fit viewport")
             }
 
             // Ensure the bounding box doesn't overflow to the left
-            if (initialX < 0) {
-                initialX = 0f
-                Log.d(TAG, "BBox[${box.index}] adjusted X from ${rect.left} to 0 (was negative)")
+            if (initialX < offsetX) {
+                initialX = offsetX
+                Log.d(TAG, "BBox[${box.index}] adjusted X from $scaledX to $offsetX (was before image start)")
             }
 
             boxView.translationX = initialX
             boxView.translationY = initialY
 
-            Log.d(TAG, "BBox[${box.index}] positioned at ($initialX, $initialY) with width $constrainedWidth")
+            Log.d(TAG, "BBox[${box.index}] original: (${box.x}, ${box.y}, ${box.width}x${box.height})")
+            Log.d(TAG, "BBox[${box.index}] scaled: ($initialX, $initialY, ${constrainedWidth}x${scaledHeight.toInt()})")
 
             mainLayout.addView(boxView)
             boundingBoxViewsMap[box.index] = boxView
