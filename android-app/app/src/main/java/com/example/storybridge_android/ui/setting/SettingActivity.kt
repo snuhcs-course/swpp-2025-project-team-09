@@ -6,6 +6,7 @@ import android.util.Log
 import android.widget.Button
 import android.widget.RadioButton
 import android.widget.RadioGroup
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -31,6 +32,7 @@ class SettingActivity : BaseActivity() {
         setupTopBar()
         setupLanguageOptions()
         setupSaveButton()
+        setupBackPressedHandler()
         observeLangResponse()
     }
 
@@ -52,9 +54,18 @@ class SettingActivity : BaseActivity() {
             "vi" -> vietnamese.isChecked = true
         }
 
-        english.setOnClickListener { AppSettings.setLanguage(this, "en") }
-        chinese.setOnClickListener { AppSettings.setLanguage(this, "zh") }
-        vietnamese.setOnClickListener { AppSettings.setLanguage(this, "vi") }
+        english.setOnClickListener {
+            AppSettings.setLanguage(this, "en")
+            recreate()
+        }
+        chinese.setOnClickListener {
+            AppSettings.setLanguage(this, "zh")
+            recreate()
+        }
+        vietnamese.setOnClickListener {
+            AppSettings.setLanguage(this, "vi")
+            recreate()
+        }
     }
 
     private fun setupSaveButton() {
@@ -70,6 +81,14 @@ class SettingActivity : BaseActivity() {
             val request = UserLangRequest(device_info = deviceInfo, language_preference = selectedLang)
             viewModel.updateLanguage(request)
         }
+    }
+
+    private fun setupBackPressedHandler() {
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                findViewById<Button>(R.id.btnBack).performClick()
+            }
+        })
     }
 
     private fun observeLangResponse() {
