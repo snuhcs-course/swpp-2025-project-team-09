@@ -32,6 +32,7 @@
 
     <!-- Taking cover image -->
     <string name="take_photo_instruction">Chụp ảnh\nbìa sách của con nhé</string>
+    <string name="take_photo_instruction_sub">Đây chỉ là buổi luyện tập,\nhãy thoải mái nhé!</string>
     <string name="start">Bắt Đầu!</string>
 
     <!-- Taking content image -->

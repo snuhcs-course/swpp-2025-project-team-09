@@ -9,10 +9,11 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.R
+import com.example.storybridge_android.ui.common.BaseActivity
 import com.example.storybridge_android.ui.main.MainActivity
+import com.example.storybridge_android.ui.setting.AppSettings
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -21,7 +22,7 @@ data class TutorialPage(
     val description: String
 )
 
-class TutorialActivity : AppCompatActivity() {
+class TutorialActivity : BaseActivity() {
 
     private val viewModel: TutorialViewModel by viewModels { TutorialViewModelFactory() }
 
@@ -34,6 +35,10 @@ class TutorialActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val selectedLang = intent.getStringExtra("lang") ?: AppSettings.getLanguage(this)
+        AppSettings.setLanguage(this, selectedLang)
+
         setContentView(R.layout.activity_tutorial)
 
         imageView = findViewById(R.id.tutorialImage)
@@ -67,7 +72,7 @@ class TutorialActivity : AppCompatActivity() {
                     }
                     is TutorialUiState.Error -> {
                         nextBtn.isEnabled = true
-                        getString(R.string.tutorial_start)
+                        nextBtn.text = getString(R.string.tutorial_start)
                         Toast.makeText(this@TutorialActivity, state.message, Toast.LENGTH_SHORT).show()
                     }
                     else -> {}
@@ -81,7 +86,7 @@ class TutorialActivity : AppCompatActivity() {
                 updateUI(currentIndex)
             } else {
                 val deviceId = fetchDeviceId()
-                viewModel.startApp(deviceId)
+                viewModel.startApp(deviceId, selectedLang)
             }
         }
     }

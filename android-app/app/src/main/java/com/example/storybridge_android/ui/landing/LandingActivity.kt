@@ -75,7 +75,6 @@ class LandingActivity : BaseActivity() {
 
         findViewById<Button>(R.id.startButton).setOnClickListener {
             if (selectedLang != null) {
-                // navigateToMain()
                 navigateToTutorial()
             } else {
                 Toast.makeText(this, getString(R.string.error_select_language), Toast.LENGTH_SHORT).show()

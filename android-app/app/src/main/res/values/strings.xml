@@ -32,6 +32,7 @@
 
     <!-- Taking cover image -->
     <string name="take_photo_instruction">Take a photo of\nyour book cover</string>
+    <string name="take_photo_instruction_sub">It\'s a practice\nso take it easy</string>
     <string name="start">Start!</string>
 
     <!-- Taking content image -->

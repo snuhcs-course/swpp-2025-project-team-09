@@ -36,7 +36,6 @@ class LandingViewModel(private val repository: UserRepository) : ViewModel() {
                         _uiState.value = LandingUiState.Error("Register failed")
                     }
                 }
-
                  */
                 val loginRes = repository.login(UserLoginRequest(deviceId))
                 if (loginRes.isSuccessful && loginRes.body() != null) {

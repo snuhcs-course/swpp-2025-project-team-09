@@ -32,6 +32,7 @@
 
     <!-- Taking cover image -->
     <string name="take_photo_instruction">拍下书本的封面</string>
+    <string name="take_photo_instruction_sub">这只是练习，\n放轻松一点！</string>
     <string name="start">开始！</string>
 
     <!-- Taking content image -->
