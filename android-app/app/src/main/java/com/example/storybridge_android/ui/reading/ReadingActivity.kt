@@ -177,7 +177,11 @@ class ReadingActivity : BaseActivity() {
         mainLayout.setOnClickListener { toggleUI() }
 
         exitConfirmBtn.setOnClickListener {
-            navigateToFinish()
+            if (isNewSession) {
+                navigateToFinish()
+            } else {
+                navigateToMain()
+            }
         }
 
         exitCancelBtn.setOnClickListener {
@@ -574,6 +578,12 @@ class ReadingActivity : BaseActivity() {
             putExtra("session_id", sessionId)
             putExtra("is_new_session", isNewSession)
         }
+        startActivity(intent)
+        finish()
+    }
+
+    private fun navigateToMain() {
+        val intent = Intent(this, com.example.storybridge_android.ui.main.MainActivity::class.java)
         startActivity(intent)
         finish()
     }
