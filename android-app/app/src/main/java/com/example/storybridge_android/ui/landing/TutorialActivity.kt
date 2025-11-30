@@ -1,21 +1,15 @@
-package com.example.storybridge_android.ui.tutorial
+package com.example.storybridge_android.ui.landing
 
 import android.content.Intent
 import android.os.Bundle
-import android.provider.Settings
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
-import androidx.activity.viewModels
-import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.R
 import com.example.storybridge_android.ui.common.BaseActivity
 import com.example.storybridge_android.ui.main.MainActivity
 import com.example.storybridge_android.ui.setting.AppSettings
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 
 data class TutorialPage(
     val imageRes: Int,
@@ -23,9 +17,6 @@ data class TutorialPage(
 )
 
 class TutorialActivity : BaseActivity() {
-
-    private val viewModel: TutorialViewModel by viewModels { TutorialViewModelFactory() }
-
     private lateinit var nextBtn: Button
     private lateinit var imageView: ImageView
     private lateinit var descView: TextView
@@ -59,34 +50,13 @@ class TutorialActivity : BaseActivity() {
 
         updateUI(0)
 
-        lifecycleScope.launch {
-            viewModel.uiState.collectLatest { state ->
-                when (state) {
-                    is TutorialUiState.Loading -> {
-                        nextBtn.isEnabled = false
-                        nextBtn.text = getString(R.string.tutorial_loading)
-                    }
-                    is TutorialUiState.NavigateMain -> {
-                        startActivity(Intent(this@TutorialActivity, MainActivity::class.java))
-                        finish()
-                    }
-                    is TutorialUiState.Error -> {
-                        nextBtn.isEnabled = true
-                        nextBtn.text = getString(R.string.tutorial_start)
-                        Toast.makeText(this@TutorialActivity, state.message, Toast.LENGTH_SHORT).show()
-                    }
-                    else -> {}
-                }
-            }
-        }
-
         nextBtn.setOnClickListener {
             if (currentIndex < tutorialList.size - 1) {
                 currentIndex++
                 updateUI(currentIndex)
             } else {
-                val deviceId = fetchDeviceId()
-                viewModel.startApp(deviceId, selectedLang)
+                startActivity(Intent(this, MainActivity::class.java))
+                finish()
             }
         }
     }
@@ -105,9 +75,5 @@ class TutorialActivity : BaseActivity() {
             val drawableRes = if (i == index) R.drawable.circle_dark else R.drawable.circle_gray
             dot.setBackgroundResource(drawableRes)
         }
-    }
-
-    private fun fetchDeviceId(): String {
-        return Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID) ?: "unknown_id"
     }
 }

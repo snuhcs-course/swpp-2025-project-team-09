@@ -9,7 +9,7 @@
     android:background="@drawable/gradient_background"
     android:paddingHorizontal="24dp"
     android:paddingVertical="20dp"
-    tools:context=".ui.tutorial.TutorialActivity">
+    tools:context=".ui.landing.TutorialActivity">
 
     <ImageView
         android:id="@+id/tutorialImage"

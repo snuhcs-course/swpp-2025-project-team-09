@@ -24,7 +24,6 @@ class LandingViewModel(private val repository: UserRepository) : ViewModel() {
     fun checkUser(deviceId: String) {
         viewModelScope.launch {
             try {
-                /*
                 val loginRes = repository.login(UserLoginRequest(deviceId))
                 if (loginRes.isSuccessful && loginRes.body() != null) {
                     _uiState.value = LandingUiState.NavigateMain
@@ -35,14 +34,6 @@ class LandingViewModel(private val repository: UserRepository) : ViewModel() {
                     } else {
                         _uiState.value = LandingUiState.Error("Register failed")
                     }
-                }
-                 */
-                val loginRes = repository.login(UserLoginRequest(deviceId))
-                if (loginRes.isSuccessful && loginRes.body() != null) {
-                    _uiState.value = LandingUiState.ShowLanguageSelect
-                } else {
-                    repository.register(UserRegisterRequest(deviceId, "en"))
-                    _uiState.value = LandingUiState.ShowLanguageSelect
                 }
             } catch (e: Exception) {
                 _uiState.value = LandingUiState.Error(e.message ?: "Network error")

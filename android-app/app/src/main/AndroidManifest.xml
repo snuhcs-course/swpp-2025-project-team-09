@@ -44,7 +44,7 @@
             android:name=".ui.session.LoadingActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.tutorial.TutorialActivity"
+            android:name=".ui.landing.TutorialActivity"
             android:exported="false" />
         <!-- Launcher Activity -->
         <activity

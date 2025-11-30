@@ -14,7 +14,6 @@ import com.example.storybridge_android.R
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import com.example.storybridge_android.ui.common.BaseActivity
-import com.example.storybridge_android.ui.tutorial.TutorialActivity
 
 class LandingActivity : BaseActivity() {
     private val viewModel: LandingViewModel by viewModels {
