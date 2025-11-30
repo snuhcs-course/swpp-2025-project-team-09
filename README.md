@@ -171,6 +171,11 @@ After execution, the Jacoco coverage report can be viewed at:
 app/build/reports/jacoco/jacocoTestReport/html/index.html
 
 This test covers both unit test and instrumental(UI) test of M, V, VM
+- 80% line coverage (374 missed/2,056 lines)
+
+If you only want to run unit tests:
+Run configuration > Modify > Specify packages > only select **data, ntework** packages (w/o ui package)
+- 88% line coverage (43 missed / 363 lines)
 
 ## Technology Stack
 
