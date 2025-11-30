@@ -210,4 +210,18 @@ class BalloonInteractionView @JvmOverloads constructor(
         super.onDetachedFromWindow()
         removeCallbacks(updateRunnable)
     }
+
+    /**
+     * Stop the animation loop (for testing)
+     */
+    fun stopAnimation() {
+        removeCallbacks(updateRunnable)
+    }
+
+    /**
+     * Get balloon text by line index (useful for testing)
+     */
+    fun getBalloonText(lineIndex: Int): String? {
+        return balloons.find { it.lineIndex == lineIndex }?.text
+    }
 }
