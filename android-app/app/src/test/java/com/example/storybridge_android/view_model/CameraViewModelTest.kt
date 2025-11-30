@@ -5,6 +5,8 @@ import android.content.ContentResolver
 import android.content.IntentSender
 import android.net.Uri
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -14,6 +16,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
+import org.mockito.Mockito.mockStatic
 import org.mockito.MockitoAnnotations
 import org.mockito.kotlin.*
 import java.io.ByteArrayInputStream
@@ -355,5 +358,23 @@ class CameraViewModelTest {
         val state = viewModel.uiState.value
         assertNotNull(state.imagePath)
         assertTrue(state.imagePath!!.startsWith(testFile.absolutePath))
+    }
+
+    @Test
+    fun `checkGooglePlayServices sets error when service missing`() {
+        val fakeApp = mock<Application>()
+        whenever(fakeApp.applicationContext).thenReturn(fakeApp)
+
+        val vm = CameraViewModel(fakeApp)
+        val googleApiAvailability = mock<GoogleApiAvailability>()
+        mockStatic(GoogleApiAvailability::class.java).use {
+            whenever(GoogleApiAvailability.getInstance()).thenReturn(googleApiAvailability)
+            whenever(googleApiAvailability.isGooglePlayServicesAvailable(any())).thenReturn(
+                ConnectionResult.SERVICE_MISSING)
+
+            val result = vm.checkGooglePlayServices()
+            assertFalse(result)
+            assertTrue(vm.uiState.value.error!!.contains("SERVICE_MISSING"))
+        }
     }
 }

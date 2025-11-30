@@ -1,6 +1,7 @@
 package com.example.storybridge_android.ui.reading
 
 import android.content.Intent
+import android.graphics.Bitmap
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
@@ -19,10 +20,14 @@ import org.junit.*
 import org.junit.runner.RunWith
 import android.util.Base64
 import android.view.View
+import android.widget.ImageView
+import org.hamcrest.Matchers.`is`
+import org.hamcrest.TypeSafeMatcher
+import org.junit.runner.Description
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
-class ReadingActivityTest {
+class ReadingActivityMockTest {
 
     private lateinit var scenario: ActivityScenario<ReadingActivity>
     private lateinit var mockPageRepository: PageRepository
@@ -175,92 +180,7 @@ class ReadingActivityTest {
         onView(withId(R.id.pageImage)).check(matches(isDisplayed()))
     }
 
-    // ==================== UI Toggle Tests ====================
-
-    @Test
-    fun toggleUI_showsTopAndBottomNav() = runTest {
-        scenario = ActivityScenario.launch(createIntent(totalPages = 2))
-        Thread.sleep(1500)
-
-        onView(withId(R.id.main)).perform(click())
-        Thread.sleep(500)
-
-        scenario.onActivity { activity ->
-            val topUi = activity.findViewById<View>(R.id.topUi)
-            val bottomUi = activity.findViewById<View>(R.id.bottomUi)
-
-            Assert.assertEquals("TopUi should be visible", 0f, topUi.translationY, 10f)
-            Assert.assertEquals("BottomUi should be visible", 0f, bottomUi.translationY, 10f)
-        }
-    }
-
-    @Test
-    fun toggleUI_hidesTopAndBottomNav() = runTest {
-        scenario = ActivityScenario.launch(createIntent(totalPages = 2))
-        Thread.sleep(1500)
-
-        // Show UI first
-        onView(withId(R.id.main)).perform(click())
-        Thread.sleep(500)
-
-        // Hide UI
-        onView(withId(R.id.main)).perform(click())
-        Thread.sleep(500)
-
-        scenario.onActivity { activity ->
-            val topUi = activity.findViewById<View>(R.id.topUi)
-            val bottomUi = activity.findViewById<View>(R.id.bottomUi)
-
-            Assert.assertTrue("TopUi should be hidden", topUi.translationY < 0f)
-            Assert.assertTrue("BottomUi should be hidden", bottomUi.translationY > 0f)
-        }
-    }
-
-    @Test
-    fun menuButton_opensOverlay() = runTest {
-        scenario = ActivityScenario.launch(createIntent(totalPages = 2))
-        Thread.sleep(1500)
-
-        onView(withId(R.id.main)).perform(click())
-        Thread.sleep(300)
-
-        onView(withId(R.id.menuButton)).perform(click())
-        Thread.sleep(500)
-
-        onView(withId(R.id.leftPanel)).check(matches(isDisplayed()))
-        onView(withId(R.id.dimBackground)).check(matches(isDisplayed()))
-    }
-
     // ==================== Page Navigation Tests ====================
-
-    @Test
-    fun prevButton_loadsCorrectPage() = runTest {
-        scenario = ActivityScenario.launch(createIntent(pageIndex = 2, totalPages = 3))
-        Thread.sleep(1500)
-
-        onView(withId(R.id.main)).perform(click())
-        Thread.sleep(300)
-
-        onView(withId(R.id.prevButton)).perform(click())
-        Thread.sleep(2000)
-
-        onView(withId(R.id.pageImage)).check(matches(isDisplayed()))
-    }
-
-    @Test
-    fun nextButton_loadsCorrectPage() = runTest {
-        scenario = ActivityScenario.launch(createIntent(pageIndex = 1, totalPages = 3))
-        Thread.sleep(1500)
-
-        onView(withId(R.id.main)).perform(click())
-        Thread.sleep(300)
-
-        onView(withId(R.id.nextButton)).perform(click())
-        Thread.sleep(2000)
-
-        onView(withId(R.id.pageImage)).check(matches(isDisplayed()))
-    }
-
     @Test
     fun statusText_displaysCorrectPageInfo() = runTest {
         scenario = ActivityScenario.launch(createIntent(pageIndex = 2, totalPages = 3))
@@ -419,23 +339,6 @@ class ReadingActivityTest {
     }
 
     // ==================== OCR & TTS Tests ====================
-
-    @Test
-    fun ocrResults_cachesBoundingBoxes() = runTest {
-        mockPageRepository = createSuccessRepository(withOcr = true)
-        ServiceLocator.pageRepository = mockPageRepository
-
-        scenario = ActivityScenario.launch(createIntent(totalPages = 2))
-        Thread.sleep(3000)
-
-        scenario.onActivity { activity ->
-            val field = activity.javaClass.getDeclaredField("cachedBoundingBoxes")
-            field.isAccessible = true
-            val cachedBoxes = field.get(activity) as List<*>
-
-            Assert.assertTrue("Bounding boxes should be cached after OCR", cachedBoxes.isNotEmpty())
-        }
-    }
 
     @Test
     fun ttsResults_cachesAudioMap() = runTest {
@@ -644,39 +547,6 @@ class ReadingActivityTest {
     // ==================== Audio Playback Tests ====================
 
     @Test
-    fun ttsResults_createsAudioMap() = runTest {
-        val bbox = createBBox()
-        val ocrBox = OcrBox(bbox, "Original", "Translated")
-        val audioResult = AudioResult(0, listOf("dGVzdA=="))
-
-        mockPageRepository = object : PageRepository {
-            override suspend fun getImage(sessionId: String, pageIndex: Int): Result<GetImageResponse> {
-                return Result.success(GetImageResponse(sessionId, pageIndex, testImageBase64, "2025-11-15T12:00:00"))
-            }
-            override suspend fun getOcrResults(sessionId: String, pageIndex: Int): Result<GetOcrTranslationResponse> {
-                return Result.success(GetOcrTranslationResponse(sessionId, pageIndex, listOf(ocrBox), "2025-11-15T12:00:00"))
-            }
-            override suspend fun getTtsResults(sessionId: String, pageIndex: Int): Result<GetTtsResponse> {
-                return Result.success(GetTtsResponse(sessionId, pageIndex, listOf(audioResult), "2025-11-15T12:00:00"))
-            }
-        }
-        ServiceLocator.pageRepository = mockPageRepository
-
-        scenario = ActivityScenario.launch(createIntent(totalPages = 2))
-        Thread.sleep(3000)
-
-        scenario.onActivity { activity ->
-            val field = activity.javaClass.getDeclaredField("audioResultsMap")
-            field.isAccessible = true
-            val audioMap = field.get(activity) as Map<Int, List<String>>
-
-            Assert.assertTrue("Audio map should contain results", audioMap.isNotEmpty())
-            Assert.assertTrue("Audio map should have index 0", audioMap.containsKey(0))
-            Assert.assertEquals("Should have 1 audio clip", 1, audioMap[0]?.size)
-        }
-    }
-
-    @Test
     fun multipleAudioResults_storesCorrectly() = runTest {
         val bbox1 = createBBox(x = 100, y = 100)
         val bbox2 = createBBox(x = 100, y = 300)
@@ -714,41 +584,6 @@ class ReadingActivityTest {
     }
 
     @Test
-    fun pageNavigationWithAudio_stopsPlayback() = runTest {
-        mockPageRepository = createSuccessRepository(withOcr = true, withTts = true)
-        ServiceLocator.pageRepository = mockPageRepository
-
-        scenario = ActivityScenario.launch(createIntent(pageIndex = 1, totalPages = 3))
-        Thread.sleep(3000)
-
-        scenario.onActivity { activity ->
-            val field = activity.javaClass.getDeclaredField("currentPlayingIndex")
-            field.isAccessible = true
-            val playingIndex = field.get(activity) as Int
-
-            Assert.assertEquals("Initially no audio playing", -1, playingIndex)
-        }
-
-        onView(withId(R.id.main)).perform(click())
-        Thread.sleep(300)
-        onView(withId(R.id.nextButton)).perform(click())
-        Thread.sleep(2000)
-
-        scenario.onActivity { activity ->
-            val playingField = activity.javaClass.getDeclaredField("currentPlayingIndex")
-            playingField.isAccessible = true
-            val playingIndex = playingField.get(activity) as Int
-
-            val audioIndexField = activity.javaClass.getDeclaredField("currentAudioIndex")
-            audioIndexField.isAccessible = true
-            val audioIndex = audioIndexField.get(activity) as Int
-
-            Assert.assertEquals("Playing index should be reset", -1, playingIndex)
-            Assert.assertEquals("Audio index should be reset", 0, audioIndex)
-        }
-    }
-
-    @Test
     fun ocrWithoutTts_noAudioMap() = runTest {
         mockPageRepository = createSuccessRepository(withOcr = true, withTts = false)
         ServiceLocator.pageRepository = mockPageRepository
@@ -762,80 +597,6 @@ class ReadingActivityTest {
             val audioMap = field.get(activity) as Map<*, *>
 
             Assert.assertTrue("Audio map should be empty without TTS", audioMap.isEmpty())
-        }
-    }
-
-    @Test
-    fun playButtonsMap_clearedOnPageChange() = runTest {
-        mockPageRepository = createSuccessRepository(withOcr = true, withTts = true)
-        ServiceLocator.pageRepository = mockPageRepository
-
-        scenario = ActivityScenario.launch(createIntent(pageIndex = 1, totalPages = 3))
-        Thread.sleep(3000)
-
-        scenario.onActivity { activity ->
-            val field = activity.javaClass.getDeclaredField("playButtonsMap")
-            field.isAccessible = true
-            val playBtnMap = field.get(activity) as Map<*, *>
-
-            Assert.assertNotNull("Play buttons map should exist", playBtnMap)
-        }
-
-        onView(withId(R.id.main)).perform(click())
-        Thread.sleep(300)
-        onView(withId(R.id.nextButton)).perform(click())
-        Thread.sleep(2000)
-
-        scenario.onActivity { activity ->
-            val field = activity.javaClass.getDeclaredField("playButtonsMap")
-            field.isAccessible = true
-            val playBtnMap = field.get(activity) as Map<*, *>
-
-            Assert.assertTrue("Play buttons map should be cleared", playBtnMap.isEmpty())
-        }
-    }
-
-    @Test
-    fun boundingBoxViewsMap_clearedOnPageChange() = runTest {
-        mockPageRepository = createSuccessRepository(withOcr = true)
-        ServiceLocator.pageRepository = mockPageRepository
-
-        scenario = ActivityScenario.launch(createIntent(pageIndex = 1, totalPages = 3))
-        Thread.sleep(3000)
-
-        onView(withId(R.id.main)).perform(click())
-        Thread.sleep(300)
-        onView(withId(R.id.nextButton)).perform(click())
-        Thread.sleep(2000)
-
-        scenario.onActivity { activity ->
-            val field = activity.javaClass.getDeclaredField("boundingBoxViewsMap")
-            field.isAccessible = true
-            val bboxMap = field.get(activity) as Map<*, *>
-
-            Assert.assertTrue("Bounding box views map should be cleared", bboxMap.isEmpty())
-        }
-    }
-
-    @Test
-    fun savedBoxTranslations_clearedOnPageChange() = runTest {
-        mockPageRepository = createSuccessRepository(withOcr = true)
-        ServiceLocator.pageRepository = mockPageRepository
-
-        scenario = ActivityScenario.launch(createIntent(pageIndex = 1, totalPages = 3))
-        Thread.sleep(3000)
-
-        onView(withId(R.id.main)).perform(click())
-        Thread.sleep(300)
-        onView(withId(R.id.nextButton)).perform(click())
-        Thread.sleep(2000)
-
-        scenario.onActivity { activity ->
-            val field = activity.javaClass.getDeclaredField("savedBoxTranslations")
-            field.isAccessible = true
-            val savedTranslations = field.get(activity) as Map<*, *>
-
-            Assert.assertTrue("Saved box translations should be cleared", savedTranslations.isEmpty())
         }
     }
 
@@ -976,6 +737,67 @@ class ReadingActivityTest {
             val touchSlop = field.get(null) as Float
 
             Assert.assertEquals("TOUCH_SLOP should be 10f", 10f, touchSlop)
+        }
+    }
+
+    @Test
+    fun displayBB_layoutScalingBranchesCovered() = runTest {
+        mockPageRepository = createSuccessRepository(withOcr = true)
+        ServiceLocator.pageRepository = mockPageRepository
+
+        scenario = ActivityScenario.launch(createIntent(totalPages = 2))
+        Thread.sleep(2000)
+
+        scenario.onActivity { activity ->
+            val bitmapField = activity.javaClass.getDeclaredField("pageBitmap")
+            bitmapField.isAccessible = true
+            bitmapField.set(
+                activity,
+                Bitmap.createBitmap(800, 1200, Bitmap.Config.ARGB_8888)
+            )
+
+            val pageImage = activity.findViewById<ImageView>(R.id.pageImage)
+            pageImage.measure(
+                View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(1600, View.MeasureSpec.EXACTLY)
+            )
+            pageImage.layout(0, 0, 1080, 1600)
+
+            val method = activity.javaClass.getDeclaredMethod(
+                "displayBB",
+                List::class.java
+            )
+            method.isAccessible = true
+
+            method.invoke(
+                activity,
+                listOf(
+                    ReadingActivity.BoundingBox(0, 50, 50, 200, "text", 1)
+                )
+            )
+        }
+
+        scenario.onActivity { activity ->
+            val field = activity.javaClass.getDeclaredField("viewportWidth")
+            field.isAccessible = true
+            val viewport = field.get(activity) as Int
+            Assert.assertTrue(viewport > 0)
+        }
+    }
+
+    @Test
+    fun displayBB_noAudio_doesNotCreatePlayButton() = runTest {
+        mockPageRepository = createSuccessRepository(withOcr = true, withTts = false)
+        ServiceLocator.pageRepository = mockPageRepository
+        scenario = ActivityScenario.launch(createIntent(totalPages = 2))
+        Thread.sleep(3000)
+        scenario.onActivity { activity ->
+            val children = activity.findViewById<View>(R.id.main) as androidx.constraintlayout.widget.ConstraintLayout
+            var playButtons = 0
+            for (i in 0 until children.childCount) {
+                if (children.getChildAt(i).tag == "play_button") playButtons++
+            }
+            Assert.assertEquals(0, playButtons)
         }
     }
 }

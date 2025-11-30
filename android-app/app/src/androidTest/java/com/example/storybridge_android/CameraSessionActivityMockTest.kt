@@ -9,6 +9,7 @@ import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.matcher.IntentMatchers
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.rule.GrantPermissionRule
+import com.example.storybridge_android.network.UploadCoverResponse
 import com.example.storybridge_android.ui.session.loading.LoadingActivity
 import com.example.storybridge_android.ui.session.voice.VoiceSelectActivity
 import com.example.storybridge_android.ui.setting.AppSettings
@@ -23,6 +24,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.hamcrest.Matchers.allOf
 
 @RunWith(AndroidJUnit4::class)
 class CameraSessionActivityMockTest {
@@ -205,5 +207,37 @@ class CameraSessionActivityMockTest {
 
         assert(loadingIntents.size == 1)
         assert(loadingIntents.first().getStringExtra("image_path") == "/tmp/final.jpg")
+    }
+
+    @Test
+    fun uiState_uploadSuccess_navigatesToVoiceSelectWithExtras() {
+        val flow = MutableStateFlow<SessionUiState>(SessionUiState.Idle)
+        every { mockViewModel.uiState } returns flow.asStateFlow()
+
+        scenario = launchWithExtras(isCover = true, sessionId = "S55")
+        Thread.sleep(500)
+
+        val mockResponse = UploadCoverResponse(
+            title = "마법 이야기",
+            translated_title = "Magic Story",
+            page_index = 1,
+            session_id = "session1",
+            status = "ok",
+            submitted_at = "2023-05-05"
+        )
+
+        flow.value = SessionUiState.UploadSuccess(mockResponse)
+        Thread.sleep(1000)
+
+        Intents.intended(
+            allOf(
+                IntentMatchers.hasComponent(VoiceSelectActivity::class.java.name),
+                IntentMatchers.hasExtra("session_id", "S55"),
+                IntentMatchers.hasExtra("title", "마법 이야기"),
+                IntentMatchers.hasExtra("translated_title", "Magic Story")
+            )
+        )
+
+        assert(scenario.state == Lifecycle.State.DESTROYED)
     }
 }

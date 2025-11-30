@@ -2,6 +2,7 @@ package com.example.storybridge_android.ui.session
 
 import android.content.Intent
 import android.util.Log
+import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -34,7 +35,6 @@ class VoiceSelectActivityTest {
 
     @Before
     fun setup() {
-        // 초기화
         maleSelected = false
         femaleSelected = false
         selectVoiceCallCount = 0
@@ -48,7 +48,6 @@ class VoiceSelectActivityTest {
                 selectVoiceCallCount++
                 Log.d("TEST", "selectVoice called: sessionId=$sessionId, voiceStyle=$voiceStyle")
 
-                // 실제 상수 값과 비교
                 when (voiceStyle) {
                     MALE_VOICE -> maleSelected = true
                     FEMALE_VOICE -> femaleSelected = true
@@ -141,7 +140,7 @@ class VoiceSelectActivityTest {
     fun testSelectMaleVoiceCallsRepository() {
         Log.d("TEST", "MALE_VOICE constant = $MALE_VOICE")
 
-        // WHEN: Man 버튼 클릭
+        // WHEN: Man
         onView(withId(R.id.manButton))
             .check(matches(isDisplayed()))
             .perform(click())
@@ -159,7 +158,7 @@ class VoiceSelectActivityTest {
     fun testSelectFemaleVoiceCallsRepository() {
         Log.d("TEST", "FEMALE_VOICE constant = $FEMALE_VOICE")
 
-        // WHEN: Woman 버튼 클릭
+        // WHEN: Woman
         onView(withId(R.id.womanButton))
             .check(matches(isDisplayed()))
             .perform(click())
@@ -186,5 +185,62 @@ class VoiceSelectActivityTest {
         // THEN: Next button enabled
         onView(withId(R.id.nextButton))
             .check(matches(isEnabled()))
+    }
+
+    @Test
+    fun testNextButtonNavigatesToInstruction() {
+        onView(withId(R.id.womanButton)).perform(click())
+        Thread.sleep(2000)
+        onView(withId(R.id.nextButton)).perform(click())
+        Thread.sleep(1000)
+        assert(scenario?.state?.isAtLeast(Lifecycle.State.DESTROYED) == true)
+    }
+
+    @Test
+    fun testExitConfirmAndCancelButtons() {
+        onView(withId(R.id.manButton)).perform(click())
+
+        scenario!!.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+
+        onView(withId(R.id.exitPanelInclude))
+            .check(matches(isDisplayed()))
+
+        Thread.sleep(500)
+
+        onView(withId(R.id.exitCancelBtn))
+            .check(matches(isDisplayed()))
+            .perform(click())
+
+        Thread.sleep(500)
+
+        scenario!!.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        onView(withId(R.id.exitPanelInclude))
+            .check(matches(isDisplayed()))
+
+        Thread.sleep(500)
+
+        onView(withId(R.id.exitConfirmBtn))
+            .check(matches(isDisplayed()))
+            .perform(click())
+
+        Thread.sleep(1000)
+    }
+
+
+    @Test
+    fun testMissingSessionId_showsToastAndFinishes() {
+        val intent = Intent(
+            ApplicationProvider.getApplicationContext(),
+            VoiceSelectActivity::class.java
+        ).apply {
+            putExtra("image_path", "/tmp/x.jpg")
+            putExtra("lang", "en")
+            // session_id intentionally omitted
+        }
+
+        val scenario = ActivityScenario.launch<VoiceSelectActivity>(intent)
+        Thread.sleep(1000)
+
+        assert(scenario.state.isAtLeast(Lifecycle.State.DESTROYED))
     }
 }

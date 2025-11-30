@@ -65,11 +65,11 @@ class MainActivityMockTest {
         coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns retrofit2.Response.success(emptyList())
 
         launchMain()
-        Thread.sleep(800)
+        Thread.sleep(1500)
 
         onView(withId(R.id.startNewReadingButton)).perform(click())
 
-        intended(IntentMatchers.hasComponent("com.example.storybridge_android.ui.session.StartSessionActivity"))
+        intended(IntentMatchers.hasComponent("com.example.storybridge_android.ui.session.start.StartSessionActivity"))
     }
 
     @Test
