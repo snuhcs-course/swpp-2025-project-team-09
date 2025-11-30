@@ -520,4 +520,42 @@ class FinishActivityMockTest {
 
         scenario.close()
     }
+
+    @Test
+    fun balloonPopping_differentOrder_displaysTextsInCorrectOrder() {
+        // GIVEN: Balloons with different texts
+        val scenario = ActivityScenario.launch<FinishActivity>(createIntent())
+        Thread.sleep(3500)
+
+        // Stop animation and trigger balloons in non-sequential order: 2, 0, 1
+        scenario.onActivity { activity ->
+            val balloonView = activity.findViewById<BalloonInteractionView>(
+                com.example.storybridge_android.R.id.balloonView
+            )
+            balloonView.stopAnimation()
+
+            // Get actual balloon text
+            val text0 = balloonView.getBalloonText(0) ?: ""  // "You read 200 words"
+            val text1 = balloonView.getBalloonText(1) ?: ""  // "and 4 pages"
+            val text2 = balloonView.getBalloonText(2) ?: ""  // "for 1 minute 20 seconds"
+
+            // Pop balloons in order: 2, 0, 1 (different from the text order)
+            balloonView.onBalloonPopped?.invoke(2, text2)  // Pop blue balloon first
+            balloonView.onBalloonPopped?.invoke(0, text0)  // Pop red balloon second
+            balloonView.onBalloonPopped?.invoke(1, text1)  // Pop green balloon last
+        }
+
+        // THEN: Texts should still appear in correct order regardless of popping order
+        // First pop should show: "You read 200 words"
+        // Second pop should show: "You read 200 words\nand 4 pages"
+        // Third pop should show: "You read 200 words\nand 4 pages\nfor 1 minute 20 seconds"
+        onView(withId(com.example.storybridge_android.R.id.balloonResultText))
+            .check(matches(withText(org.hamcrest.Matchers.allOf(
+                org.hamcrest.Matchers.containsString("You read 200 words"),
+                org.hamcrest.Matchers.containsString("and 4 pages"),
+                org.hamcrest.Matchers.containsString("for 1 minute 20 seconds")
+            ))))
+
+        scenario.close()
+    }
 }

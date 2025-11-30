@@ -74,6 +74,13 @@ class FinishActivity : BaseActivity() {
     }
 
     private fun setupBalloons(stats: SessionStatsResponse) {
+        // Store texts in the order they should appear (do this immediately, not in post)
+        orderedTexts.clear()
+        orderedTexts.add(formatWordsLine(stats.total_words_read))
+        orderedTexts.add(formatPagesLine(stats.total_pages - 1))
+        orderedTexts.add(formatTimeLine(stats.total_time_spent))
+        poppedCount = 0
+
         binding.balloonView.post {
             val viewWidth = binding.balloonView.width.toFloat()
             val viewHeight = binding.balloonView.height.toFloat()
@@ -88,13 +95,6 @@ class FinishActivity : BaseActivity() {
             // Compute balloon positions (3 horizontally aligned)
             val spacing = viewWidth / 4f
             val centerY = viewHeight / 2f
-
-            // Store texts in the order they should appear
-            orderedTexts.clear()
-            orderedTexts.add(formatWordsLine(stats.total_words_read))
-            orderedTexts.add(formatPagesLine(stats.total_pages - 1))
-            orderedTexts.add(formatTimeLine(stats.total_time_spent))
-            poppedCount = 0
 
             // Create balloon data
             val balloonDataList = listOf(
