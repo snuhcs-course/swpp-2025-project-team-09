@@ -200,7 +200,7 @@ class FinishActivityMockTest {
 
     @Test
     fun sessionStats_minutesAndSeconds_displaysBoth() {
-        // GIVEN: 1분 30초
+        // GIVEN: 1 minute 30 seconds
         mockSessionRepo = object : SessionRepository {
             override suspend fun startSession(userId: String): Result<StartSessionResponse> {
                 return Result.failure(Exception("unused"))
@@ -232,7 +232,7 @@ class FinishActivityMockTest {
                         started_at = "2025-01-01",
                         ended_at = "2025-01-01",
                         total_pages = 3,
-                        total_time_spent = 90,  // 1분 30초
+                        total_time_spent = 90,  // 1 minute 30 seconds
                         total_words_read = 150
                     )
                 )
@@ -395,7 +395,7 @@ class FinishActivityMockTest {
                         started_at = "2025-01-01",
                         ended_at = "2025-01-01",
                         total_pages = 2,
-                        total_time_spent = 60,  // 1분
+                        total_time_spent = 60,  // 1 minute
                         total_words_read = 80
                     )
                 )
@@ -475,7 +475,7 @@ class FinishActivityMockTest {
                         started_at = "2025-01-01",
                         ended_at = "2025-01-01",
                         total_pages = 2,
-                        total_time_spent = 1,  // 1초
+                        total_time_spent = 1,  // 1 second
                         total_words_read = 5
                     )
                 )
