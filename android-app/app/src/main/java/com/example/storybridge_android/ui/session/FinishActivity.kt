@@ -23,8 +23,9 @@ class FinishActivity : BaseActivity() {
     private var isNewSession = true
     private lateinit var sessionId: String
 
-    // Store text per line
-    private val lineTexts = Array(3) { "" }
+    // Store texts in order (regardless of which balloon is popped)
+    private val orderedTexts = mutableListOf<String>()
+    private var poppedCount = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,10 +58,12 @@ class FinishActivity : BaseActivity() {
 
     private fun setupBalloonCallback() {
         binding.balloonView.onBalloonPopped = { lineIndex, text ->
-            // Set text for the corresponding line
-            lineTexts[lineIndex] = text
-            // Combine all lines and display
-            binding.balloonResultText.text = lineTexts.joinToString("\n")
+            // Add the next text in order (regardless of which balloon was popped)
+            if (poppedCount < orderedTexts.size) {
+                val currentTexts = orderedTexts.take(poppedCount + 1)
+                binding.balloonResultText.text = currentTexts.joinToString("\n")
+                poppedCount++
+            }
         }
 
         binding.balloonView.onAllBalloonsPopped = {
@@ -85,6 +88,13 @@ class FinishActivity : BaseActivity() {
             // Compute balloon positions (3 horizontally aligned)
             val spacing = viewWidth / 4f
             val centerY = viewHeight / 2f
+
+            // Store texts in the order they should appear
+            orderedTexts.clear()
+            orderedTexts.add(formatWordsLine(stats.total_words_read))
+            orderedTexts.add(formatPagesLine(stats.total_pages - 1))
+            orderedTexts.add(formatTimeLine(stats.total_time_spent))
+            poppedCount = 0
 
             // Create balloon data
             val balloonDataList = listOf(
