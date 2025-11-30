@@ -4,6 +4,20 @@
     <string name="story_bridge">STORY BRIDGE</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
 
+    <!-- Tutorial -->
+    <string name="tutorial_1">Click “Start Reading!”\nbutton on the main page</string>
+    <string name="tutorial_2">Take a photo\nof your book!</string>
+    <string name="tutorial_3">Select the voice\nyou’d like to hear</string>
+    <string name="tutorial_4">You can move around\nthe text boxes</string>
+    <string name="tutorial_5">Click the headphones\nicon to hear narrations</string>
+    <string name="tutorial_6">Click arrow buttons\nto review other pages</string>
+    <string name="tutorial_7">Click “Add new page”\nto read a new page</string>
+    <string name="tutorial_8">Click “Finish Reading”\nto end this reading</string>
+
+    <string name="tutorial_start">Let\'s Start!</string>
+    <string name="tutorial_loading">Loading...</string>
+    <string name="tutorial_retry">Start</string>
+
     <!-- Main Activity -->
     <string name="start_new_reading">Start New Reading</string>
     <string name="previous_readings">Previous Readings</string>

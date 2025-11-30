@@ -1,9 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+
+    <!-- Base Theme -->
     <style name="Base.Theme.Storybridgeandroid" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
+        <!-- Customize light theme colors if needed -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
     </style>
 
-    <style name="Theme.Storybridgeandroid" parent="Base.Theme.Storybridgeandroid" />
+    <!-- App Theme -->
+    <style name="Theme.Storybridgeandroid" parent="Base.Theme.Storybridgeandroid">
+        <!-- Force white status bar -->
+        <item name="android:statusBarColor">@color/white</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+
 </resources>

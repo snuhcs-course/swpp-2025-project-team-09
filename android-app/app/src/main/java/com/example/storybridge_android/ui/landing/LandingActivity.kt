@@ -14,6 +14,7 @@ import com.example.storybridge_android.R
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import com.example.storybridge_android.ui.common.BaseActivity
+import com.example.storybridge_android.ui.tutorial.TutorialActivity
 
 class LandingActivity : BaseActivity() {
     private val viewModel: LandingViewModel by viewModels {
@@ -74,7 +75,8 @@ class LandingActivity : BaseActivity() {
 
         findViewById<Button>(R.id.startButton).setOnClickListener {
             if (selectedLang != null) {
-                navigateToMain()
+                // navigateToMain()
+                navigateToTutorial()
             } else {
                 Toast.makeText(this, getString(R.string.error_select_language), Toast.LENGTH_SHORT).show()
             }
@@ -92,6 +94,11 @@ class LandingActivity : BaseActivity() {
 
     private fun navigateToMain() {
         startActivity(Intent(this, MainActivity::class.java))
+        finish()
+    }
+
+    private fun navigateToTutorial() {
+        startActivity(Intent(this, TutorialActivity::class.java))
         finish()
     }
 }
