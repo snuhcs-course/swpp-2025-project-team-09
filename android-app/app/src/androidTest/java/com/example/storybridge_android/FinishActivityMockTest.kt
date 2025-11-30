@@ -14,6 +14,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.storybridge_android.ServiceLocator
 import com.example.storybridge_android.data.SessionRepository
 import com.example.storybridge_android.network.*
+import com.example.storybridge_android.ui.session.finish.BalloonInteractionView
+import com.example.storybridge_android.ui.session.finish.FinishActivity
 import io.mockk.unmockkAll
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.*

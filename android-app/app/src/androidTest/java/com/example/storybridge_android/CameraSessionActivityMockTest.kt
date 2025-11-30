@@ -9,8 +9,8 @@ import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.matcher.IntentMatchers
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.rule.GrantPermissionRule
-import com.example.storybridge_android.ui.session.LoadingActivity
-import com.example.storybridge_android.ui.session.VoiceSelectActivity
+import com.example.storybridge_android.ui.session.loading.LoadingActivity
+import com.example.storybridge_android.ui.session.voice.VoiceSelectActivity
 import com.example.storybridge_android.ui.setting.AppSettings
 import io.mockk.every
 import io.mockk.mockk
@@ -23,7 +23,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.hamcrest.Matchers.allOf
 
 @RunWith(AndroidJUnit4::class)
 class CameraSessionActivityMockTest {

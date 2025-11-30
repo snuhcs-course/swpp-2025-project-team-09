@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/gradient_background"
-    tools:context=".ui.session.FinishActivity">
+    tools:context=".ui.session.finish.FinishActivity">
 
     <!-- Congratulations title -->
     <TextView
@@ -36,7 +36,7 @@
         app:layout_constraintTop_toBottomOf="@id/congText" />
 
     <!-- Balloon interaction view -->
-    <com.example.storybridge_android.ui.session.BalloonInteractionView
+    <com.example.storybridge_android.ui.session.finish.BalloonInteractionView
         android:id="@+id/balloonView"
         android:layout_width="0dp"
         android:layout_height="400dp"

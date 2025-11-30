@@ -5,7 +5,7 @@
     android:id="@+id/decideSaveMain"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.session.DecideSaveActivity">
+    tools:context=".ui.session.decide.DecideSaveActivity">
 
     <!-- Title text -->
     <TextView

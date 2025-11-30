@@ -2,7 +2,7 @@ package com.example.storybridge_android.view_model
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.Observer
-import com.example.storybridge_android.ui.session.ContentInstructionViewModel
+import com.example.storybridge_android.ui.session.instruction.ContentInstructionViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
