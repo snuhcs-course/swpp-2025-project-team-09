@@ -1,4 +1,4 @@
-package com.example.storybridge_android.ui.session
+package com.example.storybridge_android.ui.session.instruction
 
 import android.content.Intent
 import android.os.Bundle

@@ -1,4 +1,4 @@
-package com.example.storybridge_android.ui.session
+package com.example.storybridge_android.ui.session.voice
 
 import android.content.Intent
 import android.media.MediaPlayer
@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import android.widget.FrameLayout
 import com.example.storybridge_android.ui.common.BaseActivity
+import com.example.storybridge_android.ui.session.instruction.ContentInstructionActivity
 
 class VoiceSelectActivity : BaseActivity() {
 

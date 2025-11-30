@@ -1,4 +1,4 @@
-package com.example.storybridge_android.ui.session
+package com.example.storybridge_android.ui.session.loading
 
 import android.content.Intent
 import android.os.Bundle
@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import androidx.activity.OnBackPressedCallback
 import com.example.storybridge_android.ui.common.BaseActivity
+import com.example.storybridge_android.ui.session.voice.VoiceSelectActivity
 
 class LoadingActivity : BaseActivity() {
     private lateinit var loadingBar: ProgressBar

@@ -8,6 +8,9 @@ import android.util.Log
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.example.storybridge_android.data.*
 import com.example.storybridge_android.network.*
+import com.example.storybridge_android.ui.session.loading.CoverResult
+import com.example.storybridge_android.ui.session.loading.LoadingViewModel
+import com.example.storybridge_android.ui.session.loading.SessionResumeResult
 import io.mockk.Runs
 import io.mockk.every
 import io.mockk.just
@@ -16,7 +19,6 @@ import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.*
 import org.junit.After
 import org.junit.Before

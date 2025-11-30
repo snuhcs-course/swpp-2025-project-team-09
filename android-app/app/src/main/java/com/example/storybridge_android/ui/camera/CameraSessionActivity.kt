@@ -13,8 +13,8 @@ import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.R
 import com.example.storybridge_android.network.UploadCoverResponse
 import com.example.storybridge_android.ui.common.BaseActivity
-import com.example.storybridge_android.ui.session.LoadingActivity
-import com.example.storybridge_android.ui.session.VoiceSelectActivity
+import com.example.storybridge_android.ui.session.loading.LoadingActivity
+import com.example.storybridge_android.ui.session.voice.VoiceSelectActivity
 import com.example.storybridge_android.ui.setting.AppSettings
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch

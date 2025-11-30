@@ -1,4 +1,4 @@
-package com.example.storybridge_android.ui.session
+package com.example.storybridge_android.ui.session.instruction
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData

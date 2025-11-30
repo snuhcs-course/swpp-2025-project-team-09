@@ -1,4 +1,4 @@
-package com.example.storybridge_android.ui.session
+package com.example.storybridge_android.ui.session.finish
 
 import com.example.storybridge_android.R
 import android.content.Intent
@@ -13,6 +13,7 @@ import com.example.storybridge_android.databinding.ActivityFinishBinding
 import com.example.storybridge_android.network.SessionStatsResponse
 import com.example.storybridge_android.ui.common.BaseActivity
 import com.example.storybridge_android.ui.main.MainActivity
+import com.example.storybridge_android.ui.session.decide.DecideSaveActivity
 
 class FinishActivity : BaseActivity() {
 

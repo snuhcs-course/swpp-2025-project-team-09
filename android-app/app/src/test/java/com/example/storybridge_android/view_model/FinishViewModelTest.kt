@@ -4,7 +4,7 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.example.storybridge_android.data.SessionRepository
 import com.example.storybridge_android.network.EndSessionResponse
 import com.example.storybridge_android.network.SessionStatsResponse
-import com.example.storybridge_android.ui.session.FinishViewModel
+import com.example.storybridge_android.ui.session.finish.FinishViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher

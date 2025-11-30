@@ -1,4 +1,4 @@
-package com.example.storybridge_android.ui.session
+package com.example.storybridge_android.ui.session.voice
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider

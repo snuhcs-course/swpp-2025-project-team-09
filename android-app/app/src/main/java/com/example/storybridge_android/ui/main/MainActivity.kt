@@ -26,8 +26,8 @@ import com.example.storybridge_android.network.UserInfoResponse
 import com.example.storybridge_android.ui.common.BaseActivity
 import com.example.storybridge_android.ui.common.SessionCard
 import com.example.storybridge_android.ui.common.TopNavigationBar
-import com.example.storybridge_android.ui.session.LoadingActivity
-import com.example.storybridge_android.ui.session.StartSessionActivity
+import com.example.storybridge_android.ui.session.loading.LoadingActivity
+import com.example.storybridge_android.ui.session.start.StartSessionActivity
 import com.example.storybridge_android.ui.setting.SettingActivity
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch

@@ -1,6 +1,5 @@
-package com.example.storybridge_android.ui.session
+package com.example.storybridge_android.ui.session.start
 
-import android.app.Service
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.storybridge_android.ServiceLocator

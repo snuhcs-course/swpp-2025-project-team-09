@@ -1,12 +1,12 @@
-package com.example.storybridge_android.ui.session
+package com.example.storybridge_android.ui.session.decide
 
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.Button
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.databinding.ActivityDecideSaveBinding
 import com.example.storybridge_android.ui.common.BaseActivity
@@ -61,7 +61,7 @@ class DecideSaveActivity : BaseActivity() {
         }
     }
 
-    private fun updateButtonState(selected: android.widget.Button) {
+    private fun updateButtonState(selected: Button) {
         listOf(binding.btnSave, binding.btnDiscard).forEach { it.isSelected = it == selected }
     }
 

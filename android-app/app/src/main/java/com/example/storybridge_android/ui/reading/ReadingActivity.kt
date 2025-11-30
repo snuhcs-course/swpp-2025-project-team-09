@@ -27,7 +27,7 @@ import com.example.storybridge_android.network.GetImageResponse
 import com.example.storybridge_android.network.GetOcrTranslationResponse
 import com.example.storybridge_android.network.GetTtsResponse
 import com.example.storybridge_android.ui.camera.CameraSessionActivity
-import com.example.storybridge_android.ui.session.FinishActivity
+import com.example.storybridge_android.ui.session.finish.FinishActivity
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
@@ -37,7 +37,6 @@ import com.example.storybridge_android.ui.common.BottomNav
 import com.example.storybridge_android.ui.common.LeftOverlay
 import androidx.activity.OnBackPressedCallback
 import com.example.storybridge_android.ui.common.BaseActivity
-import kotlin.math.max
 
 class ReadingActivity : BaseActivity() {
 

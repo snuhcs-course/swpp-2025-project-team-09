@@ -38,10 +38,10 @@
             android:value="document_scanner" />
 
         <activity
-            android:name=".ui.session.StartSessionActivity"
+            android:name=".ui.session.start.StartSessionActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.session.LoadingActivity"
+            android:name=".ui.session.loading.LoadingActivity"
             android:exported="false" />
         <activity
             android:name=".ui.landing.TutorialActivity"
@@ -64,10 +64,10 @@
             android:name=".ui.camera.CameraSessionActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.session.DecideSaveActivity"
+            android:name=".ui.session.decide.DecideSaveActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.session.FinishActivity"
+            android:name=".ui.session.finish.FinishActivity"
             android:exported="false" />
         <activity
             android:name=".ui.main.MainActivity"
@@ -77,10 +77,10 @@
             android:name=".ui.reading.ReadingActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.session.VoiceSelectActivity"
+            android:name=".ui.session.voice.VoiceSelectActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.session.ContentInstructionActivity"
+            android:name=".ui.session.instruction.ContentInstructionActivity"
             android:exported="false" />
         <activity
             android:name=".ui.setting.SettingActivity"

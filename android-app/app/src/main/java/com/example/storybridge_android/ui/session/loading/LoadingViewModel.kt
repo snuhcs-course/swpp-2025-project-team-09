@@ -1,4 +1,4 @@
-package com.example.storybridge_android.ui.session
+package com.example.storybridge_android.ui.session.loading
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
+import retrofit2.Response
 import java.io.ByteArrayOutputStream
 import java.io.File
 import kotlin.math.max
@@ -52,7 +53,7 @@ class LoadingViewModel(
     private val _navigateToReading = MutableStateFlow<SessionResumeResult?>(null)
     val navigateToReading = _navigateToReading.asStateFlow()
 
-    private val _userInfo = MutableStateFlow<retrofit2.Response<List<UserInfoResponse>>?>(null)
+    private val _userInfo = MutableStateFlow<Response<List<UserInfoResponse>>?>(null)
     val userInfo = _userInfo.asStateFlow()
 
     private var rampJob: Job? = null

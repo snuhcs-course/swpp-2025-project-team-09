@@ -2,6 +2,8 @@ package com.example.storybridge_android.ui.session
 
 import com.example.storybridge_android.data.SessionRepository
 import com.example.storybridge_android.network.DiscardSessionResponse
+import com.example.storybridge_android.ui.session.decide.DecideSaveActivityViewModel
+import com.example.storybridge_android.ui.session.decide.DecideSaveUiState
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers

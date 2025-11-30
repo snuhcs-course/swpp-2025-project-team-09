@@ -13,6 +13,7 @@ import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.storybridge_android.R
 import com.example.storybridge_android.ui.camera.CameraSessionActivity
+import com.example.storybridge_android.ui.session.instruction.ContentInstructionActivity
 import org.hamcrest.Matchers.allOf
 import org.junit.After
 import org.junit.Before

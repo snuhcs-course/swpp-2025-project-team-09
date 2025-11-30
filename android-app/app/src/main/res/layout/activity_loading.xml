@@ -5,7 +5,7 @@
     android:id="@+id/loadingMain"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.session.LoadingActivity">
+    tools:context=".ui.session.loading.LoadingActivity">
 
     <!-- Loading title text -->
     <TextView
