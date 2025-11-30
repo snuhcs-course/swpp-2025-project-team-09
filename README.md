@@ -70,12 +70,7 @@ cd swpp-2025-project-team-09
 
 ### Backend Server Information
 
-The app is pre-configured to connect to the deployed EC2 server:
-
-```
-Backend URL: http://ec2-3-36-206-206.ap-northeast-2.compute.amazonaws.com:8000
-```
-
+The app is pre-configured to connect to the deployed EC2 server.
 No additional backend setup is required. The server is already running and accessible.
 
 ### Optional: Local Backend Setup
@@ -259,18 +254,14 @@ This test covers both unit test and instrumental(UI) test of M, V, VM
 5. **Clean Architecture**: Refactored frontend using MVVM pattern for maintainability and testability.
 
 ### Demo Flow
-1. **Start Session**: Select language and voice preferences
-2. **Camera Capture**: Use ML Kit to scan book pages
-3. **OCR & Translation**: Naver OCR recognizes text, OpenAI translates to selected language
-4. **Interactive Reading**: View translated text overlay, play emotional TTS audio
-5. **Navigation**: Move between pages, adjust text positions as needed
-6. **Complete & Celebrate**: Congratulations screen shows reading statistics (pages, words, time) to encourage continued learning
-7. **Save & Manage**: Session management allows saving progress and deleting unwanted sessions
-
-## Configuration
-
-### Database
-The backend uses **SQLite** (`db.sqlite3`) for development and testing. For production deployment, PostgreSQL is supported.
+1. **Start Session**: Select language
+2. **Tutorial**: Tutorial for new users
+4. **Camera Capture**: Use ML Kit to scan book pages
+5. **OCR & Translation**: Naver OCR recognizes text, OpenAI translates to selected language
+6. **Interactive Reading**: View translated text overlay, play emotional TTS audio
+7. **Navigation**: Move between pages, adjust text positions as needed
+8. **Complete & Celebrate**: Congratulations screen shows reading statistics (pages, words, time) with ballons to encourage learning
+9. **Save & Manage**: Session management allows saving progress and deleting unwanted sessions
 
 ## Troubleshooting
 
