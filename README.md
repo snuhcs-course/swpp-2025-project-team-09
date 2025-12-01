@@ -263,10 +263,11 @@ Run configuration > Modify > Specify packages > only select **data, ntework** pa
 2. **Tutorial**: Tutorial for new users
 4. **Camera Capture**: Use ML Kit to scan book pages
 5. **OCR & Translation**: Naver OCR recognizes text, OpenAI translates to selected language
-6. **Interactive Reading**: View translated text overlay, play emotional TTS audio
-7. **Navigation**: Move between pages, adjust text positions as needed
-8. **Complete & Celebrate**: Congratulations screen shows reading statistics (pages, words, time) with ballons to encourage learning
-9. **Save & Manage**: Session management allows saving progress and deleting unwanted sessions
+6. **Profanity Filtering**: Filters swear words and provides child-friendly translation
+7. **Interactive Reading**: View translated text overlay, play emotional TTS audio
+8. **Navigation**: Move between pages, adjust text positions as needed
+9. **Complete & Celebrate**: Congratulations screen shows reading statistics (pages, words, time) with ballons to encourage learning
+10. **Save & Manage**: Session management allows saving progress and deleting unwanted sessions
 
 ## Troubleshooting
 
