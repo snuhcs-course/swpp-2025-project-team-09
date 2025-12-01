@@ -266,7 +266,7 @@ Run configuration > Modify > Specify packages > only select **data, ntework** pa
 6. **Profanity Filtering**: Filters swear words and provides child-friendly translation
 7. **Interactive Reading**: View translated text overlay, play emotional TTS audio
 8. **Navigation**: Move between pages, adjust text positions as needed
-9. **Complete & Celebrate**: Congratulations screen shows reading statistics (pages, words, time) with ballons to encourage learning
+9. **Complete & Celebrate**: Congratulations screen shows reading statistics (pages, words, time) with balloons to encourage learning
 10. **Save & Manage**: Session management allows saving progress and deleting unwanted sessions
 
 ## Troubleshooting
