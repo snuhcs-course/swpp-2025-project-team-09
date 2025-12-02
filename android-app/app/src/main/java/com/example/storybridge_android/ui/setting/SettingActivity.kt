@@ -11,7 +11,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.R
-import com.example.storybridge_android.StoryBridgeApplication
 import com.example.storybridge_android.network.UserLangRequest
 import com.example.storybridge_android.ui.common.BaseActivity
 import com.example.storybridge_android.ui.common.TopNavigationBar
@@ -70,7 +69,11 @@ class SettingActivity : BaseActivity() {
 
     private fun setupSaveButton() {
         val saveButton = findViewById<Button>(R.id.btnBack)
-        saveButton.setOnClickListener {
+        saveButton.setOnClickListener { view ->
+
+            view.isPressed = false
+            view.isEnabled = false
+
             val deviceInfo = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
             val selectedLang = when (languageGroup.checkedRadioButtonId) {
                 R.id.radioEnglish -> "en"
@@ -86,10 +89,19 @@ class SettingActivity : BaseActivity() {
     private fun setupBackPressedHandler() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                findViewById<Button>(R.id.btnBack).performClick()
+                val deviceInfo = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+                val selectedLang = when (languageGroup.checkedRadioButtonId) {
+                    R.id.radioEnglish -> "en"
+                    R.id.radioChinese -> "zh"
+                    R.id.radioVietnamese -> "vi"
+                    else -> "en"
+                }
+                val request = UserLangRequest(device_info = deviceInfo, language_preference = selectedLang)
+                viewModel.updateLanguage(request)
             }
         })
     }
+
 
     private fun observeLangResponse() {
         lifecycleScope.launch {

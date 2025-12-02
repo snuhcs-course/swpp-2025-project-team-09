@@ -153,9 +153,7 @@ class MainActivity : BaseActivity() {
 
     private fun observeStartSession() {
         lifecycleScope.launch {
-            viewModel.startSessionResult.collectLatest { result ->
-                result ?: return@collectLatest
-
+            viewModel.startSessionEvent.collect { result ->
                 result.onSuccess { sessionId ->
                     navigateToVoiceSelect(sessionId)
                 }.onFailure {
@@ -167,6 +165,7 @@ class MainActivity : BaseActivity() {
                 }
             }
         }
+
     }
 
     private fun handleUserInfoResponse(response: retrofit2.Response<List<UserInfoResponse>>?) {

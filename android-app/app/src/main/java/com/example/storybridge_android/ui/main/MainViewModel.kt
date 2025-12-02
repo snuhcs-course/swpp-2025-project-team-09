@@ -6,8 +6,7 @@ import com.example.storybridge_android.data.UserRepository
 import com.example.storybridge_android.data.SessionRepository
 import com.example.storybridge_android.network.UserInfoResponse
 import com.example.storybridge_android.network.DiscardSessionResponse
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import retrofit2.Response
 
@@ -15,15 +14,13 @@ class MainViewModel(
     private val userRepository: UserRepository,
     private val sessionRepository: SessionRepository
 ) : ViewModel() {
-
     private val _userInfo = MutableStateFlow<Response<List<UserInfoResponse>>?>(null)
     val userInfo: StateFlow<Response<List<UserInfoResponse>>?> = _userInfo
 
-    private val _startSessionResult = MutableStateFlow<Result<String>?>(null)
-    val startSessionResult: StateFlow<Result<String>?> = _startSessionResult
+    private val _startSessionEvent = MutableSharedFlow<Result<String>>(replay = 0)
+    val startSessionEvent: SharedFlow<Result<String>> = _startSessionEvent
 
-    private val _discardResult = MutableStateFlow<Result<DiscardSessionResponse>?>(null)
-    val discardResult: StateFlow<Result<DiscardSessionResponse>?> = _discardResult
+    private val _discardEvent = MutableSharedFlow<Result<DiscardSessionResponse>>(replay = 0)
 
     fun loadUserInfo(deviceInfo: String) {
         viewModelScope.launch {
@@ -41,9 +38,10 @@ class MainViewModel(
             try {
                 val result = sessionRepository.startSession(deviceId)
                 val mapped = result.map { it.session_id }
-                _startSessionResult.value = mapped
+
+                _startSessionEvent.emit(mapped)
             } catch (e: Exception) {
-                _startSessionResult.value = Result.failure(e)
+                _startSessionEvent.emit(Result.failure(e))
             }
         }
     }
@@ -52,14 +50,15 @@ class MainViewModel(
         viewModelScope.launch {
             try {
                 val result = sessionRepository.discardSession(sessionId)
-                _discardResult.value = result
+
+                _discardEvent.emit(result)
 
                 if (result.isSuccess) {
                     val response = userRepository.getUserInfo(deviceInfo)
                     _userInfo.value = response
                 }
             } catch (e: Exception) {
-                _discardResult.value = Result.failure(e)
+                _discardEvent.emit(Result.failure(e))
             }
         }
     }
