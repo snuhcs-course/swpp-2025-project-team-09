@@ -11,15 +11,15 @@ import base64
 class UserRegisterView(APIView):
     """
     Register a new user with device information
-
+    
     [POST] /user/register
-
+    
     Request Body:
         {
             "device_info": "string",
             "language_preference": "string"
         }
-
+    
     Response (200 OK):
         {
             "user_id": "string",
@@ -63,20 +63,21 @@ class UserRegisterView(APIView):
 class UserLoginView(APIView):
     """
     User login with device information
-
+    
     [POST] /user/login
-
+    
     Request Body:
         {
             "device_info": "string"
         }
-
+    
     Response (200 OK):
         {
             "user_id": "string",
             "language_preference": "string"
         }
     """
+
 
     def post(self, request):
         device_info = request.data.get("device_info")
@@ -102,15 +103,15 @@ class UserLoginView(APIView):
 class UserChangeLangView(APIView):
     """
     Update user's language preference
-
+    
     [PATCH] /user/lang
-
+    
     Request Body:
         {
             "device_info": "string",
             "language_preference": "string"
         }
-
+    
     Response (200 OK):
         {
             "user_id": "string",
@@ -152,12 +153,12 @@ class UserChangeLangView(APIView):
 class UserInfoView(APIView):
     """
     Get user's reading history (sessions with cover images)
-
+    
     [GET] /user/info?device_info={device_info}
-
+    
     Query Parameters:
         device_info: Device identifier
-
+    
     Response (200 OK):
         [
             {

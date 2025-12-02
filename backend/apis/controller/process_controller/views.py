@@ -1,3 +1,4 @@
+from aiohttp import request
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -7,6 +8,7 @@ from apis.models.page_model import Page
 from apis.models.bb_model import BB
 from apis.modules.ocr_processor import OCRModule
 from apis.modules.tts_processor import TTSModule
+from apis.modules.word_picker import StoryWordPicker
 import base64
 import json
 import uuid
@@ -59,28 +61,11 @@ class ProcessUploadView(APIView):
         # Run OCR
         ocr_result = OCRModule().process_page(image_path)
         if not ocr_result:
-            print(f"[DEBUG] No text detected on page {page_index}, creating empty page")
-            page = Page.objects.create(
-                session=session,
-                img_url=image_path,
-                bbox_json=json.dumps([]),
-                created_at=timezone.now(),
-            )
-
-            # Update session
-            session.totalPages += 1
-            session.save(update_fields=["totalPages"])
-
             return Response(
-                {
-                    "session_id": session_id,
-                    "page_index": page_index,
-                    "status": "no_text",
-                    "submitted_at": timezone.now(),
-                },
-                status=status.HTTP_200_OK,
+                {"error_code": 422, "message": "PROCESS__UNABLE_TO_PROCESS_IMAGE"},
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
-
+        
         # Count words from OCR and add to session.totalWords
         total_words = sum(
             len((para.get("text", "") or "").split()) for para in ocr_result
@@ -587,3 +572,88 @@ class ProcessUploadCoverView(APIView):
 
             traceback.print_exc()
             return "", ""
+
+class ProcessWordPickerView(APIView):
+    """
+    Extract vocabulary words from ALL pages of a session.
+
+    [POST] /process/word_picker/
+
+    Request Body:
+        {
+            "session_id": "string",
+            "lang": "string"
+        }
+
+    Response (200 OK):
+        {
+            "session_id": "string",
+            "status": "ok",
+            "items": [
+                {"word": "...", "meaning_ko": "..."},
+                ...
+            ]
+        }
+    """
+
+    def post(self, request):
+        session_id = request.data.get("session_id")
+        lang = request.data.get("lang")
+        if not session_id:
+            return Response(
+                {"error": "session_id_required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            session = Session.objects.get(id=session_id)
+        except Session.DoesNotExist:
+            return Response(
+                {"error": "session_not_found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        pages = Page.objects.filter(session=session).order_by("id")
+        if not pages.exists():
+            return Response(
+                {
+                    "session_id": session_id,
+                    "status": "no_pages",
+                    "items": [],
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        full_text_list = []
+        for page in pages:
+            for bb in page.getBBs():
+                txt = (bb.original_text or "").strip()
+                if txt:
+                    full_text_list.append(txt)
+
+        full_text = " ".join(full_text_list).strip()
+
+        if not full_text:
+            return Response(
+                {
+                    "session_id": session_id,
+                    "status": "no_text",
+                    "items": [],
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        lang_map = {"en": "English", "zh": "Chinese", "vi": "Vietnamese"}
+        target_lang = lang_map.get(lang, "English")
+        picker = StoryWordPicker(target_lang=target_lang) 
+
+        result = picker.pick_words(full_text)
+
+        return Response(
+            {
+                "session_id": session_id,
+                "status": result.get("status"),
+                "items": result.get("items", []),
+            },
+            status=status.HTTP_200_OK,
+        )

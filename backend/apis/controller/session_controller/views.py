@@ -197,16 +197,13 @@ class GetSessionStatsView(APIView):
                     "started_at": session.started_at,
                     "ended_at": session.ended_at,
                     "total_pages": session.totalPages,
-                    "total_time_spent": (
-                        (session.ended_at or timezone.now()) - session.started_at
-                    ).seconds,
-                    "total_words_read": session.totalWords,
+                    "total_time_spent": ((session.ended_at or timezone.now()) - session.started_at).seconds,
+                    "total_words_read": session.totalWords
                 },
                 status=status.HTTP_200_OK,
             )
         except Session.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
-
 
 class SessionReloadAllView(APIView):
     """
@@ -239,7 +236,6 @@ class SessionReloadAllView(APIView):
             ]
         }
     """
-
     def get(self, request):
         user_id = request.query_params.get("user_id")
         started_at = request.query_params.get("started_at")

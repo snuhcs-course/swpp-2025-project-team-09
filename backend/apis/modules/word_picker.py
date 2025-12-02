@@ -1,0 +1,179 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import time
+import re
+from pathlib import Path
+from typing import Dict, List, Any
+
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from pydantic import BaseModel, Field
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
+WORD_PICKER_PROMPT = """
+You are a warm and friendly children's vocabulary curator.
+
+You will receive a short passage from a children's story written in {target_lang}.
+Your job is to extract EXACTLY THREE important vocabulary words from the passage
+and provide a simple Korean meaning for each word.
+
+Guidelines:
+- Choose meaningful words that carry story importance.
+- If there seem to be fewer than three obvious candidates, still select the best three possible.
+- Ignore very basic words like "good", "big", "dog", etc.
+- Words must appear in the passage.
+- Use simple, age-appropriate Korean meanings.
+
+Return exactly three items and follow the structured output strictly.
+"""
+
+
+
+# -------------------------------------------------------------------------
+# Pydantic Models
+# -------------------------------------------------------------------------
+
+class VocabItem(BaseModel):
+    word: str = Field(..., description="Single vocabulary word.")
+    meaning_ko: str = Field(..., description="Short Korean meaning.")
+
+
+class VocabResult(BaseModel):
+    items: List[VocabItem] = Field(
+        ..., 
+        min_items=3,
+        max_items=3,
+        description="Exactly 3 vocabulary items."
+    )
+
+
+# -------------------------------------------------------------------------
+# StoryWordPicker Module
+# -------------------------------------------------------------------------
+
+class StoryWordPicker:
+    """
+    Extract up to 3 important vocabulary words from children's story text,
+    with simple Korean meanings.
+    """
+
+    def __init__(self, target_lang: str = "English"):
+        self.target_lang = target_lang
+        self.llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.2)
+        self.word_chain = self._create_word_chain()
+
+    def _create_word_chain(self):
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", WORD_PICKER_PROMPT),
+                ("user", "{story_text}"),
+            ]
+        )
+        return prompt | self.llm.with_structured_output(VocabResult)
+
+    def pick_words(self, story_text: str) -> Dict[str, Any]:
+        """
+        Extract vocabulary words from story text (sync version).
+
+        Returns:
+            {
+                "status": "ok" | "no_words" | "failed",
+                "items": [...],
+                "latency": float
+            }
+        """
+
+        story_text = (story_text or "").strip()
+        if not story_text:
+            return {"status": "no_words", "items": [], "latency": 0.0}
+
+        for attempt in range(3):
+            try:
+                t0 = time.time()
+
+                response: VocabResult = self.word_chain.invoke(
+                    {
+                        "story_text": story_text,
+                        "target_lang": self.target_lang,
+                    }
+                )
+
+                latency = round(time.time() - t0, 3)
+
+                items = response.items
+                if not items:
+                    return {"status": "no_words", "items": [], "latency": latency}
+
+                cleaned = []
+                seen = set()
+
+                for item in items:
+                    w = item.word.lower().strip()
+                    w = re.sub(r"[^a-zA-Z\-']", "", w)
+                    if not w:
+                        continue
+                    if w not in seen:
+                        seen.add(w)
+                        cleaned.append(
+                            {
+                                "word": w,
+                                "meaning_ko": item.meaning_ko.strip()
+                            }
+                        )
+
+                if not cleaned:
+                    return {"status": "no_words", "items": [], "latency": latency}
+
+                return {
+                    "status": "ok",
+                    "items": cleaned[:3],
+                    "latency": latency
+                }
+
+            except Exception as e:
+                print(f"[WordPicker] attempt {attempt+1} failed: {e}")
+                if attempt == 2:
+                    return {"status": "failed", "items": [], "latency": -1.0}
+
+        return {"status": "failed", "items": [], "latency": -1.0}
+
+def main():
+    # 테스트용 샘플 텍스트
+    sample_text = """
+    The tiny squirrel carried a bright acorn as it wandered through
+    the peaceful forest. The gentle wind rustled the leaves while
+    the little creature looked for a safe place to hide its treasure.
+    """
+
+    picker = StoryWordPicker(target_lang="English")
+
+    print("\n=== StoryWordPicker Test Start ===\n")
+
+    result = picker.pick_words(sample_text)
+
+    print(f"Status : {result.get('status')}")
+    print(f"Latency: {result.get('latency')} sec\n")
+
+    items = result.get("items", [])
+
+    if not items:
+        print("No vocabulary items returned.")
+        print("\n=== Test Finished ===")
+        return
+
+    print("Extracted Vocabulary Items:")
+    for idx, item in enumerate(items, start=1):
+        print(f"\nWord {idx}:")
+        print(f"  English: {item['word']}")
+        print(f"  Korean : {item['meaning_ko']}")
+
+    print("\n=== Test Finished ===")
+
+
+if __name__ == "__main__":
+    main()
+    

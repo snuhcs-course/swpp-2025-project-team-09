@@ -26,5 +26,4 @@ class User(models.Model):
         - Migration files show the DB contains `apis_user`, so align the model
         - to avoid "no such table: user" OperationalError at runtime.
         """
-
         db_table = "apis_user"

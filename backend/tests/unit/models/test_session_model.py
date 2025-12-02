@@ -70,6 +70,7 @@ class TestSessionModel(TestCase):
         pages = Page.objects.filter(session=session)
         self.assertEqual(pages.count(), 0)
 
+
     def test_07_get_pages_with_pages(self):
         """Test querying pages with multiple pages"""
         session = Session.objects.create(user=self.test_user, title="Pages Test")
@@ -109,7 +110,7 @@ class TestSessionModel(TestCase):
 
         pages = Page.objects.filter(session=session)
         self.assertEqual(pages.count(), 3)
-
+        
     def test_10_session_end(self):
         """Test ending a session"""
         session = Session.objects.create(user=self.test_user, title="End Session Test")
