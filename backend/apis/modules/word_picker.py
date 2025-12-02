@@ -94,14 +94,6 @@ class StoryWordPicker:
         for attempt in range(3):
             try:
                 t0 = time.time()
-                # Debug: print raw LLM response before structured parsing
-                raw_resp = self.llm.invoke(
-                    {
-                        "story_text": story_text,
-                        "target_lang": self.target_lang,
-                    }
-                )
-                print("RAW_LLM_OUTPUT:", raw_resp)
 
                 response: VocabResult = self.word_chain.invoke(
                     {
