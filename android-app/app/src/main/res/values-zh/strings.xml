@@ -69,7 +69,8 @@
     <string name="summary_line2">和 %1$d %2$s</string>
     <string name="summary_line3">花费了 %1$s。</string>
     <string name="tap_balloons">点击气球吧！🎈</string>
-
+    <string name="tap_words">点按卡片查看你学到了什么！</string>
+    <string name="loading_word">正在加载…</string>
     <!-- unit -->
     <string name="unit_word">个单词</string>
     <string name="unit_words">个单词</string>

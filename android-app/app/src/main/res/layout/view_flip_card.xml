@@ -14,9 +14,9 @@
             android:id="@+id/textFront"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="word"
+            android:text="@string/loading_word"
             android:textColor="#000"
-            android:textSize="20sp"
+            android:textSize="30sp"
             android:fontFamily="@font/pinkfong_baby_shark_bold"/>
 
     </LinearLayout>
@@ -35,9 +35,9 @@
             android:id="@+id/textBack"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="뜻"
+            android:text="단어"
             android:textColor="#FFF"
-            android:textSize="20sp"
+            android:textSize="30sp"
             android:fontFamily="@font/pinkfong_baby_shark_bold" />
 
     </LinearLayout>

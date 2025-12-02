@@ -69,7 +69,8 @@
     <string name="summary_line2">and %1$d %2$s</string>
     <string name="summary_line3">for %1$s.</string>
     <string name="tap_balloons">Tap the balloons! 🎈</string>
-
+    <string name="tap_words">Tap the cards to see what you learned!</string>
+    <string name="loading_word">loading...</string>
     <!-- unit -->
     <string name="unit_word">word</string>
     <string name="unit_words">words</string>

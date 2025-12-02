@@ -27,6 +27,8 @@ class FinishActivity : BaseActivity() {
     // Store texts in order (regardless of which balloon is popped)
     private val orderedTexts = mutableListOf<String>()
     private var poppedCount = 0
+    private var pickedWordsLoaded = false
+    private var allBalloonsPopped = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,6 +58,11 @@ class FinishActivity : BaseActivity() {
                 binding.card1.setData(items[0].word, items[0].meaning_ko)
                 binding.card2.setData(items[1].word, items[1].meaning_ko)
                 binding.card3.setData(items[2].word, items[2].meaning_ko)
+                pickedWordsLoaded = true
+                if (allBalloonsPopped) {
+                    binding.learnedWordsContainer.visibility = View.VISIBLE
+                    binding.learnedWordsTitle.visibility = View.VISIBLE
+                }
             }
         }
     }
@@ -77,12 +84,15 @@ class FinishActivity : BaseActivity() {
         }
 
         binding.balloonView.onAllBalloonsPopped = {
+            allBalloonsPopped = true
             binding.tapBalloonHint.visibility = View.GONE
             binding.amazingText.visibility = View.GONE
             binding.mainButton.visibility = View.GONE
-            binding.learnedWordsContainer.visibility = View.VISIBLE
-            binding.learnedWordsTitle.visibility = View.VISIBLE
-            binding.learnedWordsContainer.visibility = View.VISIBLE
+
+            if (pickedWordsLoaded) {
+                binding.learnedWordsContainer.visibility = View.VISIBLE
+                binding.learnedWordsTitle.visibility = View.VISIBLE
+            }
         }
     }
 
