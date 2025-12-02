@@ -17,6 +17,7 @@ import com.example.storybridge_android.ui.common.BaseActivity
 
 class LoadingActivity : BaseActivity() {
     private lateinit var loadingBar: ProgressBar
+    private lateinit var balloonOverlay: LoadingBalloonOverlayView
     private val viewModel: LoadingViewModel by viewModels {
         LoadingViewModelFactory()
     }
@@ -42,6 +43,7 @@ class LoadingActivity : BaseActivity() {
     private fun setupUI() {
         loadingBar = findViewById(R.id.loadingBar)
         loadingBar.max = 100
+        balloonOverlay = findViewById(R.id.balloonOverlay)
     }
 
     private fun observeProgress() {
@@ -175,5 +177,10 @@ class LoadingActivity : BaseActivity() {
         ).show()
 
         finish()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        balloonOverlay.stopAnimation()
     }
 }

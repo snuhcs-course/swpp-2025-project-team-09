@@ -36,7 +36,7 @@
         app:layout_constraintTop_toBottomOf="@id/congText" />
 
     <!-- Balloon interaction view -->
-    <com.example.storybridge_android.ui.session.finish.BalloonInteractionView
+    <com.example.storybridge_android.ui.session.finish.FinishBalloonView
         android:id="@+id/balloonView"
         android:layout_width="0dp"
         android:layout_height="400dp"

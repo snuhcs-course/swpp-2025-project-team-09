@@ -8,7 +8,7 @@ import androidx.activity.viewModels
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.Observer
 import com.example.storybridge_android.data.BalloonColor
-import com.example.storybridge_android.data.BalloonData
+import com.example.storybridge_android.data.CongratulationBalloon
 import com.example.storybridge_android.databinding.ActivityFinishBinding
 import com.example.storybridge_android.network.SessionStatsResponse
 import com.example.storybridge_android.ui.common.BaseActivity
@@ -121,7 +121,7 @@ class FinishActivity : BaseActivity() {
 
             // Create balloon data
             val balloonDataList = listOf(
-                BalloonData(
+                CongratulationBalloon(
                     x = spacing,
                     y = centerY,
                     width = balloonWidth,
@@ -130,7 +130,7 @@ class FinishActivity : BaseActivity() {
                     lineIndex = 0,
                     text = formatWordsLine(stats.total_words_read)
                 ),
-                BalloonData(
+                CongratulationBalloon(
                     x = spacing * 2f,
                     y = centerY,
                     width = balloonWidth,
@@ -139,7 +139,7 @@ class FinishActivity : BaseActivity() {
                     lineIndex = 1,
                     text = formatPagesLine(stats.total_pages - 1)
                 ),
-                BalloonData(
+                CongratulationBalloon(
                     x = spacing * 3f,
                     y = centerY,
                     width = balloonWidth,

@@ -49,4 +49,16 @@
 
     </androidx.cardview.widget.CardView>
 
+    <!-- Balloon overlay view for loading interaction -->
+    <com.example.storybridge_android.ui.session.loading.LoadingBalloonOverlayView
+        android:id="@+id/balloonOverlay"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:elevation="16dp"
+        android:translationZ="16dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

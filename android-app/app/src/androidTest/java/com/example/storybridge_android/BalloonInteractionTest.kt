@@ -5,8 +5,8 @@ import android.view.MotionEvent
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.storybridge_android.data.BalloonColor
-import com.example.storybridge_android.data.BalloonData
-import com.example.storybridge_android.ui.session.finish.BalloonInteractionView
+import com.example.storybridge_android.data.CongratulationBalloon
+import com.example.storybridge_android.ui.session.finish.FinishBalloonView
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
@@ -17,12 +17,12 @@ import org.junit.runner.RunWith
 class BalloonInteractionTest {
 
     private lateinit var context: Context
-    private lateinit var balloonView: BalloonInteractionView
+    private lateinit var balloonView: FinishBalloonView
 
     @Before
     fun setup() {
         context = ApplicationProvider.getApplicationContext()
-        balloonView = BalloonInteractionView(context)
+        balloonView = FinishBalloonView(context)
     }
 
     @After
@@ -49,7 +49,7 @@ class BalloonInteractionTest {
     fun setBalloons_withEmptyList_clearsExistingBalloons() {
         // Given
         val initialBalloons = listOf(
-            BalloonData(100f, 100f, 200f, 200f, BalloonColor.RED, 0, "Test")
+            CongratulationBalloon(100f, 100f, 200f, 200f, BalloonColor.RED, 0, "Test")
         )
         balloonView.setBalloons(initialBalloons)
 
@@ -64,8 +64,8 @@ class BalloonInteractionTest {
     fun setBalloons_withValidList_storesBalloons() {
         // Given
         val balloons = listOf(
-            BalloonData(100f, 100f, 200f, 200f, BalloonColor.RED, 0, "Hello"),
-            BalloonData(300f, 300f, 200f, 200f, BalloonColor.BLUE, 1, "World")
+            CongratulationBalloon(100f, 100f, 200f, 200f, BalloonColor.RED, 0, "Hello"),
+            CongratulationBalloon(300f, 300f, 200f, 200f, BalloonColor.BLUE, 1, "World")
         )
 
         // When
@@ -80,13 +80,13 @@ class BalloonInteractionTest {
     fun setBalloons_multipleTimes_replacesExistingBalloons() {
         // Given
         val firstBalloons = listOf(
-            BalloonData(100f, 100f, 200f, 200f, BalloonColor.RED, 0, "First")
+            CongratulationBalloon(100f, 100f, 200f, 200f, BalloonColor.RED, 0, "First")
         )
         balloonView.setBalloons(firstBalloons)
 
         // When
         val secondBalloons = listOf(
-            BalloonData(200f, 200f, 200f, 200f, BalloonColor.GREEN, 1, "Second")
+            CongratulationBalloon(200f, 200f, 200f, 200f, BalloonColor.GREEN, 1, "Second")
         )
         balloonView.setBalloons(secondBalloons)
 
@@ -101,9 +101,9 @@ class BalloonInteractionTest {
     fun getBalloonText_withValidLineIndex_returnsCorrectText() {
         // Given
         val balloons = listOf(
-            BalloonData(100f, 100f, 200f, 200f, BalloonColor.RED, 0, "Line 0"),
-            BalloonData(200f, 200f, 200f, 200f, BalloonColor.GREEN, 1, "Line 1"),
-            BalloonData(300f, 300f, 200f, 200f, BalloonColor.BLUE, 2, "Line 2")
+            CongratulationBalloon(100f, 100f, 200f, 200f, BalloonColor.RED, 0, "Line 0"),
+            CongratulationBalloon(200f, 200f, 200f, 200f, BalloonColor.GREEN, 1, "Line 1"),
+            CongratulationBalloon(300f, 300f, 200f, 200f, BalloonColor.BLUE, 2, "Line 2")
         )
         balloonView.setBalloons(balloons)
 
@@ -117,7 +117,7 @@ class BalloonInteractionTest {
     fun getBalloonText_withInvalidLineIndex_returnsNull() {
         // Given
         val balloons = listOf(
-            BalloonData(100f, 100f, 200f, 200f, BalloonColor.RED, 0, "Test")
+            CongratulationBalloon(100f, 100f, 200f, 200f, BalloonColor.RED, 0, "Test")
         )
         balloonView.setBalloons(balloons)
 
@@ -131,7 +131,7 @@ class BalloonInteractionTest {
     @Test
     fun onTouchEvent_outsideBalloon_doesNothing() {
         // Given
-        val balloon = BalloonData(500f, 500f, 200f, 200f, BalloonColor.RED, 0, "Untouched")
+        val balloon = CongratulationBalloon(500f, 500f, 200f, 200f, BalloonColor.RED, 0, "Untouched")
         balloonView.setBalloons(listOf(balloon))
 
         // When
@@ -147,7 +147,7 @@ class BalloonInteractionTest {
     @Test
     fun onTouchEvent_onAlreadyPoppedBalloon_doesNothing() {
         // Given
-        val balloon = BalloonData(500f, 500f, 200f, 200f, BalloonColor.RED, 0, "Already Popped")
+        val balloon = CongratulationBalloon(500f, 500f, 200f, 200f, BalloonColor.RED, 0, "Already Popped")
         balloon.isPopped = true
         balloonView.setBalloons(listOf(balloon))
 
@@ -193,9 +193,9 @@ class BalloonInteractionTest {
     fun setBalloons_withDifferentColors_allColorsSupported() {
         // Given
         val balloons = listOf(
-            BalloonData(100f, 100f, 200f, 200f, BalloonColor.RED, 0, "Red"),
-            BalloonData(300f, 300f, 200f, 200f, BalloonColor.GREEN, 1, "Green"),
-            BalloonData(500f, 500f, 200f, 200f, BalloonColor.BLUE, 2, "Blue")
+            CongratulationBalloon(100f, 100f, 200f, 200f, BalloonColor.RED, 0, "Red"),
+            CongratulationBalloon(300f, 300f, 200f, 200f, BalloonColor.GREEN, 1, "Green"),
+            CongratulationBalloon(500f, 500f, 200f, 200f, BalloonColor.BLUE, 2, "Blue")
         )
 
         // When
@@ -212,7 +212,7 @@ class BalloonInteractionTest {
     @Test
     fun stopAnimation_stopsUpdateLoop() {
         // Given
-        val balloon = BalloonData(500f, 500f, 200f, 200f, BalloonColor.RED, 0, "Test")
+        val balloon = CongratulationBalloon(500f, 500f, 200f, 200f, BalloonColor.RED, 0, "Test")
         balloonView.setBalloons(listOf(balloon))
 
         // When
@@ -245,7 +245,7 @@ class BalloonInteractionTest {
     @Test
     fun balloon_withZeroDimensions_handledGracefully() {
         // Given
-        val balloon = BalloonData(500f, 500f, 0f, 0f, BalloonColor.RED, 0, "Zero")
+        val balloon = CongratulationBalloon(500f, 500f, 0f, 0f, BalloonColor.RED, 0, "Zero")
         balloonView.setBalloons(listOf(balloon))
 
         // When
