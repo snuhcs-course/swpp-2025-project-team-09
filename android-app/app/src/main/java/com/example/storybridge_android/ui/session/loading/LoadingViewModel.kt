@@ -108,12 +108,9 @@ class LoadingViewModel(
             val req = UploadImageRequest(sessionId, 0, lang, base64)
             processRepo.uploadCoverImage(req).fold(
                 onSuccess = {
-                    stopRamp()
                     _progress.value = 100
 
-                    val result = CoverResult(
-                        it.title
-                    )
+                    val result = CoverResult(it.title)
                     _cover.value = result
                     _status.value = "cover_ready"
                 },
@@ -134,7 +131,8 @@ class LoadingViewModel(
                 _error.value = "Failed to process image"
                 return@launch
             }
-            startRampTo(40, 2000L)
+
+            startRampTo(100, 4000L)
 
             val req = UploadImageRequest(sessionId, pageIndex, lang, base64)
             processRepo.uploadImage(req).fold(
@@ -142,7 +140,6 @@ class LoadingViewModel(
                     pollOcr(sessionId, it.page_index)
                 },
                 onFailure = {
-                    stopRamp()
                     _error.value = it.message
                 }
             )
@@ -152,22 +149,12 @@ class LoadingViewModel(
     private suspend fun pollOcr(sessionId: String, pageIndex: Int) {
         _status.value = "polling"
 
-        if (_progress.value < 41) _progress.value = 41
-
-        var ocrStarted = false
-
         repeat(60) { i ->
             val res = processRepo.checkOcrStatus(sessionId, pageIndex)
             var done = false
 
             res.fold(
                 onSuccess = {
-                    ocrStarted = true
-
-                    val p = it.progress
-                    val mapped = 40 + (p * 60 / 100)
-                    _progress.value = mapped.coerceIn(41, 99)
-
                     if (it.status == "ready") {
                         _progress.value = 100
                         _status.value = "ready"
@@ -176,14 +163,10 @@ class LoadingViewModel(
                 },
                 onFailure = {
                     _error.value = it.message
+                    return@pollOcr
                 }
             )
             if (done) return
-
-            if (!ocrStarted) {
-                val next = (_progress.value + 1).coerceAtMost(49)
-                _progress.value = next
-            }
 
             delay(300)
         }
