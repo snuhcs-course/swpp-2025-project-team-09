@@ -86,4 +86,19 @@ class SessionRepositoryImpl : SessionRepository {
                 Result.failure(e)
             }
         }
+    override suspend fun pickWords(sessionId: String, lang: String): Result<WordPickerResponse> =
+        withContext(Dispatchers.IO) {
+            try {
+                val res = RetrofitClient.sessionApi.pickWords(
+                    WordPickerRequest(session_id = sessionId, lang = lang)
+                )
+                if (res.isSuccessful && res.body() != null) {
+                    Result.success(res.body()!!)
+                } else {
+                    Result.failure(Exception("Word pick failed: ${res.code()}"))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
 }

@@ -37,8 +37,10 @@ class FinishActivity : BaseActivity() {
         initializeSessionData()
         setupObservers()
         setupClickListeners()
+        setupFlipCardListeners()
 
         viewModel.endSession(sessionId)
+        viewModel.pickWords(sessionId)
     }
 
     private fun initializeSessionData() {
@@ -49,6 +51,13 @@ class FinishActivity : BaseActivity() {
     private fun setupObservers() {
         observeSessionStats()
         setupBalloonCallback()
+        viewModel.pickedWords.observe(this) { items ->
+            if (items.size >= 3) {
+                binding.card1.setData(items[0].word, items[0].meaning_ko)
+                binding.card2.setData(items[1].word, items[1].meaning_ko)
+                binding.card3.setData(items[2].word, items[2].meaning_ko)
+            }
+        }
     }
 
     private fun observeSessionStats() {
@@ -69,8 +78,11 @@ class FinishActivity : BaseActivity() {
 
         binding.balloonView.onAllBalloonsPopped = {
             binding.tapBalloonHint.visibility = View.GONE
-            binding.amazingText.visibility = View.VISIBLE
-            binding.mainButton.visibility = View.VISIBLE
+            binding.amazingText.visibility = View.GONE
+            binding.mainButton.visibility = View.GONE
+            binding.learnedWordsContainer.visibility = View.VISIBLE
+            binding.learnedWordsTitle.visibility = View.VISIBLE
+            binding.learnedWordsContainer.visibility = View.VISIBLE
         }
     }
 
@@ -219,4 +231,41 @@ class FinishActivity : BaseActivity() {
             "$pageCount ${getString(R.string.unit_pages)}"
         }
     }
+
+    private fun setupFlipCardListeners() {
+        val card1 = binding.card1
+        val card2 = binding.card2
+        val card3 = binding.card3
+
+        var card1Flipped = false
+        var card2Flipped = false
+        var card3Flipped = false
+
+        fun checkAllFlipped() {
+            if (card1Flipped && card2Flipped && card3Flipped) {
+                binding.amazingText.visibility = View.VISIBLE
+                binding.mainButton.visibility = View.VISIBLE
+            }
+        }
+
+        card1.onFlipped = {
+            if (!card1Flipped) {
+                card1Flipped = true
+                checkAllFlipped()
+            }
+        }
+        card2.onFlipped = {
+            if (!card2Flipped) {
+                card2Flipped = true
+                checkAllFlipped()
+            }
+        }
+        card3.onFlipped = {
+            if (!card3Flipped) {
+                card3Flipped = true
+                checkAllFlipped()
+            }
+        }
+    }
+
 }
