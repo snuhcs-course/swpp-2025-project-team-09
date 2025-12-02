@@ -101,7 +101,7 @@ class StoryWordPicker:
                         "target_lang": self.target_lang,
                     }
                 )
-
+                print(f"[WordPicker] response: {response}")
                 latency = round(time.time() - t0, 3)
 
                 items = response.items

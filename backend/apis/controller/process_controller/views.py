@@ -643,7 +643,7 @@ class ProcessWordPickerView(APIView):
         full_text_list = []
         for page in pages:
             for bb in page.getBBs():
-                txt = (bb.original_text or "").strip()
+                txt = (bb.translated_text or "").strip()
                 if txt:
                     full_text_list.append(txt)
 
