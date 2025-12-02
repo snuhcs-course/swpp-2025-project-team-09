@@ -6,7 +6,6 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Query
 
-// Retrofit API Interface
 interface SessionApi {
 
     @POST("/session/start")
@@ -91,24 +90,6 @@ data class SessionStatsResponse(
     val total_words_read: Int
 )
 
-data class SessionInfoResponse(
-    val session_id: String,
-    val user_id: String,
-    val page_index: Int,
-    val voice_style: String,
-    val started_at: String,
-    val ended_at: String?, // nullable
-    val total_pages: Int?  // nullable
-)
-
-data class SessionReviewResponse(
-    val session_id: String,
-    val user_id: String,
-    val started_at: String,
-    val ended_at: String,
-    val total_pages: Int
-)
-
 data class ReloadAllSessionResponse(
     val session_id: String,
     val started_at: String,
@@ -123,7 +104,6 @@ data class ReloadedPage(
     val ocr_results: List<OcrBox>?
 )
 
-// 2-8. Discard Session
 data class DiscardSessionRequest(
     val session_id: String
 )

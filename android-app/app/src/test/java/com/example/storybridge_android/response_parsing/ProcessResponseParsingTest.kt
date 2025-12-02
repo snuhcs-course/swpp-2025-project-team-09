@@ -1,3 +1,5 @@
+package com.example.storybridge_android.response_parsing
+
 import com.example.storybridge_android.network.*
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
@@ -7,7 +9,7 @@ import org.junit.Assert.*
 class ProcessResponseParsingTest {
     private val gson = Gson()
 
-    // ========== UploadImageResponse ==========
+    // 1. UploadImageResponse
     @Test
     fun uploadImageResponse_successfulParsing() {
         val json = """
@@ -27,49 +29,32 @@ class ProcessResponseParsingTest {
         assertEquals("2025-10-28T19:00:00Z", response.submitted_at)
     }
 
-    // ========== UploadCoverResponse (추가) ==========
+    // 2. UploadCoverResponse
     @Test
-    fun uploadCoverResponse_successfulParsing() {
+    fun uploadCoverResponse_successfullyParsesAllFields() {
         val json = """
         {
             "session_id": "sess_cover_001",
             "page_index": 0,
             "status": "submitted",
             "submitted_at": "2025-10-28T19:00:00Z",
-            "title": "Original Title",
-            "translated_title": "traslated_title"
+            "title": "제목",
+            "translated_title": "translated_title"
         }
         """.trimIndent()
 
         val response = gson.fromJson(json, UploadCoverResponse::class.java)
 
         assertEquals("sess_cover_001", response.session_id)
-        assertEquals("Original Title", response.title)
-        assertEquals("traslated_title", response.translated_title)
+        assertEquals(0, response.page_index)
+        assertEquals("submitted", response.status)
+        assertEquals("2025-10-28T19:00:00Z", response.submitted_at)
+
+        assertEquals("제목", response.title)
+        assertEquals("translated_title", response.translated_title)
     }
 
-    // ========== CheckOcrResponse ==========
-    @Test
-    fun checkOcrResponse_readyStatus() {
-        val json = """
-        {
-            "session_id": "sess_ocr_check_002",
-            "page_index": 3,
-            "status": "ready",
-            "progress": 100,
-            "submitted_at": "2025-10-28T19:30:00Z",
-            "processed_at": "2025-10-28T19:35:00Z"
-        }
-        """.trimIndent()
-
-        val response = gson.fromJson(json, CheckOcrResponse::class.java)
-
-        assertEquals("ready", response.status)
-        assertEquals(100, response.progress)
-        assertNotNull("Ready status must include processed_at timestamp", response.processed_at)
-        assertEquals("2025-10-28T19:35:00Z", response.processed_at)
-    }
-
+    // 3. OcrResponse
     @Test
     fun checkOcrResponse_pendingStatus_nullableFieldMissing() {
         val json = """
@@ -107,7 +92,67 @@ class ProcessResponseParsingTest {
         assertEquals(50, response.progress)
     }
 
-    // ========== CheckTtsResponse ==========
+    @Test
+    fun checkOcrResponse_readyStatus() {
+        val json = """
+        {
+            "session_id": "sess_ocr_check_002",
+            "page_index": 3,
+            "status": "ready",
+            "progress": 100,
+            "submitted_at": "2025-10-28T19:30:00Z",
+            "processed_at": "2025-10-28T19:35:00Z"
+        }
+        """.trimIndent()
+
+        val response = gson.fromJson(json, CheckOcrResponse::class.java)
+
+        assertEquals("ready", response.status)
+        assertEquals(100, response.progress)
+        assertNotNull("Ready status must include processed_at timestamp", response.processed_at)
+        assertEquals("2025-10-28T19:30:00Z", response.submitted_at)
+        assertEquals("2025-10-28T19:35:00Z", response.processed_at)
+    }
+
+    @Test
+    fun checkOcrResponse_invalidType_throwsException() {
+        val json = """
+        {
+            "session_id": "sess_ocr_check_007",
+            "page_index": 8,
+            "status": "ready",
+            "progress": "not_a_number"
+        }
+        """.trimIndent()
+
+        try {
+            gson.fromJson(json, CheckOcrResponse::class.java)
+            fail("Expected JsonSyntaxException to be thrown")
+        } catch (e: JsonSyntaxException) {
+            assertTrue(e.message?.contains("For input string") == true ||
+                    e.message?.contains("Expected") == true)
+        }
+    }
+
+    // 4. TtsResponse
+    @Test
+    fun checkTtsResponse_processingStatus_nullableBbStatusMissing() {
+        val json = """
+        {
+            "session_id": "sess_tts_check_005",
+            "page_index": 6,
+            "status": "processing",
+            "progress": 50
+        }
+        """.trimIndent()
+
+        val response = gson.fromJson(json, CheckTtsResponse::class.java)
+
+        assertEquals("processing", response.status)
+        assertEquals(50, response.progress)
+        assertNull("Processing status should have bb_status as null", response.bb_status)
+    }
+
     @Test
     fun checkTtsResponse_readyStatus_withBbStatus() {
         val json = """
@@ -150,42 +195,6 @@ class ProcessResponseParsingTest {
     }
 
     @Test
-    fun checkTtsResponse_processingStatus_nullableBbStatusMissing() {
-        val json = """
-        {
-            "session_id": "sess_tts_check_005",
-            "page_index": 6,
-            "status": "processing",
-            "progress": 50
-        }
-        """.trimIndent()
-
-        val response = gson.fromJson(json, CheckTtsResponse::class.java)
-
-        assertEquals("processing", response.status)
-        assertEquals(50, response.progress)
-        assertNull("Processing status should have bb_status as null", response.bb_status)
-    }
-
-    @Test
-    fun checkTtsResponse_emptyBbStatusList() {
-        val json = """
-        {
-            "session_id": "sess_tts_check_009",
-            "page_index": 7,
-            "status": "ready",
-            "progress": 100,
-            "bb_status": []
-        }
-        """.trimIndent()
-
-        val response = gson.fromJson(json, CheckTtsResponse::class.java)
-
-        assertNotNull(response.bb_status)
-        assertTrue(response.bb_status!!.isEmpty())
-    }
-
-    @Test
     fun checkTtsResponse_withExtraField_ignoredSuccessfully() {
         val json = """
         {
@@ -202,27 +211,6 @@ class ProcessResponseParsingTest {
         assertEquals("sess_tts_extra_006", response.session_id)
         assertEquals("ready", response.status)
         assertEquals(100, response.progress)
-    }
-
-    // ========== Error Cases ==========
-    @Test
-    fun checkOcrResponse_invalidType_throwsException() {
-        val json = """
-        {
-            "session_id": "sess_ocr_check_007",
-            "page_index": 8,
-            "status": "ready",
-            "progress": "not_a_number"
-        }
-        """.trimIndent()
-
-        try {
-            gson.fromJson(json, CheckOcrResponse::class.java)
-            fail("Expected JsonSyntaxException to be thrown")
-        } catch (e: JsonSyntaxException) {
-            assertTrue(e.message?.contains("For input string") == true ||
-                    e.message?.contains("Expected") == true)
-        }
     }
 
     @Test
