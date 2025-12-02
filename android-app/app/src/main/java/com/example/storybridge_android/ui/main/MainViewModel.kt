@@ -19,6 +19,9 @@ class MainViewModel(
     private val _userInfo = MutableStateFlow<Response<List<UserInfoResponse>>?>(null)
     val userInfo: StateFlow<Response<List<UserInfoResponse>>?> = _userInfo
 
+    private val _startSessionResult = MutableStateFlow<Result<String>?>(null)
+    val startSessionResult: StateFlow<Result<String>?> = _startSessionResult
+
     private val _discardResult = MutableStateFlow<Result<DiscardSessionResponse>?>(null)
     val discardResult: StateFlow<Result<DiscardSessionResponse>?> = _discardResult
 
@@ -29,6 +32,18 @@ class MainViewModel(
                 _userInfo.value = response
             } catch (e: Exception) {
                 _userInfo.value = null
+            }
+        }
+    }
+
+    fun startSession(deviceId: String) {
+        viewModelScope.launch {
+            try {
+                val result = sessionRepository.startSession(deviceId)
+                val mapped = result.map { it.session_id }
+                _startSessionResult.value = mapped
+            } catch (e: Exception) {
+                _startSessionResult.value = Result.failure(e)
             }
         }
     }

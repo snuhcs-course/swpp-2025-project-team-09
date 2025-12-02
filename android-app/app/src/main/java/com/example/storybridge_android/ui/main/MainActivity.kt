@@ -7,10 +7,12 @@ import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Base64
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -27,7 +29,7 @@ import com.example.storybridge_android.ui.common.BaseActivity
 import com.example.storybridge_android.ui.common.SessionCard
 import com.example.storybridge_android.ui.common.TopNavigationBar
 import com.example.storybridge_android.ui.session.loading.LoadingActivity
-import com.example.storybridge_android.ui.session.start.StartSessionActivity
+import com.example.storybridge_android.ui.session.voice.VoiceSelectActivity
 import com.example.storybridge_android.ui.setting.SettingActivity
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -78,6 +80,7 @@ class MainActivity : BaseActivity() {
         setupStartButton()
         setupBackPressHandler()
         observeUserInfo()
+        observeStartSession()
     }
 
     override fun onResume() {
@@ -120,7 +123,7 @@ class MainActivity : BaseActivity() {
         discardConfirmBtn.setOnClickListener {
             selectedSessionId?.let { sessionId ->
                 lifecycleScope.launch {
-                    val deviceInfo = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+                    val deviceInfo = getAndroidId()
                     viewModel.discardSession(sessionId, deviceInfo)
                 }
             }
@@ -143,6 +146,25 @@ class MainActivity : BaseActivity() {
         lifecycleScope.launch {
             viewModel.userInfo.collectLatest { response ->
                 handleUserInfoResponse(response)
+            }
+        }
+    }
+
+
+    private fun observeStartSession() {
+        lifecycleScope.launch {
+            viewModel.startSessionResult.collectLatest { result ->
+                result ?: return@collectLatest
+
+                result.onSuccess { sessionId ->
+                    navigateToVoiceSelect(sessionId)
+                }.onFailure {
+                    Toast.makeText(
+                        this@MainActivity,
+                        getString(R.string.error_session_start_failed),
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
             }
         }
     }
@@ -263,7 +285,8 @@ class MainActivity : BaseActivity() {
             val imageBytes = Base64.decode(base64String, Base64.DEFAULT)
             BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
         } catch (e: Exception) {
-            null
+            Log.e("Base64", "decode error: ${e.message}")
+            return null
         }
     }
 
@@ -295,13 +318,8 @@ class MainActivity : BaseActivity() {
     private fun setupStartButton() {
         val startButton = findViewById<Button>(R.id.startNewReadingButton)
         startButton.setOnClickListener {
-            navigateToStartSession()
+            createSession()
         }
-    }
-
-    private fun navigateToSettings() {
-        val intent = Intent(this, SettingActivity::class.java)
-        settingsLauncher.launch(intent)
     }
 
     private fun setupBackPressHandler() {
@@ -312,8 +330,9 @@ class MainActivity : BaseActivity() {
         })
     }
 
-    private fun navigateToStartSession() {
-        startActivity(Intent(this, StartSessionActivity::class.java))
+    private fun navigateToSettings() {
+        val intent = Intent(this, SettingActivity::class.java)
+        settingsLauncher.launch(intent)
     }
 
     private fun navigateToLoadingSession(startedAt: String) {
@@ -323,8 +342,22 @@ class MainActivity : BaseActivity() {
         startActivity(intent)
     }
 
+
+    private fun navigateToVoiceSelect(sessionId: String) {
+        val intent = Intent(this, VoiceSelectActivity::class.java).apply {
+            putExtra("session_id", sessionId)
+            putExtra("lang", com.example.storybridge_android.ui.setting.AppSettings.getLanguage(this@MainActivity))
+        }
+        startActivity(intent)
+    }
+
     @SuppressLint("HardwareIds")
     private fun getAndroidId(): String {
         return Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+    }
+
+    private fun createSession() {
+        val deviceId = getAndroidId()
+        viewModel.startSession(deviceId)
     }
 }

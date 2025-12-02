@@ -11,10 +11,9 @@ import androidx.activity.viewModels
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.R
-import com.example.storybridge_android.network.UploadCoverResponse
 import com.example.storybridge_android.ui.common.BaseActivity
+import com.example.storybridge_android.ui.session.instruction.ContentInstructionActivity
 import com.example.storybridge_android.ui.session.loading.LoadingActivity
-import com.example.storybridge_android.ui.session.voice.VoiceSelectActivity
 import com.example.storybridge_android.ui.setting.AppSettings
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -99,17 +98,14 @@ class CameraSessionActivity : BaseActivity() {
                         Log.d(TAG, "Uploading cover image...")
                     }
                     is SessionUiState.UploadSuccess -> {
-                        navigateToVoiceSelect(state.response)
+                        navigateToContentInstruction()
                     }
                     is SessionUiState.NoTextDetected -> {
                         showRetakeDialog()
                     }
                     is SessionUiState.Success -> {
-                        if (isCover) {
-                            navigateToVoiceSelect(state.imagePath)
-                        } else {
-                            navigateToLoading(state.imagePath)
-                        }
+                        if (isCover) navigateToContentInstruction()
+                        else navigateToLoading(state.imagePath)
                     }
                     is SessionUiState.Cancelled -> {
                         if (shouldDiscardSession()) {
@@ -159,25 +155,11 @@ class CameraSessionActivity : BaseActivity() {
         cameraLauncher.launch(intent)
     }
 
-    private fun navigateToVoiceSelect(response: UploadCoverResponse) {
-        val intent = Intent(this, VoiceSelectActivity::class.java)
-        intent.putExtra("session_id", sessionId)
-        intent.putExtra("title", response.title)
-        intent.putExtra("translated_title", response.translated_title)
+    private fun navigateToContentInstruction() {
+        val intent = Intent(this, ContentInstructionActivity::class.java).apply {
+            putExtra("session_id", sessionId)
+        }
         startActivity(intent)
-
-        setResult(RESULT_OK, Intent().putExtra("page_added", true))
-        finish()
-    }
-
-    private fun navigateToVoiceSelect(imagePath: String) {
-        val intent = Intent(this, VoiceSelectActivity::class.java)
-        intent.putExtra("session_id", sessionId)
-        intent.putExtra("image_path", imagePath)
-        intent.putExtra("lang", lang)
-        startActivity(intent)
-
-        setResult(RESULT_OK, Intent().putExtra("page_added", true))
         finish()
     }
 
