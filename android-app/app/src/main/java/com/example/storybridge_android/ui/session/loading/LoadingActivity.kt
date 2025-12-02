@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import androidx.activity.OnBackPressedCallback
 import com.example.storybridge_android.ui.common.BaseActivity
-import com.example.storybridge_android.ui.session.voice.VoiceSelectActivity
 
 class LoadingActivity : BaseActivity() {
     private lateinit var loadingBar: ProgressBar
@@ -83,7 +82,18 @@ class LoadingActivity : BaseActivity() {
 
         lifecycleScope.launchWhenStarted {
             viewModel.error.collectLatest { msg ->
-                msg?.let { showError(it) }
+                msg?.let {
+                    val isCover = intent.getBooleanExtra("is_cover", false)
+
+                    if (isCover) {
+                        setResult(RESULT_CANCELED, Intent().apply {
+                            putExtra("retake", true)
+                        })
+                        finish()
+                    } else {
+                        showError(it)
+                    }
+                }
             }
         }
     }
@@ -107,22 +117,29 @@ class LoadingActivity : BaseActivity() {
 
         lifecycleScope.launchWhenStarted {
             viewModel.error.collectLatest { msg ->
-                msg?.let { showError(it) }
-            }
-        }
-
-        lifecycleScope.launchWhenStarted {
-            viewModel.navigateToVoice.collectLatest { result ->
-                result?.let {
-                    navigateToVoiceSelect(sessionId, it.title)
+                msg?.let {
+                    if (isCover) {
+                        setResult(RESULT_CANCELED, Intent().apply {
+                            putExtra("retake", true)
+                        })
+                        finish()
+                    } else {
+                        showError(it)
+                    }
                 }
             }
         }
 
         lifecycleScope.launchWhenStarted {
             viewModel.status.collectLatest {
-                if (it == "ready") {
-                    navigateToReading(sessionId, pageIndex, pageIndex + 1)
+                when (it) {
+                    "ready" -> {
+                        navigateToReading(sessionId, pageIndex, pageIndex + 1)
+                    }
+                    "cover_ready" -> {
+                        setResult(RESULT_OK)
+                        finish()
+                    }
                 }
             }
         }
@@ -145,18 +162,6 @@ class LoadingActivity : BaseActivity() {
             putExtra("page_index", pageIndex)
             putExtra("total_pages", totalPages)
             putExtra("is_new_session", isNewSession)
-        }
-        startActivity(intent)
-        finish()
-    }
-
-    private fun navigateToVoiceSelect(
-        sessionId: String,
-        title: String
-    ) {
-        val intent = Intent(this, VoiceSelectActivity::class.java).apply {
-            putExtra("session_id", sessionId)
-            putExtra("book_title", title)
         }
         startActivity(intent)
         finish()

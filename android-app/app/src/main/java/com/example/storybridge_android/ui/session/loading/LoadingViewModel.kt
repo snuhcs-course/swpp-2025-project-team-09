@@ -47,9 +47,6 @@ class LoadingViewModel(
     private val _cover = MutableStateFlow<CoverResult?>(null)
     val cover = _cover.asStateFlow()
 
-    private val _navigateToVoice = MutableStateFlow<CoverResult?>(null)
-    val navigateToVoice = _navigateToVoice.asStateFlow()
-
     private val _navigateToReading = MutableStateFlow<SessionResumeResult?>(null)
     val navigateToReading = _navigateToReading.asStateFlow()
 
@@ -118,7 +115,6 @@ class LoadingViewModel(
                         it.title
                     )
                     _cover.value = result
-                    _navigateToVoice.value = result
                     _status.value = "cover_ready"
                 },
                 onFailure = {

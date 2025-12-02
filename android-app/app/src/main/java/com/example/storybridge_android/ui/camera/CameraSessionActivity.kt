@@ -43,13 +43,21 @@ class CameraSessionActivity : BaseActivity() {
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             val imagePath = result.data?.getStringExtra("image_path")
             if (result.resultCode == RESULT_OK && imagePath != null) {
-                if (isCover) {
-                    uploadAndValidateCover(imagePath)
-                } else {
-                    navigateToLoading(imagePath)
-                }
+                navigateToLoading(imagePath)
             } else {
                 viewModel.handleCameraResult(result.resultCode, imagePath)
+            }
+        }
+
+    private val loadingLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                navigateToContentInstruction()
+            } else {
+                val needRetake = result.data?.getBooleanExtra("retake", false) == true
+                if (needRetake) {
+                    showRetakeDialog()
+                }
             }
         }
 
@@ -124,12 +132,6 @@ class CameraSessionActivity : BaseActivity() {
         }
     }
 
-    private fun uploadAndValidateCover(imagePath: String) {
-        sessionId?.let { sid ->
-            viewModel.uploadCoverImage(sid, lang, imagePath)
-        }
-    }
-
     private fun showRetakeDialog() {
         retakePanel.visibility = View.VISIBLE
     }
@@ -164,17 +166,16 @@ class CameraSessionActivity : BaseActivity() {
     }
 
     private fun navigateToLoading(imagePath: String) {
-        val intent = Intent(this, LoadingActivity::class.java)
-        intent.putExtra("session_id", sessionId)
-        intent.putExtra("page_index", pageIndex)
-        intent.putExtra("image_path", imagePath)
-        intent.putExtra("is_cover", isCover)
-        intent.putExtra("lang", lang)
-        startActivity(intent)
-
-        setResult(RESULT_OK, Intent().putExtra("page_added", true))
-        finish()
+        val intent = Intent(this, LoadingActivity::class.java).apply {
+            putExtra("session_id", sessionId)
+            putExtra("page_index", pageIndex)
+            putExtra("image_path", imagePath)
+            putExtra("is_cover", isCover)
+            putExtra("lang", lang)
+        }
+        loadingLauncher.launch(intent)
     }
+
 
     private fun shouldDiscardSession(): Boolean {
         return isCover || pageIndex == 1
