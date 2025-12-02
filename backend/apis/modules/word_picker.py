@@ -70,7 +70,7 @@ class StoryWordPicker:
         prompt = ChatPromptTemplate.from_messages(
             [
                 ("system", WORD_PICKER_PROMPT),
-                ("user", "{story_text}"),
+                ("user", "TargetLang: {target_lang}\n\nText:\n{story_text}"),
             ]
         )
         return prompt | self.llm.with_structured_output(VocabResult)
@@ -94,6 +94,14 @@ class StoryWordPicker:
         for attempt in range(3):
             try:
                 t0 = time.time()
+                # Debug: print raw LLM response before structured parsing
+                raw_resp = self.llm.invoke(
+                    {
+                        "story_text": story_text,
+                        "target_lang": self.target_lang,
+                    }
+                )
+                print("RAW_LLM_OUTPUT:", raw_resp)
 
                 response: VocabResult = self.word_chain.invoke(
                     {
@@ -112,8 +120,7 @@ class StoryWordPicker:
                 seen = set()
 
                 for item in items:
-                    w = item.word.lower().strip()
-                    w = re.sub(r"[^a-zA-Z\-']", "", w)
+                    w = item.word.strip()
                     if not w:
                         continue
                     if w not in seen:
@@ -140,40 +147,4 @@ class StoryWordPicker:
                     return {"status": "failed", "items": [], "latency": -1.0}
 
         return {"status": "failed", "items": [], "latency": -1.0}
-
-def main():
-    # 테스트용 샘플 텍스트
-    sample_text = """
-    The tiny squirrel carried a bright acorn as it wandered through
-    the peaceful forest. The gentle wind rustled the leaves while
-    the little creature looked for a safe place to hide its treasure.
-    """
-
-    picker = StoryWordPicker(target_lang="English")
-
-    print("\n=== StoryWordPicker Test Start ===\n")
-
-    result = picker.pick_words(sample_text)
-
-    print(f"Status : {result.get('status')}")
-    print(f"Latency: {result.get('latency')} sec\n")
-
-    items = result.get("items", [])
-
-    if not items:
-        print("No vocabulary items returned.")
-        print("\n=== Test Finished ===")
-        return
-
-    print("Extracted Vocabulary Items:")
-    for idx, item in enumerate(items, start=1):
-        print(f"\nWord {idx}:")
-        print(f"  English: {item['word']}")
-        print(f"  Korean : {item['meaning_ko']}")
-
-    print("\n=== Test Finished ===")
-
-
-if __name__ == "__main__":
-    main()
     
