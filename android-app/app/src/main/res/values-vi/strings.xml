@@ -105,6 +105,8 @@
     <string name="retake_no_text_message">Chụp lại nhé!</string>
     <string name="retake_button_retake">Chụp lại</string>
     <string name="retake_button_cancel">Không</string>
+    <string name="retake_camera_title">Chụp lại ảnh?</string>
+    <string name="retake_camera_message">Con có muốn chụp lại không?</string>
 
     <!-- Error msg -->
     <string name="error_google_play_service"> Cần Google Play Services để sử dụng tính năng này. Vui lòng cập nhật hoặc cài đặt Google Play Services và thử lại. </string>

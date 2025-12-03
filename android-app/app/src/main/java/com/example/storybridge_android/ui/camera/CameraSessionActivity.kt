@@ -29,6 +29,10 @@ class CameraSessionActivity : BaseActivity() {
     private lateinit var retakeConfirmBtn: Button
     private lateinit var retakeCancelBtn: Button
 
+    private lateinit var retakeCameraPanel: View
+    private lateinit var retakeCameraConfirmBtn: Button
+    private lateinit var retakeCameraCancelBtn: Button
+
     private val viewModel: CameraSessionViewModel by viewModels {
         testViewModelFactory ?: CameraSessionViewModelFactory()
     }
@@ -78,6 +82,7 @@ class CameraSessionActivity : BaseActivity() {
         }
 
         initRetakePanel()
+        initRetakeCameraPanel()
         observeViewModel()
     }
 
@@ -86,13 +91,37 @@ class CameraSessionActivity : BaseActivity() {
         retakeConfirmBtn = findViewById(R.id.retakeConfirmBtn)
         retakeCancelBtn = findViewById(R.id.retakeCancelBtn)
 
+        // Initially hide the retake panel
+        retakePanel.visibility = View.GONE
+
         retakeConfirmBtn.setOnClickListener {
             retakePanel.visibility = View.GONE
+            // Give user another chance to take a photo
             startCamera()
         }
 
         retakeCancelBtn.setOnClickListener {
             retakePanel.visibility = View.GONE
+            discardSessionAndFinish()
+        }
+    }
+
+    private fun initRetakeCameraPanel() {
+        retakeCameraPanel = findViewById(R.id.retakeCameraPanel)
+        retakeCameraConfirmBtn = findViewById(R.id.retakeCameraConfirmBtn)
+        retakeCameraCancelBtn = findViewById(R.id.retakeCameraCancelBtn)
+
+        // Initially hide the camera retake panel
+        retakeCameraPanel.visibility = View.GONE
+
+        retakeCameraConfirmBtn.setOnClickListener {
+            retakeCameraPanel.visibility = View.GONE
+            // Give user another chance to take a photo
+            startCamera()
+        }
+
+        retakeCameraCancelBtn.setOnClickListener {
+            retakeCameraPanel.visibility = View.GONE
             discardSessionAndFinish()
         }
     }
@@ -116,12 +145,8 @@ class CameraSessionActivity : BaseActivity() {
                         else navigateToLoading(state.imagePath)
                     }
                     is SessionUiState.Cancelled -> {
-                        if (shouldDiscardSession()) {
-                            discardSessionAndFinish()
-                        } else {
-                            setResult(RESULT_CANCELED)
-                            finish()
-                        }
+                        // User cancelled camera - show camera retake dialog
+                        showRetakeCameraDialog()
                     }
                     is SessionUiState.Error -> {
                         Log.e(TAG, state.message)
@@ -134,6 +159,10 @@ class CameraSessionActivity : BaseActivity() {
 
     private fun showRetakeDialog() {
         retakePanel.visibility = View.VISIBLE
+    }
+
+    private fun showRetakeCameraDialog() {
+        retakeCameraPanel.visibility = View.VISIBLE
     }
 
 
@@ -174,10 +203,5 @@ class CameraSessionActivity : BaseActivity() {
             putExtra("lang", lang)
         }
         loadingLauncher.launch(intent)
-    }
-
-
-    private fun shouldDiscardSession(): Boolean {
-        return isCover || pageIndex == 1
     }
 }

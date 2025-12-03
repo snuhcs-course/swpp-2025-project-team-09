@@ -105,6 +105,8 @@
     <string name="retake_no_text_message">再拍一张吧！</string>
     <string name="retake_button_retake">再拍</string>
     <string name="retake_button_cancel">不要</string>
+    <string name="retake_camera_title">重新拍照？</string>
+    <string name="retake_camera_message">你想再拍一次吗？</string>
 
     <!-- Error msg -->
     <string name="error_google_play_service"> 使用此功能需要 Google Play 服务。请更新或安装 Google Play 服务后重试。 </string>
