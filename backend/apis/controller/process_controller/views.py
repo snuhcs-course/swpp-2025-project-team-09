@@ -649,8 +649,8 @@ class ProcessWordPickerView(APIView):
 
         full_text = " ".join(full_text_list).strip()
 
-        # If less than 30 words, return no_words
-        if len(full_text.split()) <= 30:
+        # If less than 20 words, return no_words
+        if len(full_text.split()) <= 20:
             return Response(
                 {
                     "session_id": session_id,
