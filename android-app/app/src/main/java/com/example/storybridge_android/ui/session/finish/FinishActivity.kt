@@ -14,6 +14,7 @@ import com.example.storybridge_android.network.SessionStatsResponse
 import com.example.storybridge_android.ui.common.BaseActivity
 import com.example.storybridge_android.ui.main.MainActivity
 import com.example.storybridge_android.ui.session.decide.DecideSaveActivity
+import com.example.storybridge_android.ui.reading.ReadingActivity
 import android.view.View
 
 class FinishActivity : BaseActivity() {
@@ -24,12 +25,12 @@ class FinishActivity : BaseActivity() {
     }
     private var isNewSession = true
     private lateinit var sessionId: String
+    private var totalPages = 0
+    private var currentPageIndex = 0  // Store the page user was on
 
     // Store texts in order (regardless of which balloon is popped)
     private val orderedTexts = mutableListOf<String>()
     private var poppedCount = 0
-    private var pickedWordsLoaded = false
-    private var allBalloonsPopped = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,43 +41,38 @@ class FinishActivity : BaseActivity() {
         initializeSessionData()
         setupObservers()
         setupClickListeners()
-        setupFlipCardListeners()
-
-        // Add back button handler - just prevents back navigation
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                // Do nothing - prevents going back from congratulations page
-            }
-        })
+        setupBackPressHandler()
 
         viewModel.endSession(sessionId)
-        viewModel.pickWords(sessionId)
     }
 
     private fun initializeSessionData() {
         sessionId = intent.getStringExtra("session_id") ?: ""
         isNewSession = intent.getBooleanExtra("is_new_session", true)
+        totalPages = intent.getIntExtra("total_pages", 0)
+        currentPageIndex = intent.getIntExtra("page_index", 0)  // Get the page user was on
+    }
+
+    private fun setupBackPressHandler() {
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                // Go back to reading activity
+                navigateBackToReading()
+            }
+        })
     }
 
     private fun setupObservers() {
         observeSessionStats()
         setupBalloonCallback()
-        viewModel.pickedWords.observe(this) { items ->
-            if (items.size >= 3) {
-                binding.card1.setData(items[0].word, items[0].meaning_ko)
-                binding.card2.setData(items[1].word, items[1].meaning_ko)
-                binding.card3.setData(items[2].word, items[2].meaning_ko)
-                pickedWordsLoaded = true
-                if (allBalloonsPopped) {
-                    binding.learnedWordsContainer.visibility = View.VISIBLE
-                    binding.learnedWordsTitle.visibility = View.VISIBLE
-                }
-            }
-        }
     }
 
     private fun observeSessionStats() {
         viewModel.sessionStats.observe(this, Observer { stats ->
+            // Store total pages from stats if not provided
+            if (totalPages == 0) {
+                totalPages = stats.total_pages
+            }
             setupBalloons(stats)
         })
     }
@@ -92,15 +88,9 @@ class FinishActivity : BaseActivity() {
         }
 
         binding.balloonView.onAllBalloonsPopped = {
-            allBalloonsPopped = true
             binding.tapBalloonHint.visibility = View.GONE
-            binding.amazingText.visibility = View.GONE
-            binding.mainButton.visibility = View.GONE
-
-            if (pickedWordsLoaded) {
-                binding.learnedWordsContainer.visibility = View.VISIBLE
-                binding.learnedWordsTitle.visibility = View.VISIBLE
-            }
+            binding.amazingText.visibility = View.VISIBLE
+            binding.mainButton.visibility = View.VISIBLE
         }
     }
 
@@ -211,6 +201,17 @@ class FinishActivity : BaseActivity() {
         startActivity(Intent(this, MainActivity::class.java))
     }
 
+    private fun navigateBackToReading() {
+        val intent = Intent(this, ReadingActivity::class.java).apply {
+            putExtra("session_id", sessionId)
+            putExtra("page_index", currentPageIndex) // Go back to the page user was on
+            putExtra("total_pages", totalPages)
+            putExtra("is_new_session", isNewSession)
+        }
+        startActivity(intent)
+        finish()
+    }
+
     private fun formatTimeText(totalSeconds: Int): String {
         val minutes = totalSeconds / 60
         val seconds = totalSeconds % 60
@@ -241,49 +242,4 @@ class FinishActivity : BaseActivity() {
             else -> ""
         }
     }
-
-    private fun formatPageText(pageCount: Int): String {
-        return if (pageCount == 1) {
-            "1 ${getString(R.string.unit_page)}"
-        } else {
-            "$pageCount ${getString(R.string.unit_pages)}"
-        }
-    }
-
-    private fun setupFlipCardListeners() {
-        val card1 = binding.card1
-        val card2 = binding.card2
-        val card3 = binding.card3
-
-        var card1Flipped = false
-        var card2Flipped = false
-        var card3Flipped = false
-
-        fun checkAllFlipped() {
-            if (card1Flipped && card2Flipped && card3Flipped) {
-                binding.amazingText.visibility = View.VISIBLE
-                binding.mainButton.visibility = View.VISIBLE
-            }
-        }
-
-        card1.onFlipped = {
-            if (!card1Flipped) {
-                card1Flipped = true
-                checkAllFlipped()
-            }
-        }
-        card2.onFlipped = {
-            if (!card2Flipped) {
-                card2Flipped = true
-                checkAllFlipped()
-            }
-        }
-        card3.onFlipped = {
-            if (!card3Flipped) {
-                card3Flipped = true
-                checkAllFlipped()
-            }
-        }
-    }
-
 }

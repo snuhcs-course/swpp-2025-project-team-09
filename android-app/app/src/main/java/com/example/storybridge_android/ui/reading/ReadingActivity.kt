@@ -576,6 +576,8 @@ class ReadingActivity : BaseActivity() {
         val intent = Intent(this, FinishActivity::class.java).apply {
             putExtra("session_id", sessionId)
             putExtra("is_new_session", isNewSession)
+            putExtra("page_index", pageIndex)
+            putExtra("total_pages", totalPages)
         }
         startActivity(intent)
         finish()
