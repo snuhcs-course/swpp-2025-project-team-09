@@ -1,3 +1,5 @@
+package com.example.storybridge_android.util
+
 import android.content.Context
 import android.content.SharedPreferences
 import com.example.storybridge_android.ui.setting.AppSettings
