@@ -30,9 +30,9 @@ class CameraActivity : BaseActivity() {
     private lateinit var permissionLauncher: ActivityResultLauncher<String>
 
     private var isCoverMode: Boolean = false
-    private lateinit var exitPanel: View
-    private lateinit var exitConfirmBtn: Button
-    private lateinit var exitCancelBtn: Button
+    private lateinit var retakeCameraPanel: View
+    private lateinit var retakeCameraConfirmBtn: Button
+    private lateinit var retakeCameraCancelBtn: Button
 
     companion object {
         private const val TAG = "CameraActivity"
@@ -45,7 +45,7 @@ class CameraActivity : BaseActivity() {
 
         isCoverMode = intent.getBooleanExtra("is_cover", false)
 
-        initExitPanel()
+        initRetakeCameraPanel()
         initLaunchers()
         observeUiState()
 
@@ -59,19 +59,22 @@ class CameraActivity : BaseActivity() {
         checkPermissionAndStart()
     }
 
-    private fun initExitPanel() {
-        exitPanel = findViewById(R.id.exitPanelInclude)
-        exitConfirmBtn = findViewById(R.id.exitConfirmBtn)
-        exitCancelBtn = findViewById(R.id.exitCancelBtn)
+    private fun initRetakeCameraPanel() {
+        retakeCameraPanel = findViewById(R.id.retakeCameraPanel)
+        retakeCameraConfirmBtn = findViewById(R.id.retakeCameraConfirmBtn)
+        retakeCameraCancelBtn = findViewById(R.id.retakeCameraCancelBtn)
 
-        exitConfirmBtn.setOnClickListener {
-            setResult(RESULT_CANCELED)
-            finish()
+        // Retake button - try camera again
+        retakeCameraConfirmBtn.setOnClickListener {
+            retakeCameraPanel.visibility = View.GONE
+            startScan()
         }
 
-        exitCancelBtn.setOnClickListener {
-            exitPanel.visibility = View.GONE
-            startScan()
+        // Cancel/Exit button - exit the activity
+        retakeCameraCancelBtn.setOnClickListener {
+            retakeCameraPanel.visibility = View.GONE
+            setResult(RESULT_CANCELED)
+            finish()
         }
     }
 
@@ -94,13 +97,8 @@ class CameraActivity : BaseActivity() {
                 val scanningResult = GmsDocumentScanningResult.fromActivityResultIntent(result.data)
                 viewModel.handleScanningResult(scanningResult, contentResolver)
             } else {
-                if (isCoverMode) {
-                    Toast.makeText(this, getString(R.string.scan_canceled), Toast.LENGTH_SHORT).show()
-                    setResult(RESULT_CANCELED)
-                    finish()
-                } else {
-                    exitPanel.visibility = View.VISIBLE
-                }
+                // User cancelled scan - show retake panel
+                retakeCameraPanel.visibility = View.VISIBLE
             }
         }
     }
