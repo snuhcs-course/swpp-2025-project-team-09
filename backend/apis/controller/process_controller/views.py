@@ -641,7 +641,7 @@ class ProcessWordPickerView(APIView):
             )
 
         full_text_list = []
-        for page in pages:
+        for page in pages[1:]:
             for bb in page.getBBs():
                 txt = (bb.translated_text or "").strip()
                 if txt:
@@ -649,19 +649,19 @@ class ProcessWordPickerView(APIView):
 
         full_text = " ".join(full_text_list).strip()
 
-        if not full_text:
+        # If less than 30 words, return no_words
+        if len(full_text.split()) <= 30:
             return Response(
                 {
                     "session_id": session_id,
-                    "status": "no_text",
+                    "status": "no_words",
                     "items": [],
                 },
                 status=status.HTTP_200_OK,
             )
 
-        lang_map = {"en": "English", "zh": "Chinese", "vi": "Vietnamese"}
-        target_lang = lang_map.get(lang, "English")
-        picker = StoryWordPicker(target_lang=target_lang) 
+
+        picker = StoryWordPicker() 
 
         result = picker.pick_words(full_text)
 
