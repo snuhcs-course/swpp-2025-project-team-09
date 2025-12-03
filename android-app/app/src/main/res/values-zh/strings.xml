@@ -49,6 +49,7 @@
     <string name="session_error">出了点小问题，请再试一次吧！</string>
     <string name="voice_preview_not_available">无法获取%1$s声音预览</string>
     <string name="failed_audio_preview">播放声音预览失败</string>
+    <string name="error_select_voice">请选择声音</string>
 
     <!-- Reading -->
     <string name="first_page">这是第一页</string>
@@ -104,6 +105,8 @@
     <string name="retake_no_text_message">再拍一张吧！</string>
     <string name="retake_button_retake">再拍</string>
     <string name="retake_button_cancel">不要</string>
+    <string name="retake_camera_title">重新拍照？</string>
+    <string name="retake_camera_message">你想再拍一次吗？</string>
 
     <!-- Error msg -->
     <string name="error_google_play_service"> 使用此功能需要 Google Play 服务。请更新或安装 Google Play 服务后重试。 </string>

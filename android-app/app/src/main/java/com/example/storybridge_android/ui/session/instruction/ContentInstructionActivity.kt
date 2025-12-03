@@ -14,13 +14,13 @@ import com.example.storybridge_android.R
 import com.example.storybridge_android.ui.camera.CameraSessionActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.lifecycle.lifecycleScope
-import com.example.storybridge_android.data.SessionRepositoryImpl
 import com.example.storybridge_android.ui.common.BaseActivity
-import kotlinx.coroutines.launch
 
 class ContentInstructionActivity : BaseActivity() {
 
-    private val viewModel: ContentInstructionViewModel by viewModels()
+    private val viewModel: ContentInstructionViewModel by viewModels {
+        ContentInstructionViewModelFactory()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,15 +57,18 @@ class ContentInstructionActivity : BaseActivity() {
         }
 
         exitConfirmBtn.setOnClickListener {
-            lifecycleScope.launch {
-                val result = SessionRepositoryImpl().discardSession(sessionId)
+            viewModel.discardSession()
+        }
+
+        lifecycleScope.launchWhenStarted {
+            viewModel.discardSuccess.collect {
                 finish()
             }
         }
 
         viewModel.navigateToCamera.observe(this) { shouldNavigate ->
             if (shouldNavigate == true) {
-                goToCamera(sessionId)
+                navigateToCamera(sessionId)
             }
         }
 
@@ -74,7 +77,7 @@ class ContentInstructionActivity : BaseActivity() {
         }
     }
 
-    private fun goToCamera(sessionId: String) {
+    private fun navigateToCamera(sessionId: String) {
         val intent = Intent(this, CameraSessionActivity::class.java).apply {
             putExtra("session_id", sessionId)
             putExtra("page_index", 1)

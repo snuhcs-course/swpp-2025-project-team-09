@@ -41,13 +41,8 @@ class LoadingViewModelTest {
 
     @Mock
     private lateinit var mockProcessRepo: ProcessRepository
-
-    @Mock
-    private lateinit var mockPageRepo: PageRepository
-
     @Mock
     private lateinit var mockUserRepo: UserRepository
-
     @Mock
     private lateinit var mockSessionRepo: SessionRepository
 
@@ -77,7 +72,7 @@ class LoadingViewModelTest {
     fun tearDown() {
         Dispatchers.resetMain()
         unmockkStatic(Log::class)
-        unmockkStatic(BitmapFactory::class) // 💡 MockkStatic 해제
+        unmockkStatic(BitmapFactory::class)
         unmockkStatic(Bitmap::class)
     }
 
@@ -97,7 +92,6 @@ class LoadingViewModelTest {
         assertEquals("idle", viewModel.status.value)
         assertNull(viewModel.error.value)
         assertNull(viewModel.cover.value)
-        assertNull(viewModel.navigateToVoice.value)
         assertNull(viewModel.navigateToReading.value)
         assertNull(viewModel.userInfo.value)
     }
@@ -200,11 +194,6 @@ class LoadingViewModelTest {
     @Test
     fun `initial cover is null`() {
         assertNull(viewModel.cover.value)
-    }
-
-    @Test
-    fun `initial navigateToVoice is null`() {
-        assertNull(viewModel.navigateToVoice.value)
     }
 
     @Test

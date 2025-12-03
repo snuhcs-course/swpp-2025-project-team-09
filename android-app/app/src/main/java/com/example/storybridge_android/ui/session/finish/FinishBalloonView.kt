@@ -12,15 +12,15 @@ import android.view.View
 import androidx.core.content.res.ResourcesCompat
 import com.example.storybridge_android.R
 import com.example.storybridge_android.data.BalloonColor
-import com.example.storybridge_android.data.BalloonData
+import com.example.storybridge_android.data.CongratulationBalloon
 import kotlin.math.min
 
-class BalloonInteractionView @JvmOverloads constructor(
+class FinishBalloonView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
 ) : View(context, attrs) {
 
-    private val balloons = mutableListOf<BalloonData>()
+    private val balloons = mutableListOf<CongratulationBalloon>()
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         textAlign = Paint.Align.CENTER
@@ -90,7 +90,7 @@ class BalloonInteractionView @JvmOverloads constructor(
     /**
      * Set balloon data
      */
-    fun setBalloons(balloonList: List<BalloonData>) {
+    fun setBalloons(balloonList: List<CongratulationBalloon>) {
         balloons.clear()
         balloons.addAll(balloonList)
         invalidate()

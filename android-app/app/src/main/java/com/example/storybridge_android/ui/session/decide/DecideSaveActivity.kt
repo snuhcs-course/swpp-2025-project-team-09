@@ -5,12 +5,14 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.databinding.ActivityDecideSaveBinding
 import com.example.storybridge_android.ui.common.BaseActivity
 import com.example.storybridge_android.ui.main.MainActivity
+import com.example.storybridge_android.ui.session.finish.FinishActivity
 import kotlinx.coroutines.flow.collectLatest
 
 class DecideSaveActivity : BaseActivity() {
@@ -35,6 +37,13 @@ class DecideSaveActivity : BaseActivity() {
 
         initListener()
         observeViewModel()
+
+        // Add back button handler - goes back to congratulations page
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                navigateBackToFinish()
+            }
+        })
     }
 
     private fun initListener() {
@@ -104,6 +113,15 @@ class DecideSaveActivity : BaseActivity() {
 
     private fun navigateToMain() {
         startActivity(Intent(this, MainActivity::class.java))
+        finish()
+    }
+
+    private fun navigateBackToFinish() {
+        val intent = Intent(this, FinishActivity::class.java).apply {
+            putExtra("session_id", sessionId)
+            putExtra("is_new_session", true)
+        }
+        startActivity(intent)
         finish()
     }
 }

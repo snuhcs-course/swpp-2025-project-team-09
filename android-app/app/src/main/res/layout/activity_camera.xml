@@ -6,7 +6,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- PreviewView를 화면 전체에 -->
     <androidx.camera.view.PreviewView
         android:id="@+id/viewFinder"
         android:layout_width="match_parent"
@@ -16,6 +15,11 @@
     <include
         android:id="@+id/exitPanelInclude"
         layout="@layout/exit_confirm_panel"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <include
+        layout="@layout/retake_camera_panel"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 

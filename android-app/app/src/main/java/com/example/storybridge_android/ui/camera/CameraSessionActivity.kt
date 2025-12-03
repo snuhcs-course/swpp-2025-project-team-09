@@ -11,10 +11,9 @@ import androidx.activity.viewModels
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.example.storybridge_android.R
-import com.example.storybridge_android.network.UploadCoverResponse
 import com.example.storybridge_android.ui.common.BaseActivity
+import com.example.storybridge_android.ui.session.instruction.ContentInstructionActivity
 import com.example.storybridge_android.ui.session.loading.LoadingActivity
-import com.example.storybridge_android.ui.session.voice.VoiceSelectActivity
 import com.example.storybridge_android.ui.setting.AppSettings
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -30,6 +29,10 @@ class CameraSessionActivity : BaseActivity() {
     private lateinit var retakeConfirmBtn: Button
     private lateinit var retakeCancelBtn: Button
 
+    private lateinit var retakeCameraPanel: View
+    private lateinit var retakeCameraConfirmBtn: Button
+    private lateinit var retakeCameraCancelBtn: Button
+
     private val viewModel: CameraSessionViewModel by viewModels {
         testViewModelFactory ?: CameraSessionViewModelFactory()
     }
@@ -44,13 +47,21 @@ class CameraSessionActivity : BaseActivity() {
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             val imagePath = result.data?.getStringExtra("image_path")
             if (result.resultCode == RESULT_OK && imagePath != null) {
-                if (isCover) {
-                    uploadAndValidateCover(imagePath)
-                } else {
-                    navigateToLoading(imagePath)
-                }
+                navigateToLoading(imagePath)
             } else {
                 viewModel.handleCameraResult(result.resultCode, imagePath)
+            }
+        }
+
+    private val loadingLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                navigateToContentInstruction()
+            } else {
+                val needRetake = result.data?.getBooleanExtra("retake", false) == true
+                if (needRetake) {
+                    showRetakeDialog()
+                }
             }
         }
 
@@ -71,6 +82,7 @@ class CameraSessionActivity : BaseActivity() {
         }
 
         initRetakePanel()
+        initRetakeCameraPanel()
         observeViewModel()
     }
 
@@ -79,13 +91,37 @@ class CameraSessionActivity : BaseActivity() {
         retakeConfirmBtn = findViewById(R.id.retakeConfirmBtn)
         retakeCancelBtn = findViewById(R.id.retakeCancelBtn)
 
+        // Initially hide the retake panel
+        retakePanel.visibility = View.GONE
+
         retakeConfirmBtn.setOnClickListener {
             retakePanel.visibility = View.GONE
+            // Give user another chance to take a photo
             startCamera()
         }
 
         retakeCancelBtn.setOnClickListener {
             retakePanel.visibility = View.GONE
+            discardSessionAndFinish()
+        }
+    }
+
+    private fun initRetakeCameraPanel() {
+        retakeCameraPanel = findViewById(R.id.retakeCameraPanel)
+        retakeCameraConfirmBtn = findViewById(R.id.retakeCameraConfirmBtn)
+        retakeCameraCancelBtn = findViewById(R.id.retakeCameraCancelBtn)
+
+        // Initially hide the camera retake panel
+        retakeCameraPanel.visibility = View.GONE
+
+        retakeCameraConfirmBtn.setOnClickListener {
+            retakeCameraPanel.visibility = View.GONE
+            // Give user another chance to take a photo
+            startCamera()
+        }
+
+        retakeCameraCancelBtn.setOnClickListener {
+            retakeCameraPanel.visibility = View.GONE
             discardSessionAndFinish()
         }
     }
@@ -99,25 +135,18 @@ class CameraSessionActivity : BaseActivity() {
                         Log.d(TAG, "Uploading cover image...")
                     }
                     is SessionUiState.UploadSuccess -> {
-                        navigateToVoiceSelect(state.response)
+                        navigateToContentInstruction()
                     }
                     is SessionUiState.NoTextDetected -> {
                         showRetakeDialog()
                     }
                     is SessionUiState.Success -> {
-                        if (isCover) {
-                            navigateToVoiceSelect(state.imagePath)
-                        } else {
-                            navigateToLoading(state.imagePath)
-                        }
+                        if (isCover) navigateToContentInstruction()
+                        else navigateToLoading(state.imagePath)
                     }
                     is SessionUiState.Cancelled -> {
-                        if (shouldDiscardSession()) {
-                            discardSessionAndFinish()
-                        } else {
-                            setResult(RESULT_CANCELED)
-                            finish()
-                        }
+                        // User cancelled camera - show camera retake dialog
+                        showRetakeCameraDialog()
                     }
                     is SessionUiState.Error -> {
                         Log.e(TAG, state.message)
@@ -128,14 +157,12 @@ class CameraSessionActivity : BaseActivity() {
         }
     }
 
-    private fun uploadAndValidateCover(imagePath: String) {
-        sessionId?.let { sid ->
-            viewModel.uploadCoverImage(sid, lang, imagePath)
-        }
-    }
-
     private fun showRetakeDialog() {
         retakePanel.visibility = View.VISIBLE
+    }
+
+    private fun showRetakeCameraDialog() {
+        retakeCameraPanel.visibility = View.VISIBLE
     }
 
 
@@ -159,42 +186,22 @@ class CameraSessionActivity : BaseActivity() {
         cameraLauncher.launch(intent)
     }
 
-    private fun navigateToVoiceSelect(response: UploadCoverResponse) {
-        val intent = Intent(this, VoiceSelectActivity::class.java)
-        intent.putExtra("session_id", sessionId)
-        intent.putExtra("title", response.title)
-        intent.putExtra("translated_title", response.translated_title)
+    private fun navigateToContentInstruction() {
+        val intent = Intent(this, ContentInstructionActivity::class.java).apply {
+            putExtra("session_id", sessionId)
+        }
         startActivity(intent)
-
-        setResult(RESULT_OK, Intent().putExtra("page_added", true))
-        finish()
-    }
-
-    private fun navigateToVoiceSelect(imagePath: String) {
-        val intent = Intent(this, VoiceSelectActivity::class.java)
-        intent.putExtra("session_id", sessionId)
-        intent.putExtra("image_path", imagePath)
-        intent.putExtra("lang", lang)
-        startActivity(intent)
-
-        setResult(RESULT_OK, Intent().putExtra("page_added", true))
         finish()
     }
 
     private fun navigateToLoading(imagePath: String) {
-        val intent = Intent(this, LoadingActivity::class.java)
-        intent.putExtra("session_id", sessionId)
-        intent.putExtra("page_index", pageIndex)
-        intent.putExtra("image_path", imagePath)
-        intent.putExtra("is_cover", isCover)
-        intent.putExtra("lang", lang)
-        startActivity(intent)
-
-        setResult(RESULT_OK, Intent().putExtra("page_added", true))
-        finish()
-    }
-
-    private fun shouldDiscardSession(): Boolean {
-        return isCover || pageIndex == 1
+        val intent = Intent(this, LoadingActivity::class.java).apply {
+            putExtra("session_id", sessionId)
+            putExtra("page_index", pageIndex)
+            putExtra("image_path", imagePath)
+            putExtra("is_cover", isCover)
+            putExtra("lang", lang)
+        }
+        loadingLauncher.launch(intent)
     }
 }

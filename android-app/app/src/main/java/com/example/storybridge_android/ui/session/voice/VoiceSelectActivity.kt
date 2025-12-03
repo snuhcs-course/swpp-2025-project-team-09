@@ -18,21 +18,20 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.Lifecycle
 import com.example.storybridge_android.R
-import com.example.storybridge_android.data.SessionRepositoryImpl
 import com.example.storybridge_android.ui.setting.AppSettings
 import kotlinx.coroutines.flow.collectLatest
 
 import kotlinx.coroutines.launch
 import android.widget.FrameLayout
 import com.example.storybridge_android.ui.common.BaseActivity
-import com.example.storybridge_android.ui.session.instruction.ContentInstructionActivity
+import com.example.storybridge_android.ui.session.start.StartSessionActivity
 
 class VoiceSelectActivity : BaseActivity() {
 
     private var sessionId: String? = null
-    private var imagePath: String? = null
     private var lang: String? = null
     private var mediaPlayer: MediaPlayer? = null
+    private var voiceSelected: Boolean = false
 
     private val viewModel: VoiceSelectViewModel by viewModels {
         VoiceSelectViewModelFactory()
@@ -51,11 +50,9 @@ class VoiceSelectActivity : BaseActivity() {
         }
 
         sessionId = intent.getStringExtra("session_id")
-        imagePath = intent.getStringExtra("image_path")
         lang = intent.getStringExtra("lang")
 
         Log.d("VoiceSelectActivity", "session_id=$sessionId")
-        Log.d("VoiceSelectActivity", "image_path=$imagePath")
         Log.d("VoiceSelectActivity", "lang=$lang")
 
         if (sessionId == null) {
@@ -81,8 +78,6 @@ class VoiceSelectActivity : BaseActivity() {
             listOf(manButton, womanButton).forEach { it.isSelected = it == selected }
         }
 
-        nextButton.isEnabled = false
-
         manButton.setOnClickListener {
             AppSettings.setVoice(this, MALE_VOICE)
             viewModel.selectVoice(sessionId!!, MALE_VOICE)
@@ -98,14 +93,22 @@ class VoiceSelectActivity : BaseActivity() {
         }
 
         nextButton.setOnClickListener {
-            goToContentInstruction()
+            if (voiceSelected) {
+                navigateToStartSession()
+            } else {
+                Toast.makeText(
+                    this,
+                    getString(R.string.error_select_voice),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
         }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.success.collectLatest {
                     Log.d("VoiceSelectActivity", "✓ Voice selection saved successfully")
-                    nextButton.isEnabled = true
+                    voiceSelected = true
                 }
             }
         }
@@ -122,6 +125,13 @@ class VoiceSelectActivity : BaseActivity() {
                 }
             }
         }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.discardSuccess.collectLatest {
+                    finish()
+                }
+            }
+        }
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 exitPanel.visibility = View.VISIBLE
@@ -129,21 +139,7 @@ class VoiceSelectActivity : BaseActivity() {
         })
         exitConfirm.setOnClickListener {
             val id = sessionId ?: return@setOnClickListener
-
-            lifecycleScope.launch {
-                val result = SessionRepositoryImpl().discardSession(id)
-                result.onSuccess {
-                    finish()
-                }.onFailure {
-                    Toast.makeText(
-                        this@VoiceSelectActivity,
-                        getString(R.string.error_discard_session_failed),
-                        Toast.LENGTH_SHORT
-                    ).show()
-
-                    finish()
-                }
-            }
+            viewModel.discardSession(id)
         }
         exitCancel.setOnClickListener {
             exitPanel.visibility = View.GONE
@@ -192,8 +188,8 @@ class VoiceSelectActivity : BaseActivity() {
         mediaPlayer = null
     }
 
-    private fun goToContentInstruction() {
-        val intent = Intent(this, ContentInstructionActivity::class.java).apply {
+    private fun navigateToStartSession() {
+        val intent = Intent(this, StartSessionActivity::class.java).apply {
             putExtra("session_id", sessionId)
         }
         startActivity(intent)

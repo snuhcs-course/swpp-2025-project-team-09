@@ -32,12 +32,10 @@ class CameraSessionViewModel(
             try {
                 Log.d(TAG, "Starting cover upload for session: $sessionId")
 
-                // Base64 인코딩
                 val imageFile = File(imagePath)
                 val bytes = imageFile.readBytes()
                 val base64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
 
-                // 업로드
                 val request = UploadImageRequest(
                     session_id = sessionId,
                     page_index = 0,

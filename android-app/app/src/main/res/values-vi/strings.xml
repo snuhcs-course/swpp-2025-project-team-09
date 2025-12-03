@@ -49,6 +49,7 @@
     <string name="session_error">Có lỗi xảy ra. Con thử lại nhé.</string>
     <string name="voice_preview_not_available">Không thể nghe thử giọng %1$s</string>
     <string name="failed_audio_preview">Không nghe được âm thanh</string>
+    <string name="error_select_voice">Con chưa chọn giọng nói</string>
 
     <!-- Reading -->
     <string name="first_page">Đây là trang đầu tiên rồi</string>
@@ -104,6 +105,8 @@
     <string name="retake_no_text_message">Chụp lại nhé!</string>
     <string name="retake_button_retake">Chụp lại</string>
     <string name="retake_button_cancel">Không</string>
+    <string name="retake_camera_title">Chụp lại ảnh?</string>
+    <string name="retake_camera_message">Con có muốn chụp lại không?</string>
 
     <!-- Error msg -->
     <string name="error_google_play_service"> Cần Google Play Services để sử dụng tính năng này. Vui lòng cập nhật hoặc cài đặt Google Play Services và thử lại. </string>

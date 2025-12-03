@@ -14,10 +14,10 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import androidx.activity.OnBackPressedCallback
 import com.example.storybridge_android.ui.common.BaseActivity
-import com.example.storybridge_android.ui.session.voice.VoiceSelectActivity
 
 class LoadingActivity : BaseActivity() {
     private lateinit var loadingBar: ProgressBar
+    private lateinit var balloonOverlay: LoadingBalloonOverlayView
     private val viewModel: LoadingViewModel by viewModels {
         LoadingViewModelFactory()
     }
@@ -43,6 +43,7 @@ class LoadingActivity : BaseActivity() {
     private fun setupUI() {
         loadingBar = findViewById(R.id.loadingBar)
         loadingBar.max = 100
+        balloonOverlay = findViewById(R.id.balloonOverlay)
     }
 
     private fun observeProgress() {
@@ -83,7 +84,18 @@ class LoadingActivity : BaseActivity() {
 
         lifecycleScope.launchWhenStarted {
             viewModel.error.collectLatest { msg ->
-                msg?.let { showError(it) }
+                msg?.let {
+                    val isCover = intent.getBooleanExtra("is_cover", false)
+
+                    if (isCover) {
+                        setResult(RESULT_CANCELED, Intent().apply {
+                            putExtra("retake", true)
+                        })
+                        finish()
+                    } else {
+                        showError(it)
+                    }
+                }
             }
         }
     }
@@ -107,22 +119,29 @@ class LoadingActivity : BaseActivity() {
 
         lifecycleScope.launchWhenStarted {
             viewModel.error.collectLatest { msg ->
-                msg?.let { showError(it) }
-            }
-        }
-
-        lifecycleScope.launchWhenStarted {
-            viewModel.navigateToVoice.collectLatest { result ->
-                result?.let {
-                    navigateToVoiceSelect(sessionId, it.title)
+                msg?.let {
+                    if (isCover) {
+                        setResult(RESULT_CANCELED, Intent().apply {
+                            putExtra("retake", true)
+                        })
+                        finish()
+                    } else {
+                        showError(it)
+                    }
                 }
             }
         }
 
         lifecycleScope.launchWhenStarted {
             viewModel.status.collectLatest {
-                if (it == "ready") {
-                    navigateToReading(sessionId, pageIndex, pageIndex + 1)
+                when (it) {
+                    "ready" -> {
+                        navigateToReading(sessionId, pageIndex, pageIndex + 1)
+                    }
+                    "cover_ready" -> {
+                        setResult(RESULT_OK)
+                        finish()
+                    }
                 }
             }
         }
@@ -150,18 +169,6 @@ class LoadingActivity : BaseActivity() {
         finish()
     }
 
-    private fun navigateToVoiceSelect(
-        sessionId: String,
-        title: String
-    ) {
-        val intent = Intent(this, VoiceSelectActivity::class.java).apply {
-            putExtra("session_id", sessionId)
-            putExtra("book_title", title)
-        }
-        startActivity(intent)
-        finish()
-    }
-
     private fun showError(message: String) {
         Toast.makeText(
             this,
@@ -170,5 +177,10 @@ class LoadingActivity : BaseActivity() {
         ).show()
 
         finish()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        balloonOverlay.stopAnimation()
     }
 }

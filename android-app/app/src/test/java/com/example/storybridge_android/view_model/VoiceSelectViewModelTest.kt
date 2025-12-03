@@ -3,7 +3,6 @@ package com.example.storybridge_android.ui.session
 import android.util.Log
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.example.storybridge_android.data.SessionRepository
-import com.example.storybridge_android.data.ProcessRepository
 import com.example.storybridge_android.network.*
 import com.example.storybridge_android.ui.session.voice.VoiceSelectViewModel
 import io.mockk.every
@@ -33,8 +32,6 @@ class VoiceSelectViewModelTest {
 
     @Mock
     private lateinit var mockSessionRepository: SessionRepository
-    @Mock
-    private lateinit var mockProcessRepository: ProcessRepository
 
     private lateinit var viewModel: VoiceSelectViewModel
     private lateinit var testImageFile: File
@@ -55,7 +52,7 @@ class VoiceSelectViewModelTest {
 
         Dispatchers.setMain(testDispatcher)
 
-        viewModel = VoiceSelectViewModel(mockSessionRepository, mockProcessRepository)
+        viewModel = VoiceSelectViewModel(mockSessionRepository)
 
         // Create a test image file
         testImageFile = File.createTempFile("test_cover", ".jpg")

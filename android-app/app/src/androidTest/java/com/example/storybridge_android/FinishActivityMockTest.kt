@@ -15,7 +15,7 @@ import com.example.storybridge_android.R
 import com.example.storybridge_android.ServiceLocator
 import com.example.storybridge_android.data.SessionRepository
 import com.example.storybridge_android.network.*
-import com.example.storybridge_android.ui.session.finish.BalloonInteractionView
+import com.example.storybridge_android.ui.session.finish.FinishBalloonView
 import com.example.storybridge_android.ui.session.finish.FinishActivity
 import io.mockk.unmockkAll
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -62,7 +62,7 @@ class FinishActivityMockTest {
         try {
             val scenario = ActivityScenario.launch<FinishActivity>(createIntent())
             scenario.onActivity {
-                it.findViewById<BalloonInteractionView>(R.id.balloonView)?.stopAnimation()
+                it.findViewById<FinishBalloonView>(R.id.balloonView)?.stopAnimation()
             }
             scenario.close()
         } catch (_: Exception) {}
@@ -75,7 +75,7 @@ class FinishActivityMockTest {
         val scenario = ActivityScenario.launch<FinishActivity>(createIntent())
         Thread.sleep(2000)
         scenario.onActivity {
-            it.findViewById<BalloonInteractionView>(R.id.balloonView)?.stopAnimation()
+            it.findViewById<FinishBalloonView>(R.id.balloonView)?.stopAnimation()
         }
         onView(withId(R.id.balloonView)).check(matches(isDisplayed()))
         onView(withId(R.id.mainButton)).check(matches(withEffectiveVisibility(Visibility.INVISIBLE)))
@@ -89,7 +89,7 @@ class FinishActivityMockTest {
         val scenario = ActivityScenario.launch<FinishActivity>(intent)
         Thread.sleep(2000)
         scenario.onActivity {
-            it.findViewById<BalloonInteractionView>(R.id.balloonView)?.stopAnimation()
+            it.findViewById<FinishBalloonView>(R.id.balloonView)?.stopAnimation()
             it.findViewById<android.widget.Button>(R.id.mainButton)?.visibility = android.view.View.VISIBLE
         }
         onView(withId(R.id.mainButton)).perform(click())
@@ -117,7 +117,7 @@ class FinishActivityMockTest {
         val scenario = ActivityScenario.launch<FinishActivity>(createIntent())
         Thread.sleep(2000)
         scenario.onActivity {
-            val v = it.findViewById<BalloonInteractionView>(R.id.balloonView)
+            val v = it.findViewById<FinishBalloonView>(R.id.balloonView)
             v.stopAnimation()
             repeat(3) { idx -> v.onBalloonPopped?.invoke(idx, v.getBalloonText(idx) ?: "") }
         }
@@ -131,7 +131,7 @@ class FinishActivityMockTest {
         val scenario = ActivityScenario.launch<FinishActivity>(createIntent())
         Thread.sleep(2000)
         scenario.onActivity {
-            val v = it.findViewById<BalloonInteractionView>(R.id.balloonView)
+            val v = it.findViewById<FinishBalloonView>(R.id.balloonView)
             v.stopAnimation()
             val t0 = v.getBalloonText(0) ?: ""
             val t1 = v.getBalloonText(1) ?: ""
@@ -154,7 +154,7 @@ class FinishActivityMockTest {
         val scenario = ActivityScenario.launch<FinishActivity>(createIntent())
         Thread.sleep(2000)
         scenario.onActivity {
-            val v = it.findViewById<BalloonInteractionView>(R.id.balloonView)
+            val v = it.findViewById<FinishBalloonView>(R.id.balloonView)
             v.stopAnimation()
             v.onAllBalloonsPopped?.invoke()
         }

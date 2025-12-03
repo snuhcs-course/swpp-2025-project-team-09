@@ -2,75 +2,54 @@ package com.example.storybridge_android.ui.session.start
 
 import android.content.Intent
 import android.os.Bundle
-import android.provider.Settings
-import android.util.Log
 import android.widget.Button
-import android.widget.Toast
-import androidx.activity.viewModels
-import androidx.activity.enableEdgeToEdge
-import androidx.lifecycle.lifecycleScope
+import androidx.activity.OnBackPressedCallback
 import com.example.storybridge_android.R
 import com.example.storybridge_android.ui.camera.CameraSessionActivity
 import com.example.storybridge_android.ui.common.BaseActivity
-import kotlinx.coroutines.flow.collectLatest
+import com.example.storybridge_android.ui.session.voice.VoiceSelectActivity
+import com.example.storybridge_android.ui.setting.AppSettings
 
 class StartSessionActivity : BaseActivity() {
 
-    private val viewModel: StartSessionViewModel by viewModels {
-        StartSessionViewModelFactory()
-    }
-
-    companion object {
-        private const val TAG = "StartSessionActivity"
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_start_session)
+
+        val sessionId = intent.getStringExtra("session_id")
+        if (sessionId == null) {
+            finish()
+            return
+        }
 
         val startButton = findViewById<Button>(R.id.startSessionButton)
         startButton.setOnClickListener {
-            startNewSession()
+            navigateToCameraForCover(sessionId)
         }
 
-        observeViewModel()
-    }
-
-    private fun startNewSession() {
-        val deviceInfo = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
-        viewModel.startSession(deviceInfo)
-    }
-
-    private fun observeViewModel() {
-        lifecycleScope.launchWhenStarted {
-            viewModel.state.collectLatest { state ->
-                when (state) {
-                    is StartSessionUiState.Idle -> {}
-                    is StartSessionUiState.Loading -> Log.d(TAG, "Session starting...")
-                    is StartSessionUiState.Success -> {
-                        Log.d(TAG, "Session started: ${state.sessionId}")
-                        navigateToCameraForCover(state.sessionId)
-                    }
-                    is StartSessionUiState.Error -> {
-                        Toast.makeText(
-                            this@StartSessionActivity,
-                            getString(R.string.error_session_start_failed, state.message),
-                            Toast.LENGTH_LONG
-                        ).show()
-
-                        finish()
-                    }
-                }
+        // Handle back button press to go back to voice selection
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                navigateBackToVoiceSelection(sessionId)
             }
-        }
+        })
     }
 
     private fun navigateToCameraForCover(sessionId: String) {
-        val intent = Intent(this, CameraSessionActivity::class.java)
-        intent.putExtra("session_id", sessionId)
-        intent.putExtra("page_index", 0)
-        intent.putExtra("is_cover", true)
+        val intent = Intent(this, CameraSessionActivity::class.java).apply {
+            putExtra("session_id", sessionId)
+            putExtra("page_index", 0)
+            putExtra("is_cover", true)
+        }
+        startActivity(intent)
+        finish()
+    }
+
+    private fun navigateBackToVoiceSelection(sessionId: String) {
+        val intent = Intent(this, VoiceSelectActivity::class.java).apply {
+            putExtra("session_id", sessionId)
+            putExtra("lang", AppSettings.getLanguage(this@StartSessionActivity))
+        }
         startActivity(intent)
         finish()
     }

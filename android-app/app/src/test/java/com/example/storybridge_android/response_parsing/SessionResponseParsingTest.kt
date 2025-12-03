@@ -1,12 +1,15 @@
+package com.example.storybridge_android.response_parsing
+
 import com.example.storybridge_android.network.*
 import com.google.gson.Gson
+import com.google.gson.JsonSyntaxException
 import org.junit.Test
 import org.junit.Assert.*
 
 class SessionResponseParsingTest {
     private val gson = Gson()
 
-    // 1. StartSessionResponse — verify correct parsing for session start
+    // 1. startSession
     @Test
     fun startSessionResponse_successfulParsing() {
         val json = """
@@ -24,7 +27,7 @@ class SessionResponseParsingTest {
         assertEquals(0, response.page_index)
     }
 
-    // 2. SelectVoiceResponse — verify correct parsing for voice style
+    // 2. selectVoice
     @Test
     fun selectVoiceResponse_successfulParsing() {
         val json = """
@@ -40,7 +43,7 @@ class SessionResponseParsingTest {
         assertEquals("Kore_Cheerful", response.voice_style)
     }
 
-    // 3. EndSessionResponse — verify proper parsing for session termination info
+    // 3. endSession
     @Test
     fun endSessionResponse_successfulParsing() {
         val json = """
@@ -58,7 +61,7 @@ class SessionResponseParsingTest {
         assertEquals(15, response.total_pages)
     }
 
-    // 4. SessionStatsResponse — verify correct parsing of numerical fields
+    // 4. sessionStats
     @Test
     fun sessionStatsResponse_successfulParsing() {
         val json = """
@@ -81,92 +84,6 @@ class SessionResponseParsingTest {
         assertEquals(15000, response.total_words_read)
     }
 
-    // 5. SessionInfoResponse — verify all fields when session is completed
-    @Test
-    fun sessionInfoResponse_allFieldsPresent() {
-        val json = """
-        {
-            "session_id": "sess_005_full",
-            "user_id": "user_info_1",
-            "page_index": 5,
-            "voice_style": "Fenrir_Neutral",
-            "started_at": "2025-10-28T12:00:00Z",
-            "ended_at": "2025-10-28T12:30:00Z",
-            "total_pages": 8
-        }
-    """.trimIndent()
-
-        val response = gson.fromJson(json, SessionInfoResponse::class.java)
-
-        assertNotNull(response.ended_at)
-        assertNotNull(response.total_pages)
-        assertEquals(8, response.total_pages)
-    }
-
-    // 6. SessionInfoResponse — verify correct handling of missing nullable fields
-    @Test
-    fun sessionInfoResponse_nullableFieldsMissing() {
-        val json = """
-        {
-            "session_id": "sess_005_ongoing",
-            "user_id": "user_info_2",
-            "page_index": 3,
-            "voice_style": "Fenrir_Neutral",
-            "started_at": "2025-10-28T13:00:00Z"
-        }
-    """.trimIndent()
-
-        val response = gson.fromJson(json, SessionInfoResponse::class.java)
-
-        assertEquals("sess_005_ongoing", response.session_id)
-        assertEquals(3, response.page_index)
-        assertNull("ended_at should be null when omitted", response.ended_at)
-        assertNull("total_pages should be null when omitted", response.total_pages)
-    }
-
-    // 7. SessionReviewResponse — verify correct parsing of final review data
-    @Test
-    fun sessionReviewResponse_successfulParsing() {
-        val json = """
-        {
-            "session_id": "sess_006",
-            "user_id": "user_review_1",
-            "started_at": "2025-10-28T14:00:00Z",
-            "ended_at": "2025-10-28T14:30:00Z",
-            "total_pages": 12
-        }
-    """.trimIndent()
-
-        val response = gson.fromJson(json, SessionReviewResponse::class.java)
-
-        assertEquals("sess_006", response.session_id)
-        assertEquals("user_review_1", response.user_id)
-        assertEquals(12, response.total_pages)
-    }
-
-    // 8. SessionInfoResponse — verify unknown fields are ignored safely
-    @Test
-    fun sessionInfoResponse_extraField_ignoredSuccessfully() {
-        val json = """
-        {
-            "session_id": "sess_007_extra",
-            "user_id": "user_extra",
-            "page_index": 10,
-            "voice_style": "Lyra_Warm",
-            "started_at": "2025-10-28T15:00:00Z",
-            "ended_at": "2025-10-28T15:45:00Z",
-            "total_pages": 9,
-            "unexpected_field": "ignore_me"
-        }
-    """.trimIndent()
-
-        val response = gson.fromJson(json, SessionInfoResponse::class.java)
-
-        assertEquals("sess_007_extra", response.session_id)
-        assertEquals(9, response.total_pages)
-    }
-
-    // 9. SessionStatsResponse — verify invalid type handling for numeric field
     @Test
     fun sessionStatsResponse_invalidType_throwsException() {
         val json = """
@@ -181,12 +98,11 @@ class SessionResponseParsingTest {
         try {
             gson.fromJson(json, SessionStatsResponse::class.java)
             fail("Expected JsonSyntaxException to be thrown")
-        } catch (e: com.google.gson.JsonSyntaxException) {
+        } catch (e: JsonSyntaxException) {
             assertTrue(e.message?.contains("For input string") == true)
         }
     }
 
-    // 11. SessionStatsResponse — verify isOngoing field parsing (Boolean type)
     @Test
     fun sessionStatsResponse_isOngoingBooleanParsing() {
         // Case 1: isOngoing = true
@@ -216,5 +132,80 @@ class SessionResponseParsingTest {
     """.trimIndent()
         response = gson.fromJson(json, SessionStatsResponse::class.java)
         assertFalse("isOngoing should be false", response.isOngoing)
+    }
+
+    // 5. reloadAllSession
+    @Test
+    fun reloadAllSessionResponse_successfulParsing() {
+        val json = """
+        {
+            "session_id": "sess_reload_001",
+            "started_at": "2025-10-28T12:00:00Z",
+            "pages": [
+                {
+                    "page_index": 0,
+                    "img_url": "http://example.com/img0",
+                    "translation_text": "Hello",
+                    "audio_url": "http://example.com/audio0",
+                    "ocr_results": []
+                },
+                {
+                    "page_index": 1,
+                    "img_url": null,
+                    "translation_text": null,
+                    "audio_url": null,
+                    "ocr_results": null
+                }
+            ]
+        }
+        """.trimIndent()
+
+        val response = gson.fromJson(json, ReloadAllSessionResponse::class.java)
+
+        assertEquals("sess_reload_001", response.session_id)
+        assertEquals("2025-10-28T12:00:00Z", response.started_at)
+        assertEquals(2, response.pages.size)
+    }
+
+    @Test
+    fun reloadedPage_parsingWithNullableFields() {
+        val json = """
+        {
+            "session_id": "sess_reload_002",
+            "started_at": "2025-10-28T12:30:00Z",
+            "pages": [
+                {
+                    "page_index": 5,
+                    "img_url": null,
+                    "translation_text": "Sample text",
+                    "audio_url": null,
+                    "ocr_results": []
+                }
+            ]
+        }
+        """.trimIndent()
+
+        val response = gson.fromJson(json, ReloadAllSessionResponse::class.java)
+        val page = response.pages[0]
+
+        assertEquals(5, page.page_index)
+        assertNull(page.img_url)
+        assertEquals("Sample text", page.translation_text)
+        assertNull(page.audio_url)
+        assertTrue(page.ocr_results?.isEmpty() == true)
+    }
+
+    // 6. discardSession
+    @Test
+    fun discardSessionResponse_successfulParsing() {
+        val json = """ 
+        { 
+            "message": "session discarded successfully" 
+        } 
+        """.trimIndent()
+
+        val response = gson.fromJson(json, DiscardSessionResponse::class.java)
+
+        assertEquals("session discarded successfully", response.message)
     }
 }

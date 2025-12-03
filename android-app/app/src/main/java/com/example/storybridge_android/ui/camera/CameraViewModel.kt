@@ -35,11 +35,7 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
     val uiState: StateFlow<CameraUiState> = _uiState
 
     private var scanner: GmsDocumentScanner? = null
-    private val context = application.applicationContext
-
-    companion object {
-        private const val TAG = "CameraViewModel"
-    }
+    private val context get() = getApplication<Application>().applicationContext
 
     fun checkGooglePlayServices(): Boolean {
         val googleApiAvailability = GoogleApiAvailability.getInstance()
@@ -124,21 +120,25 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
             return
         }
 
-        val page = scanningResult.getPages()?.firstOrNull()
+        val page = scanningResult.pages?.firstOrNull()
         if (page == null) {
             _uiState.value = _uiState.value.copy(error = "No page scanned")
             return
         }
 
-        saveImage(page.getImageUri(), contentResolver)
+        saveImage(page.imageUri, contentResolver)
     }
 
     private fun saveImage(uri: Uri, contentResolver: ContentResolver) {
         try {
-            val inputStream = contentResolver.openInputStream(uri)
-                ?: throw Exception("Cannot open input stream")
             val file = File(context.filesDir, "scan_${System.currentTimeMillis()}.jpg")
-            FileOutputStream(file).use { output -> inputStream.copyTo(output) }
+
+            contentResolver.openInputStream(uri)?.use { input ->
+                FileOutputStream(file).use { output ->
+                    input.copyTo(output)
+                }
+            } ?: throw Exception("Cannot open input stream")
+
             _uiState.value = _uiState.value.copy(imagePath = file.absolutePath)
         } catch (e: Exception) {
             _uiState.value = _uiState.value.copy(error = "Save failed: ${e.message}")

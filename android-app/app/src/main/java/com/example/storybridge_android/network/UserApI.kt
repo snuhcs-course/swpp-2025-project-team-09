@@ -33,7 +33,6 @@ interface UserApi {
 // Request / Response data classes
 // --------------------
 
-// 1-1. Register
 data class UserRegisterRequest(
     val device_info: String,
     val language_preference: String
@@ -44,7 +43,6 @@ data class UserRegisterResponse(
     val language_preference: String
 )
 
-// 1-2. Login
 data class UserLoginRequest(
     val device_info: String
 )
@@ -54,7 +52,6 @@ data class UserLoginResponse(
     val language_preference: String
 )
 
-// 1-3. Change Language Preference
 data class UserLangRequest(
     val device_info: String,
     val language_preference: String
@@ -66,7 +63,6 @@ data class UserLangResponse(
     val updated_at: String // datetime as ISO string
 )
 
-// 1-4. Get user's full reading list
 data class UserInfoResponse(
     val user_id: String,
     val session_id: String,

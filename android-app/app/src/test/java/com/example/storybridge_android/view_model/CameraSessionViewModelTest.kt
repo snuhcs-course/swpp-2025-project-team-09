@@ -30,6 +30,8 @@ import org.junit.Rule
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+
+
 /**
  * Unit tests for CameraSessionViewModel.
  * This ViewModel is simple, so we are just testing the state transitions
