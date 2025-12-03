@@ -49,6 +49,7 @@
     <string name="session_error">出了点小问题，请再试一次吧！</string>
     <string name="voice_preview_not_available">无法获取%1$s声音预览</string>
     <string name="failed_audio_preview">播放声音预览失败</string>
+    <string name="error_select_voice">请选择声音</string>
 
     <!-- Reading -->
     <string name="first_page">这是第一页</string>

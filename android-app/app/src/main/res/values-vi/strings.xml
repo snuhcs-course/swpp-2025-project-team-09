@@ -49,6 +49,7 @@
     <string name="session_error">Có lỗi xảy ra. Con thử lại nhé.</string>
     <string name="voice_preview_not_available">Không thể nghe thử giọng %1$s</string>
     <string name="failed_audio_preview">Không nghe được âm thanh</string>
+    <string name="error_select_voice">Con chưa chọn giọng nói</string>
 
     <!-- Reading -->
     <string name="first_page">Đây là trang đầu tiên rồi</string>

@@ -49,6 +49,7 @@
     <string name="session_error">Session error. Please try again.</string>
     <string name="voice_preview_not_available">%1$s voice preview not available</string>
     <string name="failed_audio_preview">Failed to play audio preview</string>
+    <string name="error_select_voice">Please select a voice</string>
 
     <!-- Reading -->
     <string name="first_page">This is the first page</string>

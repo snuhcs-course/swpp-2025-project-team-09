@@ -31,6 +31,7 @@ class VoiceSelectActivity : BaseActivity() {
     private var sessionId: String? = null
     private var lang: String? = null
     private var mediaPlayer: MediaPlayer? = null
+    private var voiceSelected: Boolean = false
 
     private val viewModel: VoiceSelectViewModel by viewModels {
         VoiceSelectViewModelFactory()
@@ -77,8 +78,6 @@ class VoiceSelectActivity : BaseActivity() {
             listOf(manButton, womanButton).forEach { it.isSelected = it == selected }
         }
 
-        nextButton.isEnabled = false
-
         manButton.setOnClickListener {
             AppSettings.setVoice(this, MALE_VOICE)
             viewModel.selectVoice(sessionId!!, MALE_VOICE)
@@ -94,14 +93,22 @@ class VoiceSelectActivity : BaseActivity() {
         }
 
         nextButton.setOnClickListener {
-            navigateToStartSession()
+            if (voiceSelected) {
+                navigateToStartSession()
+            } else {
+                Toast.makeText(
+                    this,
+                    getString(R.string.error_select_voice),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
         }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.success.collectLatest {
                     Log.d("VoiceSelectActivity", "✓ Voice selection saved successfully")
-                    nextButton.isEnabled = true
+                    voiceSelected = true
                 }
             }
         }
