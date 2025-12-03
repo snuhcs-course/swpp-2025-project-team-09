@@ -103,12 +103,14 @@ class LoadingViewModel(
                 _error.value = "Failed to process image"
                 return@launch
             }
-            startRampTo(40, 2000L)
+            startRampTo(100, 3000L)
 
             val req = UploadImageRequest(sessionId, 0, lang, base64)
             processRepo.uploadCoverImage(req).fold(
                 onSuccess = {
-                    _progress.value = 100
+                    while (_progress.value < 100) {
+                        delay(100)
+                    }
 
                     val result = CoverResult(it.title)
                     _cover.value = result
@@ -132,7 +134,7 @@ class LoadingViewModel(
                 return@launch
             }
 
-            startRampTo(100, 4000L)
+            startRampTo(100, 8000L)
 
             val req = UploadImageRequest(sessionId, pageIndex, lang, base64)
             processRepo.uploadImage(req).fold(
@@ -156,7 +158,9 @@ class LoadingViewModel(
             res.fold(
                 onSuccess = {
                     if (it.status == "ready") {
-                        _progress.value = 100
+                        while (_progress.value < 100) {
+                            delay(100)
+                        }
                         _status.value = "ready"
                         done = true
                     }
