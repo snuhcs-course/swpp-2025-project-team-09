@@ -145,8 +145,8 @@ class CameraSessionActivity : BaseActivity() {
                         else navigateToLoading(state.imagePath)
                     }
                     is SessionUiState.Cancelled -> {
-                        // User cancelled camera - show camera retake dialog
-                        showRetakeCameraDialog()
+                        setResult(RESULT_CANCELED)
+                        finish()
                     }
                     is SessionUiState.Error -> {
                         Log.e(TAG, state.message)
