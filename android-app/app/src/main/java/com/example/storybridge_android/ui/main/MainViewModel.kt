@@ -33,10 +33,10 @@ class MainViewModel(
         }
     }
 
-    fun startSession(deviceId: String) {
+    fun startSession(deviceInfo: String) {
         viewModelScope.launch {
             try {
-                val result = sessionRepository.startSession(deviceId)
+                val result = sessionRepository.startSession(deviceInfo)
                 val mapped = result.map { it.session_id }
 
                 _startSessionEvent.emit(mapped)

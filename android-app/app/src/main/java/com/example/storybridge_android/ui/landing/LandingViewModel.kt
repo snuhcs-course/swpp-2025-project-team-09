@@ -21,14 +21,14 @@ class LandingViewModel(private val repository: UserRepository) : ViewModel() {
     private val _uiState = MutableStateFlow<LandingUiState>(LandingUiState.Loading)
     val uiState: StateFlow<LandingUiState> = _uiState
 
-    fun checkUser(deviceId: String) {
+    fun checkUser(deviceInfo: String) {
         viewModelScope.launch {
             try {
-                val loginRes = repository.login(UserLoginRequest(deviceId))
+                val loginRes = repository.login(UserLoginRequest(deviceInfo))
                 if (loginRes.isSuccessful && loginRes.body() != null) {
                     _uiState.value = LandingUiState.NavigateMain
                 } else {
-                    val regRes = repository.register(UserRegisterRequest(deviceId, "en"))
+                    val regRes = repository.register(UserRegisterRequest(deviceInfo, "en"))
                     if (regRes.isSuccessful) {
                         _uiState.value = LandingUiState.ShowLanguageSelect
                     } else {

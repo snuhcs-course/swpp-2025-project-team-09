@@ -25,7 +25,7 @@ class LandingActivity : BaseActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_landing_first)
 
-        val deviceId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+        val deviceInfo = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
 
         lifecycleScope.launch {
             viewModel.uiState.collectLatest { state ->
@@ -38,7 +38,7 @@ class LandingActivity : BaseActivity() {
             }
         }
 
-        viewModel.checkUser(deviceId)
+        viewModel.checkUser(deviceInfo)
     }
 
     private fun showLanguageSelection() {

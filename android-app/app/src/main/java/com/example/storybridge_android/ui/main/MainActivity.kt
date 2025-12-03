@@ -356,7 +356,7 @@ class MainActivity : BaseActivity() {
     }
 
     private fun createSession() {
-        val deviceId = getAndroidId()
-        viewModel.startSession(deviceId)
+        val deviceInfo = getAndroidId()
+        viewModel.startSession(deviceInfo)
     }
 }

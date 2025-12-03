@@ -1,5 +1,6 @@
 package com.example.storybridge_android.ui.setting
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
@@ -35,11 +36,6 @@ class SettingActivity : BaseActivity() {
         observeLangResponse()
     }
 
-    private fun setupTopBar() {
-        val topBar = findViewById<TopNavigationBar>(R.id.topNavigationBar)
-        topBar.setOnSettingsClickListener { finish() }
-    }
-
     private fun setupLanguageOptions() {
         languageGroup = findViewById(R.id.languageGroup)
         val english = findViewById<RadioButton>(R.id.radioEnglish)
@@ -67,6 +63,26 @@ class SettingActivity : BaseActivity() {
         }
     }
 
+    private fun setSelectedLanguage() {
+        val deviceInfo = getAndroidId()
+        val selectedLang = when (languageGroup.checkedRadioButtonId) {
+            R.id.radioEnglish -> "en"
+            R.id.radioChinese -> "zh"
+            R.id.radioVietnamese -> "vi"
+            else -> "en"
+        }
+        val request = UserLangRequest(device_info = deviceInfo, language_preference = selectedLang)
+
+        viewModel.updateLanguage(request)
+    }
+
+    private fun setupTopBar() {
+        val topBar = findViewById<TopNavigationBar>(R.id.topNavigationBar)
+        topBar.setOnSettingsClickListener {
+            setSelectedLanguage()
+        }
+    }
+
     private fun setupSaveButton() {
         val saveButton = findViewById<Button>(R.id.btnBack)
         saveButton.setOnClickListener { view ->
@@ -74,30 +90,14 @@ class SettingActivity : BaseActivity() {
             view.isPressed = false
             view.isEnabled = false
 
-            val deviceInfo = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
-            val selectedLang = when (languageGroup.checkedRadioButtonId) {
-                R.id.radioEnglish -> "en"
-                R.id.radioChinese -> "zh"
-                R.id.radioVietnamese -> "vi"
-                else -> "en"
-            }
-            val request = UserLangRequest(device_info = deviceInfo, language_preference = selectedLang)
-            viewModel.updateLanguage(request)
+            setSelectedLanguage()
         }
     }
 
     private fun setupBackPressedHandler() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                val deviceInfo = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
-                val selectedLang = when (languageGroup.checkedRadioButtonId) {
-                    R.id.radioEnglish -> "en"
-                    R.id.radioChinese -> "zh"
-                    R.id.radioVietnamese -> "vi"
-                    else -> "en"
-                }
-                val request = UserLangRequest(device_info = deviceInfo, language_preference = selectedLang)
-                viewModel.updateLanguage(request)
+                setSelectedLanguage()
             }
         })
     }
@@ -125,5 +125,10 @@ class SettingActivity : BaseActivity() {
                 }
             }
         }
+    }
+
+    @SuppressLint("HardwareIds")
+    private fun getAndroidId(): String {
+        return Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
     }
 }
