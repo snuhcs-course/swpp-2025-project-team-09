@@ -9,4 +9,5 @@ interface SessionRepository {
     suspend fun getSessionStats(sessionId: String): Result<SessionStatsResponse>
     suspend fun reloadAllSession(userId: String, startedAt: String): Result<ReloadAllSessionResponse>
     suspend fun discardSession(sessionId: String): Result<DiscardSessionResponse>
+    suspend fun pickWords(sessionId: String, lang: String): Result<WordPickerResponse>
 }

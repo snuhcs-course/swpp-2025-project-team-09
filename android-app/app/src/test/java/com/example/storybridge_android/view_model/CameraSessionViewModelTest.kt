@@ -15,6 +15,7 @@ import com.example.storybridge_android.network.CheckTtsResponse
 import com.example.storybridge_android.network.UploadCoverResponse
 import com.example.storybridge_android.network.UploadImageRequest
 import com.example.storybridge_android.network.UploadImageResponse
+import com.example.storybridge_android.network.WordPickerResponse
 import com.example.storybridge_android.ui.camera.CameraSessionViewModel
 import com.example.storybridge_android.ui.camera.SessionUiState
 import kotlinx.coroutines.Dispatchers
@@ -29,7 +30,6 @@ import org.junit.Rule
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-
 /**
  * Unit tests for CameraSessionViewModel.
  * This ViewModel is simple, so we are just testing the state transitions
@@ -75,6 +75,10 @@ class CameraSessionViewModelTest {
                 )
             )
         }
+        override suspend fun pickWords(
+            sessionId: String,
+            lang: String
+        ) = Result.failure<WordPickerResponse>(NotImplementedError())
     }
 
     class FakeProcessRepository : ProcessRepository {

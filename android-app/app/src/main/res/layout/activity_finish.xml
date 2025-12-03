@@ -70,6 +70,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
+
     <!-- Next button -->
     <android.widget.Button
         android:id="@+id/mainButton"
@@ -87,5 +88,49 @@
         app:layout_constraintTop_toBottomOf="@id/amazingText"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- Learned words title -->
+    <TextView
+        style="@style/text48pt"
+        android:id="@+id/learnedWordsTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/tap_words"
+        android:visibility="gone"
+        android:layout_marginTop="20dp"
+        app:layout_constraintTop_toTopOf="@id/balloonView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Learned words container -->
+    <LinearLayout
+        android:id="@+id/learnedWordsContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="20dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/learnedWordsTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <com.example.storybridge_android.ui.session.finish.FlipCardView
+            android:id="@+id/card1"
+            android:layout_width="200dp"
+            android:layout_height="150dp"
+            android:layout_marginEnd="24dp" />
+        <com.example.storybridge_android.ui.session.finish.FlipCardView
+            android:id="@+id/card2"
+            android:layout_width="200dp"
+            android:layout_height="150dp"
+            android:layout_marginEnd="24dp"
+            android:layout_marginStart="24dp" />
+        <com.example.storybridge_android.ui.session.finish.FlipCardView
+            android:id="@+id/card3"
+            android:layout_width="200dp"
+            android:layout_height="150dp"
+            android:layout_marginStart="24dp" />
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

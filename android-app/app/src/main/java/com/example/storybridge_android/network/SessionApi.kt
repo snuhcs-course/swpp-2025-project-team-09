@@ -40,6 +40,10 @@ interface SessionApi {
         @Body request: DiscardSessionRequest
     ): Response<DiscardSessionResponse>
 
+    @POST("/process/word_picker/")
+    suspend fun pickWords(
+        @Body request: WordPickerRequest
+    ): Response<WordPickerResponse>
 }
 
 // --------------------
@@ -128,3 +132,18 @@ data class DiscardSessionResponse(
     val message: String
 )
 
+data class WordPickerRequest(
+    val session_id: String,
+    val lang: String
+)
+
+data class WordPickerResponse(
+    val session_id: String,
+    val status: String,
+    val items: List<WordItem>
+)
+
+data class WordItem(
+    val word: String,
+    val meaning_ko: String
+)
