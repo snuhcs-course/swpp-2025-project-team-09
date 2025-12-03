@@ -149,6 +149,10 @@ class MainViewModelTest {
                 Result.failure(Exception("fail"))
             }
         }
+        override suspend fun pickWords(
+            sessionId: String,
+            lang: String
+        ) = Result.failure<WordPickerResponse>(NotImplementedError())
     }
 
     class ExceptionUserRepo : UserRepository {
@@ -188,6 +192,10 @@ class MainViewModelTest {
         override suspend fun discardSession(sessionId: String): Result<DiscardSessionResponse> {
             throw RuntimeException("boom")
         }
+        override suspend fun pickWords(
+            sessionId: String,
+            lang: String
+        ) = Result.failure<WordPickerResponse>(NotImplementedError())
     }
 
     @Test
