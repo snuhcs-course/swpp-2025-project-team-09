@@ -588,6 +588,17 @@ class ReadingActivity : BaseActivity() {
     }
 
     private fun navigateToCamera() {
+        // Stop any playing audio before opening camera
+        mediaPlayer?.release()
+        mediaPlayer = null
+        currentPlayingIndex = -1
+        currentAudioIndex = 0
+
+        // Reset all play button states
+        for ((index, button) in playButtonsMap) {
+            resetButtonState(index)
+        }
+
         val intent = Intent(this, CameraSessionActivity::class.java).apply {
             putExtra("session_id", sessionId)
             putExtra("page_index", totalPages)
