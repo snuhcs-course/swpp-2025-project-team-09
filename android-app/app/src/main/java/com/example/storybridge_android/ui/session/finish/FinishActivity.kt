@@ -33,6 +33,7 @@ class FinishActivity : BaseActivity() {
     private var poppedCount = 0
     private var pickedWordsLoaded = false
     private var allBalloonsPopped = false
+    private var hasPickedWords = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,6 +72,7 @@ class FinishActivity : BaseActivity() {
         setupBalloonCallback()
         viewModel.pickedWords.observe(this) { items ->
             if (items.size >= 3) {
+                hasPickedWords = true
                 binding.card1.setData(items[0].word, items[0].meaning_ko)
                 binding.card2.setData(items[1].word, items[1].meaning_ko)
                 binding.card3.setData(items[2].word, items[2].meaning_ko)
@@ -78,6 +80,16 @@ class FinishActivity : BaseActivity() {
                 if (allBalloonsPopped) {
                     binding.learnedWordsContainer.visibility = View.VISIBLE
                     binding.learnedWordsTitle.visibility = View.VISIBLE
+                    binding.mainButton.visibility = View.VISIBLE
+                }
+            } else {
+                hasPickedWords = false
+                pickedWordsLoaded = true
+                binding.learnedWordsContainer.visibility = View.GONE
+                binding.learnedWordsTitle.visibility = View.GONE
+
+                if (allBalloonsPopped) {
+                    binding.mainButton.visibility = View.VISIBLE
                 }
             }
         }
@@ -109,10 +121,12 @@ class FinishActivity : BaseActivity() {
             binding.amazingText.visibility = View.GONE
             binding.mainButton.visibility = View.GONE
 
-            if (pickedWordsLoaded) {
+            if (pickedWordsLoaded && hasPickedWords) {
                 binding.learnedWordsContainer.visibility = View.VISIBLE
                 binding.learnedWordsTitle.visibility = View.VISIBLE
             }
+            binding.mainButton.visibility = View.VISIBLE
+
         }
     }
 
@@ -274,29 +288,20 @@ class FinishActivity : BaseActivity() {
         var card2Flipped = false
         var card3Flipped = false
 
-        fun checkAllFlipped() {
-            if (card1Flipped && card2Flipped && card3Flipped) {
-                binding.amazingText.visibility = View.VISIBLE
-                binding.mainButton.visibility = View.VISIBLE
-            }
-        }
 
         card1.onFlipped = {
             if (!card1Flipped) {
                 card1Flipped = true
-                checkAllFlipped()
             }
         }
         card2.onFlipped = {
             if (!card2Flipped) {
                 card2Flipped = true
-                checkAllFlipped()
             }
         }
         card3.onFlipped = {
             if (!card3Flipped) {
                 card3Flipped = true
-                checkAllFlipped()
             }
         }
     }
