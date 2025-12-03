@@ -17,7 +17,7 @@ load_dotenv()
 WORD_PICKER_PROMPT = """
 You are a warm and friendly children's vocabulary curator.
 
-You will receive a short passage from a children's story written in {target_lang}.
+You will receive a short passage from a children's story.
 Your job is to extract EXACTLY THREE important vocabulary words from the passage
 and provide a simple Korean meaning for each word.
 
@@ -30,7 +30,6 @@ Guidelines:
 
 Return exactly three items and follow the structured output strictly.
 """
-
 
 
 # -------------------------------------------------------------------------
@@ -61,8 +60,7 @@ class StoryWordPicker:
     with simple Korean meanings.
     """
 
-    def __init__(self, target_lang: str = "English"):
-        self.target_lang = target_lang
+    def __init__(self):
         self.llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.2)
         self.word_chain = self._create_word_chain()
 
@@ -70,7 +68,7 @@ class StoryWordPicker:
         prompt = ChatPromptTemplate.from_messages(
             [
                 ("system", WORD_PICKER_PROMPT),
-                ("user", "TargetLang: {target_lang}\n\nText:\n{story_text}"),
+                ("user", "Text:\n{story_text}"),
             ]
         )
         return prompt | self.llm.with_structured_output(VocabResult)
@@ -97,8 +95,7 @@ class StoryWordPicker:
 
                 response: VocabResult = self.word_chain.invoke(
                     {
-                        "story_text": story_text,
-                        "target_lang": self.target_lang,
+                        "story_text": story_text
                     }
                 )
                 print(f"[WordPicker] response: {response}")
@@ -139,4 +136,3 @@ class StoryWordPicker:
                     return {"status": "failed", "items": [], "latency": -1.0}
 
         return {"status": "failed", "items": [], "latency": -1.0}
-    
