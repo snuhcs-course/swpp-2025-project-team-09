@@ -60,6 +60,7 @@
     <string name="finish_reading">完成阅读</string>
     <string name="button_add_new_page">添加新页面</string>
     <string name="page_status_format">第 %1$d/%2$d 页</string>
+    <string name="thumbnail_page_format">第 %d 页</string>
 
     <!-- summary -->
     <string name="congratulations">太棒了！</string>

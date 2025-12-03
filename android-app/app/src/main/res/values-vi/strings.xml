@@ -60,6 +60,7 @@
     <string name="finish_reading">Đọc Xong</string>
     <string name="button_add_new_page">Thêm trang mới</string>
     <string name="page_status_format">Trang %1$d/%2$d</string>
+    <string name="thumbnail_page_format">Trang %d</string>
 
     <!-- summary -->
     <string name="congratulations">Giỏi Lắm Con!</string>

@@ -28,7 +28,9 @@ class ThumbnailAdapter(
 
         @SuppressLint("SetTextI18n")
         fun bind(thumbnail: PageThumbnail) {
-            pageNumber.text = "Page ${thumbnail.pageIndex}"
+            val context = itemView.context
+            val formattedText = context.getString(R.string.thumbnail_page_format, thumbnail.pageIndex)
+            pageNumber.text = formattedText
 
             // Decode and display image
             if (thumbnail.imageBase64 != null) {
