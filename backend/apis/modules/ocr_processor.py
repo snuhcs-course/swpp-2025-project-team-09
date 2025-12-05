@@ -218,7 +218,7 @@ class OCRModule:
 
         result = response.json()
         paragraphs = self._parse_infer_text(result)
-
+        print(f"[DEBUG] paragraphs: {paragraphs}")
         return paragraphs
 
     def process_cover_page(self, image_path: str) -> str:
