@@ -154,6 +154,7 @@ class TTSModule:
                 response.translated_text = cleaned_text
 
                 latency = time.time() - t0
+                print(f"Translation successful: {cleaned_text}")
                 return {"result": response, "latency": round(latency, 3)}
             except Exception as e:
                 print(f"Translation attempt {attempt + 1} failed: {e}")
