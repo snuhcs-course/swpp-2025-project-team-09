@@ -6,6 +6,7 @@ import android.util.Base64
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
@@ -21,8 +22,10 @@ class ThumbnailAdapter(
 ) : RecyclerView.Adapter<ThumbnailAdapter.ThumbnailViewHolder>() {
 
     private val thumbnails = mutableListOf<PageThumbnail>()
+    private var currentPageIndex: Int = 0
 
     inner class ThumbnailViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val thumbnailContainer: FrameLayout = view.findViewById(R.id.thumbnailContainer)
         val thumbnailImage: ImageView = view.findViewById(R.id.thumbnailImage)
         val pageNumber: TextView = view.findViewById(R.id.pageNumber)
 
@@ -31,6 +34,13 @@ class ThumbnailAdapter(
             val context = itemView.context
             val formattedText = context.getString(R.string.thumbnail_page_format, thumbnail.pageIndex)
             pageNumber.text = formattedText
+
+            // Set border based on current page
+            if (thumbnail.pageIndex == currentPageIndex) {
+                thumbnailContainer.setBackgroundResource(R.drawable.thumbnail_border_selected)
+            } else {
+                thumbnailContainer.setBackgroundResource(0) // No border
+            }
 
             // Decode and display image
             if (thumbnail.imageBase64 != null) {
@@ -70,6 +80,12 @@ class ThumbnailAdapter(
     fun submitList(newThumbnails: List<PageThumbnail>) {
         thumbnails.clear()
         thumbnails.addAll(newThumbnails)
+        notifyDataSetChanged()
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    fun setCurrentPage(pageIndex: Int) {
+        currentPageIndex = pageIndex
         notifyDataSetChanged()
     }
 }

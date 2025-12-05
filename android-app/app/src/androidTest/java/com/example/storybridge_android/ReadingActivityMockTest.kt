@@ -407,6 +407,83 @@ class ReadingActivityMockTest {
 
             Assert.assertNotNull("RecyclerView should exist", recyclerView)
             Assert.assertNotNull("RecyclerView should have adapter", recyclerView.adapter)
+
+            // Verify adapter is ThumbnailAdapter type
+            Assert.assertTrue("Adapter should be ThumbnailAdapter", recyclerView.adapter is ThumbnailAdapter)
+        }
+    }
+
+    @Test
+    fun thumbnailAdapter_hasSetCurrentPageMethod() = runTest {
+        scenario = ActivityScenario.launch(createIntent(pageIndex = 1, totalPages = 3))
+        Thread.sleep(2000)
+
+        scenario.onActivity { activity ->
+            val leftPanel = activity.findViewById<com.example.storybridge_android.ui.common.LeftOverlay>(R.id.leftPanel)
+            val adapter = leftPanel.thumbnailRecyclerView.adapter as ThumbnailAdapter
+
+            // Verify setCurrentPage method exists and works
+            try {
+                adapter.setCurrentPage(2)
+                val field = adapter.javaClass.getDeclaredField("currentPageIndex")
+                field.isAccessible = true
+                val currentPage = field.get(adapter) as Int
+                Assert.assertEquals("Current page should be set to 2", 2, currentPage)
+            } catch (e: Exception) {
+                Assert.fail("setCurrentPage method should exist and work: ${e.message}")
+            }
+        }
+    }
+
+    @Test
+    fun thumbnailAdapter_initialPageIsSet() = runTest {
+        val initialPage = 2
+        scenario = ActivityScenario.launch(createIntent(pageIndex = initialPage, totalPages = 5))
+        Thread.sleep(2000)
+
+        scenario.onActivity { activity ->
+            val leftPanel = activity.findViewById<com.example.storybridge_android.ui.common.LeftOverlay>(R.id.leftPanel)
+            val adapter = leftPanel.thumbnailRecyclerView.adapter as ThumbnailAdapter
+
+            val field = adapter.javaClass.getDeclaredField("currentPageIndex")
+            field.isAccessible = true
+            val currentPage = field.get(adapter) as Int
+
+            Assert.assertEquals("Initial current page should match pageIndex", initialPage, currentPage)
+        }
+    }
+
+    @Test
+    fun pageNavigation_updatesThumbnailCurrentPage() = runTest {
+        scenario = ActivityScenario.launch(createIntent(pageIndex = 1, totalPages = 3))
+        Thread.sleep(2000)
+
+        scenario.onActivity { activity ->
+            val leftPanel = activity.findViewById<com.example.storybridge_android.ui.common.LeftOverlay>(R.id.leftPanel)
+            val adapter = leftPanel.thumbnailRecyclerView.adapter as ThumbnailAdapter
+
+            val field = adapter.javaClass.getDeclaredField("currentPageIndex")
+            field.isAccessible = true
+            val initialPage = field.get(adapter) as Int
+
+            Assert.assertEquals("Initial page should be 1", 1, initialPage)
+        }
+
+        // Navigate to next page
+        onView(withId(R.id.main)).perform(click())
+        Thread.sleep(300)
+        onView(withId(R.id.nextButton)).perform(click())
+        Thread.sleep(2000)
+
+        scenario.onActivity { activity ->
+            val leftPanel = activity.findViewById<com.example.storybridge_android.ui.common.LeftOverlay>(R.id.leftPanel)
+            val adapter = leftPanel.thumbnailRecyclerView.adapter as ThumbnailAdapter
+
+            val field = adapter.javaClass.getDeclaredField("currentPageIndex")
+            field.isAccessible = true
+            val newPage = field.get(adapter) as Int
+
+            Assert.assertEquals("Current page should update to 2 after navigation", 2, newPage)
         }
     }
 

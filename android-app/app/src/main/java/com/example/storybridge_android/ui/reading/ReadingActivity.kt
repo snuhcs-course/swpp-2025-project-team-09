@@ -122,6 +122,9 @@ class ReadingActivity : BaseActivity() {
         observeViewModel()
         fetchPage()
         fetchAllThumbnails()
+
+        // Set initial current page for thumbnail border
+        thumbnailAdapter.setCurrentPage(pageIndex)
     }
 
     private fun initViews() {
@@ -558,6 +561,8 @@ class ReadingActivity : BaseActivity() {
         boundingBoxViewsMap.clear()
         savedBoxTranslations.clear()
         updateBottomNavStatus()
+        // Update thumbnail border for current page
+        thumbnailAdapter.setCurrentPage(pageIndex)
         // Fetch new page
         fetchPage()
     }
