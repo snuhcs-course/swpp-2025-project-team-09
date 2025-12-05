@@ -65,6 +65,8 @@ class CameraSessionViewModel(
     }
 
     fun handleCameraResult(resultCode: Int, imagePath: String?) {
+        Log.d(TAG, "handleCameraResult: resultCode=$resultCode, imagePath=$imagePath, currentState=${_uiState.value}")
+
         when {
             resultCode == android.app.Activity.RESULT_OK && !imagePath.isNullOrEmpty() -> {
                 _uiState.value = SessionUiState.Success(imagePath)
@@ -76,9 +78,13 @@ class CameraSessionViewModel(
                 _uiState.value = SessionUiState.Error("Failed to capture image")
             }
         }
+
+        Log.d(TAG, "handleCameraResult: newState=${_uiState.value}")
     }
 
+    // Call this before relaunching camera to ensure state transitions properly
     fun resetState() {
+        Log.d(TAG, "resetState called, transitioning from ${_uiState.value} to Idle")
         _uiState.value = SessionUiState.Idle
     }
 

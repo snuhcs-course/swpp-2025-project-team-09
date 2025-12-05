@@ -5,8 +5,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
-import android.view.View
-import android.widget.Button
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
@@ -30,9 +28,6 @@ class CameraActivity : BaseActivity() {
     private lateinit var permissionLauncher: ActivityResultLauncher<String>
 
     private var isCoverMode: Boolean = false
-    private lateinit var retakeCameraPanel: View
-    private lateinit var retakeCameraConfirmBtn: Button
-    private lateinit var retakeCameraCancelBtn: Button
 
     companion object {
         private const val TAG = "CameraActivity"
@@ -45,7 +40,6 @@ class CameraActivity : BaseActivity() {
 
         isCoverMode = intent.getBooleanExtra("is_cover", false)
 
-        initRetakeCameraPanel()
         initLaunchers()
         observeUiState()
 
@@ -57,25 +51,6 @@ class CameraActivity : BaseActivity() {
         }
 
         checkPermissionAndStart()
-    }
-
-    private fun initRetakeCameraPanel() {
-        retakeCameraPanel = findViewById(R.id.retakeCameraPanel)
-        retakeCameraConfirmBtn = findViewById(R.id.retakeCameraConfirmBtn)
-        retakeCameraCancelBtn = findViewById(R.id.retakeCameraCancelBtn)
-
-        // Retake button - try camera again
-        retakeCameraConfirmBtn.setOnClickListener {
-            retakeCameraPanel.visibility = View.GONE
-            startScan()
-        }
-
-        // Cancel/Exit button - exit the activity
-        retakeCameraCancelBtn.setOnClickListener {
-            retakeCameraPanel.visibility = View.GONE
-            setResult(RESULT_CANCELED)
-            finish()
-        }
     }
 
     private fun initLaunchers() {
@@ -97,8 +72,9 @@ class CameraActivity : BaseActivity() {
                 val scanningResult = GmsDocumentScanningResult.fromActivityResultIntent(result.data)
                 viewModel.handleScanningResult(scanningResult, contentResolver)
             } else {
-                // User cancelled scan - show retake panel
-                retakeCameraPanel.visibility = View.VISIBLE
+                // User cancelled scan - just return CANCELED, let parent handle the dialog
+                setResult(RESULT_CANCELED)
+                finish()
             }
         }
     }
