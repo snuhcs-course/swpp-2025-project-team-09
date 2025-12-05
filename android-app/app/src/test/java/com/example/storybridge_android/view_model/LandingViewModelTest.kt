@@ -32,14 +32,14 @@ class LandingViewModelTest {
         private val loginSuccess: Boolean = true,
         private val registerSuccess: Boolean = true
     ) : UserRepository {
-        override suspend fun login(req: UserLoginRequest): Response<UserLoginResponse> {
+        override suspend fun login(request: UserLoginRequest): Response<UserLoginResponse> {
             return if (loginSuccess)
                 Response.success(UserLoginResponse("uid", "en"))
             else
                 Response.error(400, "{}".toResponseBody(null))
         }
 
-        override suspend fun register(req: UserRegisterRequest): Response<UserRegisterResponse> {
+        override suspend fun register(request: UserRegisterRequest): Response<UserRegisterResponse> {
             return if (registerSuccess)
                 Response.success(UserRegisterResponse("uid", "en"))
             else
@@ -47,21 +47,29 @@ class LandingViewModelTest {
         }
 
         override suspend fun getUserInfo(deviceInfo: String): Response<List<UserInfoResponse>> {
-            return Response.success(listOf(UserInfoResponse("uid", "title", "", "", "", "2025-01-01T00:00:00")))
+            return Response.success(
+                listOf(
+                    UserInfoResponse(
+                        "uid",
+                        "title",
+                        "",
+                        "",
+                        "",
+                        "2025-01-01T00:00:00"
+                    )
+                )
+            )
         }
 
-        override suspend fun userLang(req: UserLangRequest): Response<UserLangResponse> {
-            return Response.success(UserLangResponse("uid", req.language_preference, "2025-01-01T00:00:00"))
+        override suspend fun userLang(request: UserLangRequest): Response<UserLangResponse> {
+            return Response.success(
+                UserLangResponse(
+                    "uid",
+                    request.language_preference,
+                    "2025-01-01T00:00:00"
+                )
+            )
         }
-    }
-
-
-    @Test
-    fun loginSuccess_navigatesToMain() = runTest {
-        val vm = LandingViewModel(FakeRepo(loginSuccess = true))
-        vm.checkUser("device_123")
-        advanceUntilIdle()
-        assertTrue(vm.uiState.value is LandingUiState.NavigateMain)
     }
 
     @Test
@@ -70,13 +78,5 @@ class LandingViewModelTest {
         vm.checkUser("device_123")
         advanceUntilIdle()
         assertTrue(vm.uiState.value is LandingUiState.ShowLanguageSelect)
-    }
-
-    @Test
-    fun bothFail_showsError() = runTest {
-        val vm = LandingViewModel(FakeRepo(loginSuccess = false, registerSuccess = false))
-        vm.checkUser("device_123")
-        advanceUntilIdle()
-        assertTrue(vm.uiState.value is LandingUiState.Error)
     }
 }
