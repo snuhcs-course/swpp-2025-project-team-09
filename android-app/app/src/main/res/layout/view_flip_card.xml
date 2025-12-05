@@ -17,9 +17,14 @@
             android:text="@string/loading_word"
             android:textColor="#000"
             android:textSize="30sp"
-            android:fontFamily="@font/pinkfong_baby_shark_bold"/>
+            android:fontFamily="@font/pinkfong_baby_shark_bold"
+            android:gravity="center"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="14sp"
+            android:autoSizeMaxTextSize="30sp"
+            android:autoSizeStepGranularity="1sp"/>
 
-    </LinearLayout>
+    </LinearLayout>ㅌ
 
     <!-- Back -->
     <LinearLayout
@@ -38,7 +43,12 @@
             android:text="단어"
             android:textColor="#FFF"
             android:textSize="30sp"
-            android:fontFamily="@font/pinkfong_baby_shark_bold" />
+            android:fontFamily="@font/pinkfong_baby_shark_bold"
+            android:gravity="center"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="14sp"
+            android:autoSizeMaxTextSize="30sp"
+            android:autoSizeStepGranularity="1sp" />
 
     </LinearLayout>
 
