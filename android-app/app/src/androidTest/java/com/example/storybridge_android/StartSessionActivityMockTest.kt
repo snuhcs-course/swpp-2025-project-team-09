@@ -19,6 +19,7 @@ import com.example.storybridge_android.network.ReloadAllSessionResponse
 import com.example.storybridge_android.network.SelectVoiceResponse
 import com.example.storybridge_android.network.SessionStatsResponse
 import com.example.storybridge_android.network.StartSessionResponse
+import com.example.storybridge_android.network.WordPickerResponse
 import com.example.storybridge_android.ui.session.start.StartSessionActivity
 import io.mockk.coEvery
 import io.mockk.mockkStatic
@@ -80,6 +81,13 @@ class StartSessionActivityMockTest {
             }
 
             override suspend fun discardSession(sessionId: String): Result<DiscardSessionResponse> {
+                return Result.failure(Exception("unused"))
+            }
+
+            override suspend fun pickWords(
+                sessionId: String,
+                lang: String
+            ): Result<WordPickerResponse> {
                 return Result.failure(Exception("unused"))
             }
         }
