@@ -75,7 +75,8 @@ class TutorialActivity : BaseActivity() {
             TutorialPage(R.drawable.tutorial_5, getString(R.string.tutorial_5)),
             TutorialPage(R.drawable.tutorial_6, getString(R.string.tutorial_6)),
             TutorialPage(R.drawable.tutorial_7, getString(R.string.tutorial_7)),
-            TutorialPage(R.drawable.tutorial_8, getString(R.string.tutorial_8))
+            TutorialPage(R.drawable.tutorial_8, getString(R.string.tutorial_8)),
+            TutorialPage(R.drawable.tutorial_9, getString(R.string.tutorial_9))
         )
     }
 
