@@ -60,26 +60,9 @@ class ProcessUploadView(APIView):
         # Run OCR
         ocr_result = OCRModule().process_page(image_path)
         if not ocr_result:
-            print(f"[DEBUG] No text detected on page {page_index}, creating empty page")
-            page = Page.objects.create(
-                session=session,
-                img_url=image_path,
-                bbox_json=json.dumps([]),
-                created_at=timezone.now(),
-            )
-
-            # Update session
-            session.totalPages += 1
-            session.save(update_fields=["totalPages"])
-
             return Response(
-                {
-                    "session_id": session_id,
-                    "page_index": page_index,
-                    "status": "no_text",
-                    "submitted_at": timezone.now(),
-                },
-                status=status.HTTP_200_OK,
+                {"error_code": 422, "message": "PROCESS__UNABLE_TO_PROCESS_IMAGE"},
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
         
         # Count words from OCR and add to session.totalWords
