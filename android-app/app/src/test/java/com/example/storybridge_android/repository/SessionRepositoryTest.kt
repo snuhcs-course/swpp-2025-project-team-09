@@ -205,4 +205,40 @@ class SessionRepositoryTest {
         assertTrue(result.isFailure)
     }
 
+    @Test
+    fun pickWords_returnsParsedResponse() = runBlocking {
+        val json = """
+            {
+                "session_id":"s123",
+                "status":"success",
+                "items":[
+                    {"word":"apple","meaning_ko":"사과"},
+                    {"word":"banana","meaning_ko":"바나나"}
+                ]
+            }
+        """
+        server.enqueue(MockResponse().setResponseCode(200).setBody(json))
+
+        val result = repository.pickWords("s123", "ko")
+
+        assertTrue(result.isSuccess)
+        val body = result.getOrNull()
+        assertEquals("success", body?.status)
+        assertEquals(2, body?.items?.size)
+        assertEquals("사과", body?.items?.get(0)?.meaning_ko)
+    }
+
+    @Test
+    fun pickWords_returnsFailureOnHttpError() = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(503))
+        val result = repository.pickWords("s1", "en")
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun pickWords_returnsFailureOnNullBody() = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(200).setBody(""))
+        val result = repository.pickWords("s1", "en")
+        assertTrue(result.isFailure)
+    }
 }
