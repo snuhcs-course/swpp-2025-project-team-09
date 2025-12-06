@@ -399,7 +399,7 @@ class ReadingActivity : BaseActivity() {
 
             // Adjust initial position to keep bounding box within viewport
             var initialX = scaledX
-            var initialY = scaledY
+            val initialY = scaledY
 
             // Ensure the bounding box doesn't overflow horizontally
             if (initialX + constrainedWidth > offsetX + displayedWidth) {
@@ -602,7 +602,7 @@ class ReadingActivity : BaseActivity() {
         currentAudioIndex = 0
 
         // Reset all play button states
-        for ((index, button) in playButtonsMap) {
+        for ((index, _) in playButtonsMap) {
             resetButtonState(index)
         }
 

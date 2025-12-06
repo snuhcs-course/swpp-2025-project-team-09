@@ -120,7 +120,7 @@
     <string name="info_current_page"> This is the current page. </string>
     <string name="error_generic"> Please check internet connection or try again later: %1$s </string>
     <string name="error_image_decode"> Failed to load image. Please check internet connection or try again later. </string>
-    <string name="info_session_saved"> Session saved successfully. </string>
+    <string name="info_session_saved"> Session saved! </string>
     <string name="info_session_discarded"> Session discarded. </string>
     <string name="error_session_action_failed"> Failed to complete the action: %1$s </string>
     <string name="error_session_not_found"> Session not found. Please try different session. </string>

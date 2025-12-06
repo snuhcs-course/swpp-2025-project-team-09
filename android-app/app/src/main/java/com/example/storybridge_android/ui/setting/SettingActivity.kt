@@ -1,8 +1,6 @@
 package com.example.storybridge_android.ui.setting
 
-import android.annotation.SuppressLint
 import android.os.Bundle
-import android.provider.Settings
 import android.util.Log
 import android.widget.Button
 import android.widget.RadioButton
@@ -64,7 +62,6 @@ class SettingActivity : BaseActivity() {
     }
 
     private fun setSelectedLanguage() {
-        val deviceInfo = getAndroidId()
         val selectedLang = when (languageGroup.checkedRadioButtonId) {
             R.id.radioEnglish -> "en"
             R.id.radioChinese -> "zh"
@@ -125,10 +122,5 @@ class SettingActivity : BaseActivity() {
                 }
             }
         }
-    }
-
-    @SuppressLint("HardwareIds")
-    private fun getAndroidId(): String {
-        return Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
     }
 }

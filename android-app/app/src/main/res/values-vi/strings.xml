@@ -120,7 +120,7 @@
     <string name="info_current_page"> Đây là trang hiện tại. </string>
     <string name="error_generic"> Đã xảy ra lỗi: %1$s </string>
     <string name="error_image_decode"> Không thể tải hình ảnh. Vui lòng kiểm tra kết nối internet hoặc thử lại sau. </string>
-    <string name="info_session_saved"> Phiên làm việc đã được lưu thành công. </string>
+    <string name="info_session_saved"> Phiên đã được lưu! </string>
     <string name="info_session_discarded"> Phiên làm việc đã bị hủy. </string>
     <string name="error_session_action_failed"> Không thể hoàn thành thao tác: %1$s </string>
     <string name="error_session_not_found"> Không tìm thấy phiên làm việc. Vui lòng thử một phiên khác. </string>

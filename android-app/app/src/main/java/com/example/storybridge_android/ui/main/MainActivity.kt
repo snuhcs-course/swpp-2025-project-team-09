@@ -1,11 +1,9 @@
 package com.example.storybridge_android.ui.main
 
-import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
-import android.provider.Settings
 import android.util.Base64
 import android.util.Log
 import android.view.View
@@ -123,7 +121,6 @@ class MainActivity : BaseActivity() {
         discardConfirmBtn.setOnClickListener {
             selectedSessionId?.let { sessionId ->
                 lifecycleScope.launch {
-                    val deviceInfo = getAndroidId()
                     viewModel.discardSession(sessionId, deviceInfo)
                 }
             }
@@ -138,7 +135,6 @@ class MainActivity : BaseActivity() {
     }
 
     private fun loadUserInfo() {
-        val deviceInfo = getAndroidId()
         viewModel.loadUserInfo(deviceInfo)
     }
 
@@ -341,7 +337,6 @@ class MainActivity : BaseActivity() {
         startActivity(intent)
     }
 
-
     private fun navigateToVoiceSelect(sessionId: String) {
         val intent = Intent(this, VoiceSelectActivity::class.java).apply {
             putExtra("session_id", sessionId)
@@ -350,13 +345,7 @@ class MainActivity : BaseActivity() {
         startActivity(intent)
     }
 
-    @SuppressLint("HardwareIds")
-    private fun getAndroidId(): String {
-        return Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
-    }
-
     private fun createSession() {
-        val deviceInfo = getAndroidId()
         viewModel.startSession(deviceInfo)
     }
 }

@@ -2,7 +2,6 @@ package com.example.storybridge_android.ui.landing
 
 import android.content.Intent
 import android.os.Bundle
-import android.provider.Settings
 import android.widget.Button
 import android.widget.Toast
 import androidx.activity.viewModels
@@ -24,8 +23,6 @@ class LandingActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_landing_first)
-
-        val deviceInfo = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
 
         lifecycleScope.launch {
             viewModel.uiState.collectLatest { state ->
@@ -88,7 +85,6 @@ class LandingActivity : BaseActivity() {
             Toast.LENGTH_LONG
         ).show()
     }
-
 
     private fun navigateToMain() {
         startActivity(Intent(this, MainActivity::class.java))
