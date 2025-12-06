@@ -20,7 +20,7 @@ class OCRModule:
     - Calculate bounding boxes
     """
 
-    def __init__(self, conf_threshold: float = 0.8):
+    def __init__(self, conf_threshold: float = 0.75):
         self.api_url = os.getenv("OCR_API_URL", "")
         self.secret_key = os.getenv("OCR_SECRET", "")
         self.conf_threshold = conf_threshold
@@ -140,7 +140,7 @@ class OCRModule:
                 continue
             # Cluster by Y within paragraph (DBSCAN)
             Y = np.array([[t["y"]] for t in para])
-            line_eps = max(fs * 0.5, 2.0)
+            line_eps = fs*0.25
             line_db = DBSCAN(eps=line_eps, min_samples=1)
             line_labels = line_db.fit_predict(Y)
             for t, lbl in zip(para, line_labels):

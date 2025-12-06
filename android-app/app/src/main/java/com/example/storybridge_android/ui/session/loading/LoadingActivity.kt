@@ -85,16 +85,10 @@ class LoadingActivity : BaseActivity() {
         lifecycleScope.launchWhenStarted {
             viewModel.error.collectLatest { msg ->
                 msg?.let {
-                    val isCover = intent.getBooleanExtra("is_cover", false)
-
-                    if (isCover) {
-                        setResult(RESULT_CANCELED, Intent().apply {
-                            putExtra("retake", true)
-                        })
-                        finish()
-                    } else {
-                        showError(it)
-                    }
+                    setResult(RESULT_CANCELED, Intent().apply {
+                        putExtra("retake", true)
+                    })
+                    finish()
                 }
             }
         }
@@ -120,14 +114,10 @@ class LoadingActivity : BaseActivity() {
         lifecycleScope.launchWhenStarted {
             viewModel.error.collectLatest { msg ->
                 msg?.let {
-                    if (isCover) {
-                        setResult(RESULT_CANCELED, Intent().apply {
-                            putExtra("retake", true)
-                        })
-                        finish()
-                    } else {
-                        showError(it)
-                    }
+                    setResult(RESULT_CANCELED, Intent().apply {
+                        putExtra("retake", true)
+                    })
+                    finish()
                 }
             }
         }

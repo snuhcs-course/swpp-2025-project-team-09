@@ -258,7 +258,12 @@ class CameraSessionActivity : BaseActivity() {
 
         lifecycleScope.launch {
             sessionId?.let { sid ->
-                viewModel.discardSession(sid)
+                if (pageIndex <= 1) {
+                    viewModel.discardSession(sid)
+                    Log.d(TAG, "Session will be discarded (pageIndex: $pageIndex)")
+                } else {
+                    Log.d(TAG, "Session kept (pageIndex: $pageIndex)")
+                }
             }
         }
     }

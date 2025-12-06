@@ -72,6 +72,13 @@ class VoiceSelectActivityTest {
 
             override suspend fun discardSession(sessionId: String) =
                 Result.failure<DiscardSessionResponse>(Exception("unused"))
+
+            override suspend fun pickWords(
+                sessionId: String,
+                lang: String
+            ): Result<WordPickerResponse> {
+                return Result.failure(Exception("unused"))
+            }
         }
 
         // Fake ProcessRepository
