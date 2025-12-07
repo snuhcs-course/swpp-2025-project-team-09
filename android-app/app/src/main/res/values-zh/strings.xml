@@ -6,8 +6,8 @@
 
     <!-- Tutorial -->
     <string name="tutorial_1">点击“开始阅读！”\n在主页上的按钮</string>
-    <string name="tutorial_2">拍一张\n你书本的照片！</string>
-    <string name="tutorial_3">选择你想听的\n声音</string>
+    <string name="tutorial_2">选择你想听的\n声音</string>
+    <string name="tutorial_3">拍一张\n你书本的照片！</string>
     <string name="tutorial_4">你可以移动\n文字框的位置</string>
     <string name="tutorial_5">点击耳机图标\n听故事朗读</string>
     <string name="tutorial_6">点击箭头按钮\n看其他页面</string>

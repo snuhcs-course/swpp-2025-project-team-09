@@ -6,8 +6,8 @@
 
     <!-- Tutorial -->
     <string name="tutorial_1">Nhấn “Bắt đầu đọc!”\nở trang chính</string>
-    <string name="tutorial_2">Chụp một bức ảnh\ncuốn sách của con!</string>
-    <string name="tutorial_3">Chọn giọng nói\ncon muốn nghe</string>
+    <string name="tutorial_2">Chọn giọng nói\ncon muốn nghe</string>
+    <string name="tutorial_3">Chụp một bức ảnh\ncuốn sách của con!</string>
     <string name="tutorial_4">Con có thể di chuyển\nhộp chữ trên trang</string>
     <string name="tutorial_5">Nhấn vào biểu tượng tai nghe\nđể nghe đọc truyện</string>
     <string name="tutorial_6">Nhấn vào các mũi tên\nđể xem trang khác</string>

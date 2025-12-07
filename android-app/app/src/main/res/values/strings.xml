@@ -6,8 +6,8 @@
 
     <!-- Tutorial -->
     <string name="tutorial_1">Click “Start Reading!”\nbutton on the main page</string>
-    <string name="tutorial_2">Take a photo\nof your book!</string>
-    <string name="tutorial_3">Select the voice\nyou’d like to hear</string>
+    <string name="tutorial_2">Select the voice\nyou’d like to hear</string>
+    <string name="tutorial_3">Take a photo\nof your book!</string>
     <string name="tutorial_4">You can move around\nthe text boxes</string>
     <string name="tutorial_5">Click the headphones\nicon to hear narrations</string>
     <string name="tutorial_6">Click arrow buttons\nto review other pages</string>
