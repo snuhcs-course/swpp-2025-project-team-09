@@ -131,10 +131,10 @@ class TTSModule:
 
         result = text
         for word in found_words:
-            pattern = r'\b' + re.escape(word) + r'\b'
-            result = re.sub(pattern, '', result, flags=re.IGNORECASE)
+            pattern = r"\b" + re.escape(word) + r"\b"
+            result = re.sub(pattern, "", result, flags=re.IGNORECASE)
 
-        result = re.sub(r'\s+', ' ', result).strip()
+        result = re.sub(r"\s+", " ", result).strip()
 
         return result
 

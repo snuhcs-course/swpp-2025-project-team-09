@@ -354,4 +354,3 @@ class OCRModule:
         # Return the tallest text block (likely the title)
         results.sort(key=lambda r: r["height"], reverse=True)
         return results[0]["text"] if results else None
-
