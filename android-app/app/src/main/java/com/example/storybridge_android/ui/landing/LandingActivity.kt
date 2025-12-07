@@ -2,12 +2,13 @@ package com.example.storybridge_android.ui.landing
 
 import android.content.Intent
 import android.os.Bundle
-import android.provider.Settings
 import android.widget.Button
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.activity.enableEdgeToEdge
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.storybridge_android.ui.setting.AppSettings
 import com.example.storybridge_android.ui.main.MainActivity
 import com.example.storybridge_android.R
@@ -25,15 +26,15 @@ class LandingActivity : BaseActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_landing_first)
 
-        val deviceInfo = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
-
         lifecycleScope.launch {
-            viewModel.uiState.collectLatest { state ->
-                when (state) {
-                    is LandingUiState.Loading -> Unit
-                    is LandingUiState.NavigateMain -> navigateToMain()
-                    is LandingUiState.ShowLanguageSelect -> showLanguageSelection()
-                    is LandingUiState.Error -> showError(state.message)
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collectLatest { state ->
+                    when (state) {
+                        is LandingUiState.Loading -> Unit
+                        is LandingUiState.NavigateMain -> navigateToMain()
+                        is LandingUiState.ShowLanguageSelect -> showLanguageSelection()
+                        is LandingUiState.Error -> showError(state.message)
+                    }
                 }
             }
         }
@@ -88,7 +89,6 @@ class LandingActivity : BaseActivity() {
             Toast.LENGTH_LONG
         ).show()
     }
-
 
     private fun navigateToMain() {
         startActivity(Intent(this, MainActivity::class.java))

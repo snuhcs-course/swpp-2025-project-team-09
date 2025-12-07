@@ -18,6 +18,9 @@ import com.example.storybridge_android.network.UploadImageResponse
 import com.example.storybridge_android.network.WordPickerResponse
 import com.example.storybridge_android.ui.camera.CameraSessionViewModel
 import com.example.storybridge_android.ui.camera.SessionUiState
+import io.mockk.every
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -40,11 +43,20 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class)
 class CameraSessionViewModelTest {
 
-    // Rule to execute LiveData updates synchronously
     @get:Rule
     val instantTaskExecutorRule = InstantTaskExecutorRule()
 
-    // Test dispatcher for coroutines
+    @Before
+    fun mockLog() {
+        mockkStatic(android.util.Log::class)
+        every { android.util.Log.d(any(), any()) } returns 0
+    }
+
+    @After
+    fun unmockLog() {
+        unmockkAll()
+    }
+
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var viewModel: CameraSessionViewModel

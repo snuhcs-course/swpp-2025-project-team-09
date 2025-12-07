@@ -16,6 +16,8 @@ import com.example.storybridge_android.ui.landing.TutorialActivity
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility
+import androidx.test.espresso.matcher.ViewMatchers.Visibility
 
 @RunWith(AndroidJUnit4::class)
 class TutorialActivityTest {
@@ -26,43 +28,69 @@ class TutorialActivityTest {
     @get:Rule
     val activityRule = ActivityScenarioRule(TutorialActivity::class.java)
 
+    private val lastPageIndex = 9
+
+    //------------------------------------
+    // 1. Initial State
+    //------------------------------------
+
     @Test
     fun initialState_showsFirstTutorialPage() {
         onView(withId(R.id.nextButton))
+            .check(matches(isDisplayed()))
             .check(matches(withText(R.string.next)))
+        onView(withId(R.id.startButton))
+            .check(matches(withEffectiveVisibility(Visibility.GONE)))
     }
+
+    //------------------------------------
+    // 2. Navigation
+    //------------------------------------
 
     @Test
     fun clickNext_movesToNextPage() {
         onView(withId(R.id.nextButton)).perform(click())
         onView(withId(R.id.nextButton))
+            .check(matches(isDisplayed()))
             .check(matches(withText(R.string.next)))
     }
 
     @Test
     fun lastPage_showsStartButton() {
-        repeat(7) {
+        repeat(lastPageIndex) {
             onView(withId(R.id.nextButton)).perform(click())
         }
 
         onView(withId(R.id.nextButton))
+            .check(matches(withEffectiveVisibility(Visibility.GONE)))
+
+        onView(withId(R.id.startButton))
+            .check(matches(isDisplayed()))
             .check(matches(withText(R.string.tutorial_start)))
     }
 
     @Test
     fun clickStartOnLastPage_navigatesToMain() {
-        repeat(7) {
+        repeat(lastPageIndex) {
             onView(withId(R.id.nextButton)).perform(click())
         }
-        onView(withId(R.id.nextButton)).perform(click())
+
+        onView(withId(R.id.startButton)).perform(click())
+
         intended(hasComponent(MainActivity::class.java.name))
     }
+
+    //------------------------------------
+    // 3. UI Elements
+    //------------------------------------
 
     @Test
     fun indicatorDots_updateCorrectly() {
         onView(withId(R.id.indicatorLayout))
             .check(matches(isDisplayed()))
+
         onView(withId(R.id.nextButton)).perform(click())
+
         onView(withId(R.id.indicatorLayout))
             .check(matches(isDisplayed()))
     }

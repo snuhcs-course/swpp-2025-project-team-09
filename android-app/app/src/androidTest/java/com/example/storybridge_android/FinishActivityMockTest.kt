@@ -1,4 +1,4 @@
-package com.example.storybridge_android.ui.session
+package com.example.storybridge_android.ui.session.finish
 
 import android.content.Intent
 import androidx.test.core.app.ActivityScenario
@@ -15,8 +15,6 @@ import com.example.storybridge_android.R
 import com.example.storybridge_android.ServiceLocator
 import com.example.storybridge_android.data.SessionRepository
 import com.example.storybridge_android.network.*
-import com.example.storybridge_android.ui.session.finish.FinishBalloonView
-import com.example.storybridge_android.ui.session.finish.FinishActivity
 import io.mockk.unmockkAll
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.*
@@ -53,8 +51,25 @@ class FinishActivityMockTest {
             )
             override suspend fun reloadAllSession(userId: String, startedAt: String) = Result.failure<ReloadAllSessionResponse>(Exception("unused"))
             override suspend fun discardSession(sessionId: String) = Result.failure<DiscardSessionResponse>(Exception("unused"))
+
+            // 💡 WordPickerResponse 형태로 수정
+            override suspend fun pickWords(
+                sessionId: String,
+                lang: String
+            ): Result<WordPickerResponse> {
+                return Result.success(WordPickerResponse(
+                    session_id = sessionId,
+                    status = "ok",
+                    items = listOf(
+                        WordItem("a", "b"),
+                        WordItem("c", "d"),
+                        WordItem("e", "f")
+                    )
+                ))
+            }
         }
         ServiceLocator.sessionRepository = mockSessionRepo
+        Intents.init()
     }
 
     @After
@@ -68,6 +83,7 @@ class FinishActivityMockTest {
         } catch (_: Exception) {}
         ServiceLocator.reset()
         unmockkAll()
+        Intents.release()
     }
 
     @Test
@@ -85,7 +101,6 @@ class FinishActivityMockTest {
     @Test
     fun clickMainButton_existingSession_navigatesToMain() {
         val intent = createIntent().apply { putExtra("is_new_session", false) }
-        Intents.init()
         val scenario = ActivityScenario.launch<FinishActivity>(intent)
         Thread.sleep(2000)
         scenario.onActivity {
@@ -95,7 +110,23 @@ class FinishActivityMockTest {
         onView(withId(R.id.mainButton)).perform(click())
         intended(IntentMatchers.hasComponent("com.example.storybridge_android.ui.main.MainActivity"))
         scenario.close()
-        Intents.release()
+    }
+
+    @Test
+    fun clickMainButton_newSession_navigatesToDecideSave() {
+        val intent = createIntent().apply { putExtra("is_new_session", true) }
+        val scenario = ActivityScenario.launch<FinishActivity>(intent)
+        Thread.sleep(2000)
+        scenario.onActivity {
+            it.findViewById<FinishBalloonView>(R.id.balloonView)?.stopAnimation()
+            it.findViewById<android.widget.Button>(R.id.mainButton)?.visibility = android.view.View.VISIBLE
+        }
+
+        onView(withId(R.id.mainButton)).perform(click())
+
+        intended(IntentMatchers.hasComponent("com.example.storybridge_android.ui.session.decide.DecideSaveActivity"))
+
+        scenario.close()
     }
 
     @Test
@@ -112,6 +143,12 @@ class FinishActivityMockTest {
             )
             override suspend fun reloadAllSession(userId: String, startedAt: String) = Result.failure<ReloadAllSessionResponse>(Exception("unused"))
             override suspend fun discardSession(sessionId: String) = Result.failure<DiscardSessionResponse>(Exception("unused"))
+            override suspend fun pickWords(
+                sessionId: String,
+                lang: String
+            ): Result<WordPickerResponse> {
+                return Result.success(WordPickerResponse(session_id = sessionId, status = "ok", items = emptyList()))
+            }
         }
         ServiceLocator.sessionRepository = mockSessionRepo
         val scenario = ActivityScenario.launch<FinishActivity>(createIntent())
@@ -125,6 +162,75 @@ class FinishActivityMockTest {
             .check(matches(withText(allOf(containsString("1 minute"), containsString("30 seconds")))))
         scenario.close()
     }
+
+    @Test
+    fun sessionStats_zeroSeconds_displaysOnlyMinutes() {
+        mockSessionRepo = object : SessionRepository {
+            override suspend fun startSession(userId: String) = Result.failure<StartSessionResponse>(Exception("unused"))
+            override suspend fun selectVoice(sessionId: String, voiceStyle: String) = Result.failure<SelectVoiceResponse>(Exception("unused"))
+            override suspend fun endSession(sessionId: String) = Result.success(EndSessionResponse("S1", "2025-01-01", 5))
+            override suspend fun getSessionStats(sessionId: String) = Result.success(
+                SessionStatsResponse(
+                    "S1", "U1", false, "2025-01-01", "2025-01-01",
+                    total_pages = 5, total_time_spent = 120, total_words_read = 200
+                )
+            )
+            override suspend fun reloadAllSession(userId: String, startedAt: String) = Result.failure<ReloadAllSessionResponse>(Exception("unused"))
+            override suspend fun discardSession(sessionId: String) = Result.failure<DiscardSessionResponse>(Exception("unused"))
+            override suspend fun pickWords(
+                sessionId: String,
+                lang: String
+            ): Result<WordPickerResponse> {
+                return Result.success(WordPickerResponse(session_id = sessionId, status = "ok", items = emptyList()))
+            }
+        }
+        ServiceLocator.sessionRepository = mockSessionRepo
+        val scenario = ActivityScenario.launch<FinishActivity>(createIntent())
+        Thread.sleep(2000)
+        scenario.onActivity {
+            val v = it.findViewById<FinishBalloonView>(R.id.balloonView)
+            v.stopAnimation()
+            repeat(3) { idx -> v.onBalloonPopped?.invoke(idx, v.getBalloonText(idx) ?: "") }
+        }
+        onView(withId(R.id.balloonResultText))
+            .check(matches(withText(allOf(containsString("2 minutes"), not(containsString("seconds"))))))
+        scenario.close()
+    }
+
+    @Test
+    fun sessionStats_lessThanOneMinute_displaysOnlySeconds() {
+        mockSessionRepo = object : SessionRepository {
+            override suspend fun startSession(userId: String) = Result.failure<StartSessionResponse>(Exception("unused"))
+            override suspend fun selectVoice(sessionId: String, voiceStyle: String) = Result.failure<SelectVoiceResponse>(Exception("unused"))
+            override suspend fun endSession(sessionId: String) = Result.success(EndSessionResponse("S1", "2025-01-01", 5))
+            override suspend fun getSessionStats(sessionId: String) = Result.success(
+                SessionStatsResponse(
+                    "S1", "U1", false, "2025-01-01", "2025-01-01",
+                    total_pages = 5, total_time_spent = 45, total_words_read = 200
+                )
+            )
+            override suspend fun reloadAllSession(userId: String, startedAt: String) = Result.failure<ReloadAllSessionResponse>(Exception("unused"))
+            override suspend fun discardSession(sessionId: String) = Result.failure<DiscardSessionResponse>(Exception("unused"))
+            override suspend fun pickWords(
+                sessionId: String,
+                lang: String
+            ): Result<WordPickerResponse> {
+                return Result.success(WordPickerResponse(session_id = sessionId, status = "ok", items = emptyList()))
+            }
+        }
+        ServiceLocator.sessionRepository = mockSessionRepo
+        val scenario = ActivityScenario.launch<FinishActivity>(createIntent())
+        Thread.sleep(2000)
+        scenario.onActivity {
+            val v = it.findViewById<FinishBalloonView>(R.id.balloonView)
+            v.stopAnimation()
+            repeat(3) { idx -> v.onBalloonPopped?.invoke(idx, v.getBalloonText(idx) ?: "") }
+        }
+        onView(withId(R.id.balloonResultText))
+            .check(matches(withText(allOf(containsString("45 seconds"), not(containsString("minute"))))))
+        scenario.close()
+    }
+
 
     @Test
     fun balloonPopping_differentOrder_displaysTextsInCorrectOrder() {
@@ -158,9 +264,57 @@ class FinishActivityMockTest {
             v.stopAnimation()
             v.onAllBalloonsPopped?.invoke()
         }
+
         onView(withId(R.id.tapBalloonHint)).check(matches(withEffectiveVisibility(Visibility.GONE)))
-        onView(withId(R.id.amazingText)).check(matches(isDisplayed()))
+        onView(withId(R.id.amazingText)).check(matches(withEffectiveVisibility(Visibility.GONE)))
         onView(withId(R.id.mainButton)).check(matches(isDisplayed()))
+
+        scenario.close()
+    }
+
+    @Test
+    fun pickedWords_lessThanThree_hidesWordContainer() {
+        mockSessionRepo = object : SessionRepository {
+            override suspend fun getSessionStats(sessionId: String) = Result.success(
+                SessionStatsResponse("S1", "U1", false, "", "", 5, 80, 200)
+            )
+            // 💡 WordPickerResponse 형태로 수정 및 2개 단어만 반환
+            override suspend fun pickWords(
+                sessionId: String,
+                lang: String
+            ): Result<WordPickerResponse> {
+                return Result.success(WordPickerResponse(
+                    session_id = sessionId,
+                    status = "ok",
+                    items = listOf(
+                        WordItem("w1", "m1"),
+                        WordItem("w2", "m2")
+                    )
+                ))
+            }
+            override suspend fun startSession(userId: String) = Result.failure<StartSessionResponse>(Exception("unused"))
+            override suspend fun selectVoice(sessionId: String, voiceStyle: String) = Result.failure<SelectVoiceResponse>(Exception("unused"))
+            override suspend fun endSession(sessionId: String) = Result.success(EndSessionResponse("S1", "2025-01-01", 5))
+            override suspend fun reloadAllSession(userId: String, startedAt: String) = Result.failure<ReloadAllSessionResponse>(Exception("unused"))
+            override suspend fun discardSession(sessionId: String) = Result.failure<DiscardSessionResponse>(Exception("unused"))
+        }
+        ServiceLocator.sessionRepository = mockSessionRepo
+
+        val scenario = ActivityScenario.launch<FinishActivity>(createIntent())
+        Thread.sleep(2000)
+
+        scenario.onActivity {
+            val v = it.findViewById<FinishBalloonView>(R.id.balloonView)
+            v.stopAnimation()
+            v.onAllBalloonsPopped?.invoke()
+        }
+
+        onView(withId(R.id.learnedWordsContainer))
+            .check(matches(withEffectiveVisibility(Visibility.GONE)))
+        onView(withId(R.id.learnedWordsTitle))
+            .check(matches(withEffectiveVisibility(Visibility.GONE)))
+        onView(withId(R.id.mainButton)).check(matches(isDisplayed()))
+
         scenario.close()
     }
 

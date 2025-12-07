@@ -9,8 +9,6 @@
     <color name="gray_dark">#444444</color>
 
     <color name="black_50">#80000000</color>
-    <color name="light_blue_400">#FF29B6F6</color>
-    <color name="light_blue_600">#FF039BE5</color>
     <color name="gray_400">#FFBDBDBD</color>
     <color name="gray_600">#FF757575</color>
 
@@ -20,6 +18,8 @@
     <color name="yellow_primary">#FFBF08</color>
     <color name="yellow_light">#FFE7A1</color>
     <color name="yellow_bright">#FCEE21</color>
+    <color name="current_page_frame">#03A9F4</color>
+
 
     <color name="red_light">#FFC0C3</color>
     <color name="teal_light">#97E2DB</color>

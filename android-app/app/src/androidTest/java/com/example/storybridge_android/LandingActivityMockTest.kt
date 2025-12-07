@@ -1,12 +1,10 @@
 package com.example.storybridge_android
 
-import android.widget.Button
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
-import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.Intents.intended
@@ -17,6 +15,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withId
 import com.example.storybridge_android.data.UserRepository
 import com.example.storybridge_android.network.*
 import com.example.storybridge_android.ui.landing.LandingActivity
+import com.example.storybridge_android.ui.landing.TutorialActivity
 import com.example.storybridge_android.ui.main.MainActivity
 import com.example.storybridge_android.ui.setting.AppSettings
 import io.mockk.*
@@ -26,8 +25,10 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.*
 import org.junit.runner.RunWith
+import org.junit.runners.MethodSorters
 import retrofit2.Response
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
 class LandingActivityMockTest {
@@ -39,6 +40,7 @@ class LandingActivityMockTest {
     fun setup() {
         mockUserRepository = mockk()
         ServiceLocator.userRepository = mockUserRepository
+        Intents.init()
     }
 
     @After
@@ -46,23 +48,17 @@ class LandingActivityMockTest {
         if (::scenario.isInitialized) scenario.close()
         ServiceLocator.reset()
         clearAllMocks()
+        Intents.release()
     }
 
-    /***
-     * 1. Successful Login
-     ***/
+    //------------------------------------
+    // 1. Check user info
+    //------------------------------------
+
     @Test
-    fun whenServerReturns200_NavigatesToMain() = runTest {
+    fun whenServerReturns200_ShowsLanguageSelection() = runTest {
         val loginResponse = UserLoginResponse("uid", "en")
-        val info = UserInfoResponse(
-            user_id = "uid",
-            title = "title",
-            translated_title = "",
-            image_base64 = "",
-            started_at = "2025-10-29T00:00:00",
-            session_id = "session_id"
-        )
-        val infoListResponse = listOf(info)
+        val infoListResponse = emptyList<UserInfoResponse>()
 
         coEvery { mockUserRepository.login(any()) } returns Response.success(loginResponse)
         coEvery { mockUserRepository.getUserInfo(any()) } returns Response.success(infoListResponse)
@@ -70,34 +66,30 @@ class LandingActivityMockTest {
         scenario = ActivityScenario.launch(LandingActivity::class.java)
         Thread.sleep(3000)
 
-        onView(withId(R.id.main)).check(matches(isDisplayed()))
+        onView(withId(R.id.btnEnglish)).check(matches(isDisplayed()))
+        onView(withId(R.id.btnChinese)).check(matches(isDisplayed()))
 
         coVerify(exactly = 1) { mockUserRepository.login(any()) }
+        coVerify(exactly = 0) { mockUserRepository.getUserInfo(any()) }
     }
 
     @Test
-    fun successfulLogin_withEmptyUserInfo_navigatesToMain() = runTest {
+    fun successfulLogin_withEmptyUserInfo_ShowsLanguageSelection() = runTest {
         val loginResponse = UserLoginResponse("uid", "en")
+        val infoListResponse = emptyList<UserInfoResponse>()
 
         coEvery { mockUserRepository.login(any()) } returns Response.success(loginResponse)
-        coEvery { mockUserRepository.getUserInfo(any()) } returns Response.success(emptyList())
+        coEvery { mockUserRepository.getUserInfo(any()) } returns Response.success(infoListResponse)
 
         scenario = ActivityScenario.launch(LandingActivity::class.java)
         Thread.sleep(3000)
 
-        var isFinishing = false
-        try {
-            scenario.onActivity { activity ->
-                isFinishing = activity.isFinishing
-            }
-        } catch (e: Exception) {
-            isFinishing = true
-        }
-        assert(isFinishing) { "Activity should be finishing after navigation to MainActivity" }
+        onView(withId(R.id.btnEnglish)).check(matches(isDisplayed()))
+        intended(IntentMatchers.hasComponent(MainActivity::class.java.name), times(0))
     }
 
     @Test
-    fun getUserInfoError_stillNavigatesToMain() = runTest {
+    fun getUserInfoError_ShowsLanguageSelection() = runTest {
         val loginResponse = UserLoginResponse("uid", "en")
         val infoError = Response.error<List<UserInfoResponse>>(
             500,
@@ -110,12 +102,10 @@ class LandingActivityMockTest {
         scenario = ActivityScenario.launch(LandingActivity::class.java)
         Thread.sleep(3000)
 
-        coVerify(exactly = 1) { mockUserRepository.getUserInfo(any()) }
-    }
+        onView(withId(R.id.btnEnglish)).check(matches(isDisplayed()))
 
-    /***
-     * 2. Login failed -> Register (language selection)
-     ***/
+        coVerify(exactly = 1) { mockUserRepository.login(any()) }
+    }
 
     @Test
     fun whenServerReturns400_ShowsLanguageSelection() = runTest {
@@ -139,29 +129,7 @@ class LandingActivityMockTest {
     }
 
     @Test
-    fun clickingLanguageButton_callsRegister() = runTest {
-        val errorResponse = Response.error<UserLoginResponse>(
-            400,
-            """{"error":"USER__INVALID_REQUEST_BODY"}""".toResponseBody("application/json".toMediaType())
-        )
-
-        val registerResponse = UserRegisterResponse("mock_uid", "en")
-
-        coEvery { mockUserRepository.login(any()) } returns errorResponse
-        coEvery { mockUserRepository.register(any()) } returns Response.success(registerResponse)
-
-        scenario = ActivityScenario.launch(LandingActivity::class.java)
-        Thread.sleep(1500)
-
-        onView(withId(R.id.btnEnglish)).perform(click())
-        Thread.sleep(1000)
-
-        coVerify(exactly = 1) { mockUserRepository.register(any()) }
-    }
-
-    @Test
-    fun registerSuccess_navigatesToMain() = runTest {
-        // GIVEN: Login 실패 → Register 성공
+    fun registerSuccess_navigatesToTutorial() = runTest {
         val loginError = Response.error<UserLoginResponse>(
             400,
             """{"error":"USER__INVALID_REQUEST_BODY"}""".toResponseBody("application/json".toMediaType())
@@ -171,7 +139,6 @@ class LandingActivityMockTest {
         coEvery { mockUserRepository.login(any()) } returns loginError
         coEvery { mockUserRepository.register(any()) } returns Response.success(registerResponse)
 
-        // WHEN: Activity 실행 후 English 선택 및 Start
         scenario = ActivityScenario.launch(LandingActivity::class.java)
         Thread.sleep(1500)
 
@@ -180,249 +147,113 @@ class LandingActivityMockTest {
         onView(withId(R.id.startButton)).perform(click())
         Thread.sleep(1000)
 
-        // THEN: MainActivity로 이동
-        var isFinishing = false
-        try {
-            scenario.onActivity { activity ->
-                isFinishing = activity.isFinishing
-            }
-        } catch (e: Exception) {
-            isFinishing = true
-        }
-        assert(isFinishing) { "Activity should finish after successful registration" }
+        intended(IntentMatchers.hasComponent(TutorialActivity::class.java.name), times(1))
     }
 
-    /***
-     * 3. Language selection UI
-     ***/
+    //------------------------------------
+    // 2. Language Selection
+    //------------------------------------
+
+    @Test
+    fun clickingStartButton_withoutSelectingLanguage_showsToastAndStays() = runTest {
+        val loginError = Response.error<UserLoginResponse>(
+            400,
+            """{"error":"USER__INVALID_REQUEST_BODY"}""".toResponseBody("application/json".toMediaType())
+        )
+        val registerResponse = UserRegisterResponse("mock_uid", "en")
+
+        coEvery { mockUserRepository.login(any()) } returns loginError
+        coEvery { mockUserRepository.register(any()) } returns Response.success(registerResponse)
+
+        scenario = ActivityScenario.launch(LandingActivity::class.java)
+        Thread.sleep(1500)
+
+        onView(withId(R.id.startButton)).check(matches(isDisplayed())).perform(click())
+        Thread.sleep(1000)
+
+        intended(IntentMatchers.hasComponent(TutorialActivity::class.java.name), times(0))
+
+        onView(withId(R.id.btnEnglish)).check(matches(isDisplayed()))
+    }
+
+    @Test
+    fun clickingVietnameseButton_setsLanguageToVi() = runTest {
+        mockkObject(AppSettings)
+        every { AppSettings.setLanguage(any(), any()) } just Runs
+
+        val loginError = Response.error<UserLoginResponse>(
+            400,
+            """{"error":"USER__INVALID_REQUEST_BODY"}""".toResponseBody("application/json".toMediaType())
+        )
+        val registerResponse = UserRegisterResponse("mock_uid", "vi")
+
+        coEvery { mockUserRepository.login(any()) } returns loginError
+        coEvery { mockUserRepository.register(any()) } returns Response.success(registerResponse)
+
+        scenario = ActivityScenario.launch(LandingActivity::class.java)
+        Thread.sleep(1500)
+
+        onView(withId(R.id.btnVietnamese)).check(matches(isDisplayed())).perform(click())
+        Thread.sleep(500)
+
+        verify { AppSettings.setLanguage(any(), "vi") }
+
+        unmockkObject(AppSettings)
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        AppSettings.setLanguage(context, "en")
+    }
 
     @Test
     fun clickingChineseButton_setsLanguageToZh() = runTest {
-        // GIVEN: AppSettings mock
         mockkObject(AppSettings)
         every { AppSettings.setLanguage(any(), any()) } just Runs
 
-        val errorResponse = Response.error<UserLoginResponse>(
+        val loginError = Response.error<UserLoginResponse>(
             400,
             """{"error":"USER__INVALID_REQUEST_BODY"}""".toResponseBody("application/json".toMediaType())
         )
         val registerResponse = UserRegisterResponse("mock_uid", "zh")
 
-        coEvery { mockUserRepository.login(any()) } returns errorResponse
+        coEvery { mockUserRepository.login(any()) } returns loginError
         coEvery { mockUserRepository.register(any()) } returns Response.success(registerResponse)
 
         scenario = ActivityScenario.launch(LandingActivity::class.java)
         Thread.sleep(1500)
 
-        // WHEN: Chinese 버튼 클릭
-        onView(withId(R.id.btnChinese)).perform(click())
+        onView(withId(R.id.btnChinese)).check(matches(isDisplayed())).perform(click())
         Thread.sleep(500)
 
-        // THEN: AppSettings에 "zh"가 설정됨
         verify { AppSettings.setLanguage(any(), "zh") }
 
         unmockkObject(AppSettings)
-
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
         AppSettings.setLanguage(context, "en")
     }
 
     @Test
-    fun clickingEnglishButton_setsLanguageToEn() = runTest {
-        // GIVEN: AppSettings mock
+    fun z_clickingEnglishButton_setsLanguageToEn() = runTest {
         mockkObject(AppSettings)
         every { AppSettings.setLanguage(any(), any()) } just Runs
 
-        val errorResponse = Response.error<UserLoginResponse>(
+        val loginError = Response.error<UserLoginResponse>(
             400,
             """{"error":"USER__INVALID_REQUEST_BODY"}""".toResponseBody("application/json".toMediaType())
         )
         val registerResponse = UserRegisterResponse("mock_uid", "en")
 
-        coEvery { mockUserRepository.login(any()) } returns errorResponse
+        coEvery { mockUserRepository.login(any()) } returns loginError
         coEvery { mockUserRepository.register(any()) } returns Response.success(registerResponse)
 
         scenario = ActivityScenario.launch(LandingActivity::class.java)
         Thread.sleep(1500)
 
-        // WHEN: English 버튼 클릭
-        onView(withId(R.id.btnEnglish)).perform(click())
+        onView(withId(R.id.btnEnglish)).check(matches(isDisplayed())).perform(click())
         Thread.sleep(500)
 
-        // THEN: AppSettings에 "en"이 설정됨
         verify { AppSettings.setLanguage(any(), "en") }
 
         unmockkObject(AppSettings)
-    }
-
-
-    @Test
-    fun languageButtonSelection_updatesButtonState() = runTest {
-        val errorResponse = Response.error<UserLoginResponse>(
-            400,
-            """{"error":"USER__INVALID_REQUEST_BODY"}""".toResponseBody("application/json".toMediaType())
-        )
-        val registerResponse = UserRegisterResponse("mock_uid", "en")
-
-        coEvery { mockUserRepository.login(any()) } returns errorResponse
-        coEvery { mockUserRepository.register(any()) } returns Response.success(registerResponse)
-
-        scenario = ActivityScenario.launch(LandingActivity::class.java)
-        Thread.sleep(1500)
-
-        // WHEN: English 버튼 선택
-        onView(withId(R.id.btnEnglish)).perform(click())
-        Thread.sleep(300)
-
-        // THEN: English 버튼이 선택됨
-        scenario.onActivity { activity ->
-            val btnEnglish = activity.findViewById<Button>(R.id.btnEnglish)
-            val btnChinese = activity.findViewById<Button>(R.id.btnChinese)
-            assert(btnEnglish.isSelected) { "English button should be selected" }
-            assert(!btnChinese.isSelected) { "Chinese button should not be selected" }
-        }
-
-        // WHEN: Chinese 버튼 선택 (토글)
-        onView(withId(R.id.btnChinese)).perform(click())
-        Thread.sleep(300)
-
-        // THEN: Chinese 버튼만 선택됨
-        scenario.onActivity { activity ->
-            val btnEnglish = activity.findViewById<Button>(R.id.btnEnglish)
-            val btnChinese = activity.findViewById<Button>(R.id.btnChinese)
-            assert(!btnEnglish.isSelected) { "English button should not be selected" }
-            assert(btnChinese.isSelected) { "Chinese button should be selected" }
-        }
-
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
         AppSettings.setLanguage(context, "en")
-    }
-
-    /***
-     * 4. Start button in Language selection UI
-     ***/
-    @Test
-    fun clickingStartButton_withoutSelectingLanguage_doesNotNavigate() = runTest {
-        val errorResponse = Response.error<UserLoginResponse>(
-            400,
-            """{"error":"USER__INVALID_REQUEST_BODY"}""".toResponseBody("application/json".toMediaType())
-        )
-        val registerResponse = UserRegisterResponse("mock_uid", "en")
-
-        coEvery { mockUserRepository.login(any()) } returns errorResponse
-        coEvery { mockUserRepository.register(any()) } returns Response.success(registerResponse)
-
-        Intents.init()
-
-        scenario = ActivityScenario.launch(LandingActivity::class.java)
-        Thread.sleep(1500)
-
-        onView(withId(R.id.startButton)).perform(click())
-        Thread.sleep(500)
-
-        intended(IntentMatchers.hasComponent(MainActivity::class.java.name), times(0))
-
-        Intents.release()
-    }
-
-    @Test
-    fun clickingStartButton_withoutSelectingLanguage_staysOnLanguageScreen() = runTest {
-        val loginError = Response.error<UserLoginResponse>(
-            400,
-            """{"error":"USER__INVALID_REQUEST_BODY"}""".toResponseBody("application/json".toMediaType())
-        )
-        val registerSuccess = UserRegisterResponse("mock_uid", "en")
-
-        coEvery { mockUserRepository.login(any()) } returns loginError
-        coEvery { mockUserRepository.register(any()) } returns Response.success(registerSuccess)
-
-        Intents.init()
-
-        scenario = ActivityScenario.launch(LandingActivity::class.java)
-        Thread.sleep(1500) // ShowLanguageSelect 도달
-
-        // WHEN: 언어 선택 없이 startButton 클릭
-        onView(withId(R.id.startButton)).perform(click())
-        Thread.sleep(500)
-
-        // THEN: MainActivity로 이동하지 않아야 함
-        intended(IntentMatchers.hasComponent(MainActivity::class.java.name), times(0))
-
-        Intents.release()
-    }
-
-    @Test
-    fun clickingStartButton_afterSelectingChinese_navigatesToMain() = runTest {
-        val errorResponse = Response.error<UserLoginResponse>(
-            400,
-            """{"error":"USER__INVALID_REQUEST_BODY"}""".toResponseBody("application/json".toMediaType())
-        )
-        val registerResponse = UserRegisterResponse("mock_uid", "zh")
-
-        coEvery { mockUserRepository.login(any()) } returns errorResponse
-        coEvery { mockUserRepository.register(any()) } returns Response.success(registerResponse)
-
-        scenario = ActivityScenario.launch(LandingActivity::class.java)
-        Thread.sleep(1500)
-
-        // WHEN: Start after Chinese selected
-        onView(withId(R.id.btnChinese)).perform(click())
-        Thread.sleep(300)
-        onView(withId(R.id.startButton)).perform(click())
-        Thread.sleep(1000)
-
-        // THEN: Move to MainActivity
-        var isFinishing = false
-        try {
-            scenario.onActivity { activity ->
-                isFinishing = activity.isFinishing
-            }
-        } catch (e: Exception) {
-            isFinishing = true
-        }
-        assert(isFinishing) { "Activity should finish after clicking start" }
-
-        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-        AppSettings.setLanguage(context, "en")
-    }
-
-
-    /***
-     * 5. Error Handling
-     ***/
-    @Test
-    fun loginError_andRegisterError_showsErrorAndStaysOnLanding() = runTest {
-        val loginError = Response.error<UserLoginResponse>(
-            400, """{"error":"USER__INVALID_REQUEST_BODY"}""".toResponseBody("application/json".toMediaType())
-        )
-
-        val registerError = Response.error<UserRegisterResponse>(
-            500, """{"error":"SERVER_ERROR"}""".toResponseBody("application/json".toMediaType())
-        )
-
-        coEvery { mockUserRepository.login(any()) } returns loginError
-        coEvery { mockUserRepository.register(any()) } returns registerError
-
-        scenario = ActivityScenario.launch(LandingActivity::class.java)
-        Thread.sleep(1500)
-
-        onView(withId(R.id.btnEnglish)).check(doesNotExist())
-        onView(withId(R.id.btnChinese)).check(doesNotExist())
-
-        onView(withId(R.id.logo)).check(matches(isDisplayed()))
-    }
-
-    @Test
-    fun uiStateError_showsToast() = runTest {
-        // GIVEN: Login exception
-        coEvery { mockUserRepository.login(any()) } throws Exception("Network error")
-
-        // WHEN: Activity 실행
-        scenario = ActivityScenario.launch(LandingActivity::class.java)
-        Thread.sleep(2000)
-
-        scenario.onActivity { activity ->
-            assert(!activity.isFinishing) { "Activity should not finish on error" }
-        }
     }
 }

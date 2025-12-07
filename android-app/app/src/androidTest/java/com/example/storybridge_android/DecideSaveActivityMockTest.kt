@@ -89,6 +89,13 @@ class DecideSaveActivityMockTest {
             override suspend fun discardSession(sessionId: String): Result<DiscardSessionResponse> {
                 return Result.failure(Exception("unused"))
             }
+
+            override suspend fun pickWords(
+                sessionId: String,
+                lang: String
+            ): Result<WordPickerResponse> {
+                return Result.failure(Exception("unused"))
+            }
         }
 
         ServiceLocator.sessionRepository = fakeRepo
@@ -140,6 +147,13 @@ class DecideSaveActivityMockTest {
             override suspend fun discardSession(sessionId: String): Result<DiscardSessionResponse> {
                 return Result.success(DiscardSessionResponse("discarded"))
             }
+
+            override suspend fun pickWords(
+                sessionId: String,
+                lang: String
+            ): Result<WordPickerResponse> {
+                return Result.failure(Exception("unused"))
+            }
         }
 
         ServiceLocator.sessionRepository = fakeRepo
@@ -190,6 +204,13 @@ class DecideSaveActivityMockTest {
 
             override suspend fun discardSession(sessionId: String): Result<DiscardSessionResponse> {
                 return Result.failure(Exception("DISCARD FAIL"))
+            }
+
+            override suspend fun pickWords(
+                sessionId: String,
+                lang: String
+            ): Result<WordPickerResponse> {
+                return Result.failure(Exception("unused"))
             }
         }
 

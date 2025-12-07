@@ -2,7 +2,6 @@ package com.example.storybridge_android.ui.session.loading
 
 import android.content.Intent
 import android.os.Bundle
-import android.provider.Settings
 import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.activity.viewModels
@@ -13,6 +12,8 @@ import com.example.storybridge_android.ui.reading.ReadingActivity
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import androidx.activity.OnBackPressedCallback
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.storybridge_android.ui.common.BaseActivity
 
 class LoadingActivity : BaseActivity() {
@@ -47,53 +48,54 @@ class LoadingActivity : BaseActivity() {
     }
 
     private fun observeProgress() {
-        lifecycleScope.launchWhenStarted {
-            viewModel.progress.collectLatest { progress ->
-                loadingBar.progress = progress.coerceIn(0, 100)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.progress.collectLatest { progress ->
+                    loadingBar.progress = progress.coerceIn(0, 100)
+                }
             }
         }
     }
 
     private fun handleResumeSession(startedAt: String) {
         lifecycleScope.launch {
-            val deviceInfo = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
             viewModel.loadUserInfo(deviceInfo)
         }
 
-        lifecycleScope.launchWhenStarted {
-            viewModel.userInfo.collectLatest { response ->
-                if (response == null || !response.isSuccessful) return@collectLatest
-                val sessions = response.body() ?: return@collectLatest
-                val match = sessions.find { it.started_at == startedAt }
-                if (match != null) {
-                    viewModel.reloadAllSession(match.started_at, this@LoadingActivity)
-                } else {
-                    showError(getString(R.string.error_session_not_found))
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.userInfo.collectLatest { response ->
+                    if (response == null || !response.isSuccessful) return@collectLatest
+                    val sessions = response.body() ?: return@collectLatest
+                    val match = sessions.find { it.started_at == startedAt }
+                    if (match != null) {
+                        viewModel.reloadAllSession(match.started_at, this@LoadingActivity)
+                    } else {
+                        showError(getString(R.string.error_session_not_found))
+                    }
                 }
             }
         }
 
-        lifecycleScope.launchWhenStarted {
-            viewModel.navigateToReading.collectLatest { session ->
-                session?.let {
-                    val realStartIndex = if (it.page_index == 0) 1 else it.page_index
-                    navigateToReading(it.session_id, realStartIndex, it.total_pages)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.navigateToReading.collectLatest { session ->
+                    session?.let {
+                        val realStartIndex = if (it.page_index == 0) 1 else it.page_index
+                        navigateToReading(it.session_id, realStartIndex, it.total_pages)
+                    }
                 }
             }
         }
 
-        lifecycleScope.launchWhenStarted {
-            viewModel.error.collectLatest { msg ->
-                msg?.let {
-                    val isCover = intent.getBooleanExtra("is_cover", false)
-
-                    if (isCover) {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.error.collectLatest { msg ->
+                    msg?.let {
                         setResult(RESULT_CANCELED, Intent().apply {
                             putExtra("retake", true)
                         })
                         finish()
-                    } else {
-                        showError(it)
                     }
                 }
             }
@@ -117,30 +119,30 @@ class LoadingActivity : BaseActivity() {
             else viewModel.uploadImage(sessionId, pageIndex, lang, imagePath)
         }
 
-        lifecycleScope.launchWhenStarted {
-            viewModel.error.collectLatest { msg ->
-                msg?.let {
-                    if (isCover) {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.error.collectLatest { msg ->
+                    msg?.let {
                         setResult(RESULT_CANCELED, Intent().apply {
                             putExtra("retake", true)
                         })
                         finish()
-                    } else {
-                        showError(it)
                     }
                 }
             }
         }
 
-        lifecycleScope.launchWhenStarted {
-            viewModel.status.collectLatest {
-                when (it) {
-                    "ready" -> {
-                        navigateToReading(sessionId, pageIndex, pageIndex + 1)
-                    }
-                    "cover_ready" -> {
-                        setResult(RESULT_OK)
-                        finish()
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.status.collectLatest {
+                    when (it) {
+                        "ready" -> {
+                            navigateToReading(sessionId, pageIndex, pageIndex + 1)
+                        }
+                        "cover_ready" -> {
+                            setResult(RESULT_OK)
+                            finish()
+                        }
                     }
                 }
             }

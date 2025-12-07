@@ -1,4 +1,4 @@
-package com.example.storybridge_android.ui.session
+package com.example.storybridge_android
 
 import android.content.Intent
 import android.util.Log
@@ -10,8 +10,6 @@ import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.*
-import com.example.storybridge_android.R
-import com.example.storybridge_android.ServiceLocator
 import com.example.storybridge_android.data.MALE_VOICE
 import com.example.storybridge_android.data.FEMALE_VOICE
 import com.example.storybridge_android.data.ProcessRepository
@@ -72,6 +70,13 @@ class VoiceSelectActivityTest {
 
             override suspend fun discardSession(sessionId: String) =
                 Result.failure<DiscardSessionResponse>(Exception("unused"))
+
+            override suspend fun pickWords(
+                sessionId: String,
+                lang: String
+            ): Result<WordPickerResponse> {
+                return Result.failure(Exception("unused"))
+            }
         }
 
         // Fake ProcessRepository

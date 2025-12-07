@@ -4,14 +4,10 @@
     android:layout_height="match_parent"
     android:background="@color/black">
 
-    <include
-        layout="@layout/retake_panel"
-        android:id="@+id/retakePanel"
-        android:visibility="gone" />
+    <!-- For "no text detected" errors -->
+    <include layout="@layout/retake_panel" />
 
-    <include
-        layout="@layout/retake_camera_panel"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+    <!-- For camera cancellation -->
+    <include layout="@layout/exit_confirm_panel" />
 
 </FrameLayout>

@@ -208,4 +208,51 @@ class SessionResponseParsingTest {
 
         assertEquals("session discarded successfully", response.message)
     }
+
+    // 7. pickWords
+    @Test
+    fun wordPickerResponse_successfulParsing() {
+        val json = """
+        {
+            "session_id": "sess_word_001",
+            "status": "success",
+            "items": [
+                {
+                    "word": "apple",
+                    "meaning_ko": "사과"
+                },
+                {
+                    "word": "banana",
+                    "meaning_ko": "바나나"
+                }
+            ]
+        }
+        """.trimIndent()
+
+        val response = gson.fromJson(json, WordPickerResponse::class.java)
+
+        assertEquals("sess_word_001", response.session_id)
+        assertEquals("success", response.status)
+        assertEquals(2, response.items.size)
+
+        val firstItem = response.items[0]
+        assertEquals("apple", firstItem.word)
+        assertEquals("사과", firstItem.meaning_ko)
+    }
+
+    @Test
+    fun wordPickerResponse_emptyItemsParsing() {
+        val json = """
+        {
+            "session_id": "sess_word_002",
+            "status": "no_words_found",
+            "items": []
+        }
+        """.trimIndent()
+
+        val response = gson.fromJson(json, WordPickerResponse::class.java)
+
+        assertEquals("no_words_found", response.status)
+        assertTrue(response.items.isEmpty())
+    }
 }

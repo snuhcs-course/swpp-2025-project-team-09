@@ -12,15 +12,4 @@
         android:layout_height="match_parent"
         app:implementationMode="compatible"/>
 
-    <include
-        android:id="@+id/exitPanelInclude"
-        layout="@layout/exit_confirm_panel"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
-    <include
-        layout="@layout/retake_camera_panel"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
 </androidx.constraintlayout.widget.ConstraintLayout>

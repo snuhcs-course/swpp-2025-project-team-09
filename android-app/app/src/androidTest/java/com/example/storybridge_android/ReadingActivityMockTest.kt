@@ -21,9 +21,9 @@ import org.junit.runner.RunWith
 import android.util.Base64
 import android.view.View
 import android.widget.ImageView
-import org.hamcrest.Matchers.`is`
-import org.hamcrest.TypeSafeMatcher
-import org.junit.runner.Description
+import androidx.lifecycle.Lifecycle
+import androidx.test.espresso.intent.Intents
+import androidx.test.espresso.intent.matcher.IntentMatchers
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -60,6 +60,8 @@ class ReadingActivityMockTest {
         every { Base64.decode(any<String>(), any()) } returns byteArrayOf(
             0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A
         )
+
+        Intents.init()
     }
 
     @After
@@ -69,6 +71,8 @@ class ReadingActivityMockTest {
         }
         ServiceLocator.reset()
         unmockkAll()
+
+        Intents.release()
     }
 
     // ==================== Helper Functions ====================
@@ -407,6 +411,83 @@ class ReadingActivityMockTest {
 
             Assert.assertNotNull("RecyclerView should exist", recyclerView)
             Assert.assertNotNull("RecyclerView should have adapter", recyclerView.adapter)
+
+            // Verify adapter is ThumbnailAdapter type
+            Assert.assertTrue("Adapter should be ThumbnailAdapter", recyclerView.adapter is ThumbnailAdapter)
+        }
+    }
+
+    @Test
+    fun thumbnailAdapter_hasSetCurrentPageMethod() = runTest {
+        scenario = ActivityScenario.launch(createIntent(pageIndex = 1, totalPages = 3))
+        Thread.sleep(2000)
+
+        scenario.onActivity { activity ->
+            val leftPanel = activity.findViewById<com.example.storybridge_android.ui.common.LeftOverlay>(R.id.leftPanel)
+            val adapter = leftPanel.thumbnailRecyclerView.adapter as ThumbnailAdapter
+
+            // Verify setCurrentPage method exists and works
+            try {
+                adapter.setCurrentPage(2)
+                val field = adapter.javaClass.getDeclaredField("currentPageIndex")
+                field.isAccessible = true
+                val currentPage = field.get(adapter) as Int
+                Assert.assertEquals("Current page should be set to 2", 2, currentPage)
+            } catch (e: Exception) {
+                Assert.fail("setCurrentPage method should exist and work: ${e.message}")
+            }
+        }
+    }
+
+    @Test
+    fun thumbnailAdapter_initialPageIsSet() = runTest {
+        val initialPage = 2
+        scenario = ActivityScenario.launch(createIntent(pageIndex = initialPage, totalPages = 5))
+        Thread.sleep(2000)
+
+        scenario.onActivity { activity ->
+            val leftPanel = activity.findViewById<com.example.storybridge_android.ui.common.LeftOverlay>(R.id.leftPanel)
+            val adapter = leftPanel.thumbnailRecyclerView.adapter as ThumbnailAdapter
+
+            val field = adapter.javaClass.getDeclaredField("currentPageIndex")
+            field.isAccessible = true
+            val currentPage = field.get(adapter) as Int
+
+            Assert.assertEquals("Initial current page should match pageIndex", initialPage, currentPage)
+        }
+    }
+
+    @Test
+    fun pageNavigation_updatesThumbnailCurrentPage() = runTest {
+        scenario = ActivityScenario.launch(createIntent(pageIndex = 1, totalPages = 3))
+        Thread.sleep(2000)
+
+        scenario.onActivity { activity ->
+            val leftPanel = activity.findViewById<com.example.storybridge_android.ui.common.LeftOverlay>(R.id.leftPanel)
+            val adapter = leftPanel.thumbnailRecyclerView.adapter as ThumbnailAdapter
+
+            val field = adapter.javaClass.getDeclaredField("currentPageIndex")
+            field.isAccessible = true
+            val initialPage = field.get(adapter) as Int
+
+            Assert.assertEquals("Initial page should be 1", 1, initialPage)
+        }
+
+        // Navigate to next page
+        onView(withId(R.id.main)).perform(click())
+        Thread.sleep(300)
+        onView(withId(R.id.nextButton)).perform(click())
+        Thread.sleep(2000)
+
+        scenario.onActivity { activity ->
+            val leftPanel = activity.findViewById<com.example.storybridge_android.ui.common.LeftOverlay>(R.id.leftPanel)
+            val adapter = leftPanel.thumbnailRecyclerView.adapter as ThumbnailAdapter
+
+            val field = adapter.javaClass.getDeclaredField("currentPageIndex")
+            field.isAccessible = true
+            val newPage = field.get(adapter) as Int
+
+            Assert.assertEquals("Current page should update to 2 after navigation", 2, newPage)
         }
     }
 
@@ -799,5 +880,50 @@ class ReadingActivityMockTest {
             }
             Assert.assertEquals(0, playButtons)
         }
+    }
+
+    // Navigation test
+
+    @Test
+    fun exitConfirmButton_notNewSession_navigatesToMain() = runTest {
+        scenario = ActivityScenario.launch(createIntent(isNewSession = false))
+        Thread.sleep(1000)
+
+        scenario.onActivity { activity ->
+            activity.onBackPressedDispatcher.onBackPressed()
+        }
+        Thread.sleep(500)
+
+        onView(withId(R.id.exitConfirmBtn)).perform(click())
+        Thread.sleep(1000)
+
+        Intents.intended(
+            IntentMatchers.hasComponent("com.example.storybridge_android.ui.main.MainActivity")
+        )
+    }
+
+    @Test
+    fun thumbnailClick_onCurrentPage_showsToast() = runTest {
+        val currentPage = 2
+        scenario = ActivityScenario.launch(createIntent(pageIndex = currentPage, totalPages = 3))
+        Thread.sleep(2000)
+
+        onView(withId(R.id.main)).perform(click())
+        Thread.sleep(300)
+        onView(withId(R.id.menuButton)).perform(click())
+        Thread.sleep(500)
+
+        scenario.onActivity { activity ->
+            val method = activity.javaClass.getDeclaredMethod(
+                "onThumbnailClick",
+                Int::class.java
+            )
+            method.isAccessible = true
+            method.invoke(activity, currentPage)
+        }
+
+        Thread.sleep(1000)
+
+        Assert.assertFalse("Activity should not finish", scenario.state == Lifecycle.State.DESTROYED)
     }
 }

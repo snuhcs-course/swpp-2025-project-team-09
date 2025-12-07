@@ -13,8 +13,11 @@ import androidx.core.view.WindowInsetsCompat
 import com.example.storybridge_android.R
 import com.example.storybridge_android.ui.camera.CameraSessionActivity
 import androidx.activity.OnBackPressedCallback
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.storybridge_android.ui.common.BaseActivity
+import kotlinx.coroutines.launch
 
 class ContentInstructionActivity : BaseActivity() {
 
@@ -60,9 +63,11 @@ class ContentInstructionActivity : BaseActivity() {
             viewModel.discardSession()
         }
 
-        lifecycleScope.launchWhenStarted {
-            viewModel.discardSuccess.collect {
-                finish()
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.discardSuccess.collect {
+                    finish()
+                }
             }
         }
 

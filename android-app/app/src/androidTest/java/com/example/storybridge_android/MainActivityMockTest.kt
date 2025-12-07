@@ -1,4 +1,4 @@
-package com.example.storybridge_android.ui.main
+package com.example.storybridge_android
 
 import android.app.Activity.RESULT_OK
 import android.app.Instrumentation
@@ -15,16 +15,17 @@ import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.matcher.IntentMatchers
 import androidx.test.espresso.intent.Intents.intended
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.storybridge_android.ServiceLocator
 import com.example.storybridge_android.data.*
 import com.example.storybridge_android.network.UserInfoResponse
-import com.example.storybridge_android.R
 import com.example.storybridge_android.network.DiscardSessionResponse
+import com.example.storybridge_android.network.StartSessionResponse
+import com.example.storybridge_android.ui.main.MainActivity
 import io.mockk.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.*
 import org.junit.runner.RunWith
+import retrofit2.Response
 
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -47,6 +48,9 @@ class MainActivityMockTest {
         mockkStatic(Settings.Secure::class)
         every { Settings.Secure.getString(any(), Settings.Secure.ANDROID_ID) } returns "DEVICE123"
 
+        coEvery { mockSessionRepo.startSession("DEVICE123") } returns
+                Result.success(StartSessionResponse("SESSION_123", "2025-12-03", 1))
+
         Intents.init()
     }
 
@@ -61,20 +65,8 @@ class MainActivityMockTest {
     )
 
     @Test
-    fun startButton_opensStartSessionActivity() = runTest {
-        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns retrofit2.Response.success(emptyList())
-
-        launchMain()
-        Thread.sleep(1500)
-
-        onView(withId(R.id.startNewReadingButton)).perform(click())
-
-        intended(IntentMatchers.hasComponent("com.example.storybridge_android.ui.session.start.StartSessionActivity"))
-    }
-
-    @Test
     fun settingsButton_opensSettingActivity() = runTest {
-        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns retrofit2.Response.success(emptyList())
+        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns Response.success(emptyList())
 
         launchMain()
         Thread.sleep(800)
@@ -105,7 +97,7 @@ class MainActivityMockTest {
             )
         )
 
-        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns retrofit2.Response.success(fakeList)
+        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns Response.success(fakeList)
 
         launchMain()
         Thread.sleep(1000)
@@ -116,7 +108,7 @@ class MainActivityMockTest {
 
     @Test
     fun userInfo_empty_showsEmptyContainer() = runTest {
-        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns retrofit2.Response.success(emptyList())
+        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns Response.success(emptyList())
 
         launchMain()
         Thread.sleep(800)
@@ -126,7 +118,7 @@ class MainActivityMockTest {
 
     @Test
     fun settingsLauncher_receivesResultOk() = runTest {
-        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns retrofit2.Response.success(emptyList())
+        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns Response.success(emptyList())
 
         val intent = Intent(ApplicationProvider.getApplicationContext(), MainActivity::class.java)
         val scenario = ActivityScenario.launch<MainActivity>(intent)
@@ -145,7 +137,7 @@ class MainActivityMockTest {
         Thread.sleep(1000)
 
         // THEN: SettingActivity activated
-        Intents.intended(
+        intended(
             IntentMatchers.hasComponent("com.example.storybridge_android.ui.setting.SettingActivity")
         )
 
@@ -158,7 +150,7 @@ class MainActivityMockTest {
 
     @Test
     fun backPress_showsExitPanel() = runTest {
-        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns retrofit2.Response.success(emptyList())
+        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns Response.success(emptyList())
 
         launchMain()
         Thread.sleep(500)
@@ -171,7 +163,7 @@ class MainActivityMockTest {
 
     @Test
     fun exitConfirmBtn_closesExitPanel() = runTest {
-        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns retrofit2.Response.success(emptyList())
+        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns Response.success(emptyList())
 
         val scenario = launchMain()
         Thread.sleep(500)
@@ -200,7 +192,7 @@ class MainActivityMockTest {
 
     @Test
     fun exitCancelBtn_hidesExitPanel() = runTest {
-        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns retrofit2.Response.success(emptyList())
+        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns Response.success(emptyList())
 
         launchMain()
         Thread.sleep(500)
@@ -228,7 +220,7 @@ class MainActivityMockTest {
                 translated_title = "TestBook"
             )
         )
-        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns retrofit2.Response.success(fakeList)
+        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns Response.success(fakeList)
 
         launchMain()
         Thread.sleep(800)
@@ -251,7 +243,7 @@ class MainActivityMockTest {
                 translated_title = "TestBook"
             )
         )
-        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns retrofit2.Response.success(fakeList)
+        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns Response.success(fakeList)
 
         launchMain()
         Thread.sleep(800)
@@ -277,7 +269,7 @@ class MainActivityMockTest {
                 translated_title = "TestBook"
             )
         )
-        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns retrofit2.Response.success(fakeList)
+        coEvery { mockUserRepo.getUserInfo("DEVICE123") } returns Response.success(fakeList)
         coEvery { mockSessionRepo.discardSession("S1") } returns
                 Result.success(DiscardSessionResponse("Session discarded"))
 

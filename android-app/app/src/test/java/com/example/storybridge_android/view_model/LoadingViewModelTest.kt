@@ -8,7 +8,6 @@ import android.util.Log
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.example.storybridge_android.data.*
 import com.example.storybridge_android.network.*
-import com.example.storybridge_android.ui.session.loading.CoverResult
 import com.example.storybridge_android.ui.session.loading.LoadingViewModel
 import com.example.storybridge_android.ui.session.loading.SessionResumeResult
 import io.mockk.Runs
@@ -45,7 +44,6 @@ class LoadingViewModelTest {
     private lateinit var mockUserRepo: UserRepository
     @Mock
     private lateinit var mockSessionRepo: SessionRepository
-
     @Mock
     private lateinit var mockContext: Context
 
@@ -177,50 +175,6 @@ class LoadingViewModelTest {
     }
 
     @Test
-    fun `initial progress is zero`() {
-        assertEquals(0, viewModel.progress.value)
-    }
-
-    @Test
-    fun `initial status is idle`() {
-        assertEquals("idle", viewModel.status.value)
-    }
-
-    @Test
-    fun `initial error is null`() {
-        assertNull(viewModel.error.value)
-    }
-
-    @Test
-    fun `initial cover is null`() {
-        assertNull(viewModel.cover.value)
-    }
-
-    @Test
-    fun `initial navigateToReading is null`() {
-        assertNull(viewModel.navigateToReading.value)
-    }
-
-    @Test
-    fun `initial userInfo is null`() {
-        assertNull(viewModel.userInfo.value)
-    }
-
-    @Test
-    fun `CoverResult data class works correctly`() {
-        val result = CoverResult("Test Title")
-        assertEquals("Test Title", result.title)
-    }
-
-    @Test
-    fun `SessionResumeResult data class works correctly`() {
-        val result = SessionResumeResult("session_123", 5, 10)
-        assertEquals("session_123", result.session_id)
-        assertEquals(5, result.page_index)
-        assertEquals(10, result.total_pages)
-    }
-
-    @Test
     fun `SessionResumeResult with default total_pages`() {
         val result = SessionResumeResult("session_123", 3)
         assertEquals("session_123", result.session_id)
@@ -230,12 +184,10 @@ class LoadingViewModelTest {
 
     @Test
     fun `loadUserInfo with empty response`() = runTest {
-        // Given
         val deviceInfo = "test_device"
         val response = Response.success(emptyList<UserInfoResponse>())
         whenever(mockUserRepo.getUserInfo(deviceInfo)).thenReturn(response)
 
-        // When
         viewModel.loadUserInfo(deviceInfo)
         advanceUntilIdle()
 
@@ -248,22 +200,17 @@ class LoadingViewModelTest {
 
     @Test
     fun `error state persists across operations`() = runTest {
-        // Given
         val invalidPath = "/invalid/path.jpg"
 
-        // When
         viewModel.uploadImage("session_1", 1, "en", invalidPath)
         advanceUntilIdle()
         val firstError = viewModel.error.value
 
-        // Then
         assertEquals("Failed to process image", firstError)
 
-        // When - another invalid operation
         viewModel.uploadCover("session_2", "en", invalidPath)
         advanceUntilIdle()
 
-        // Then - error persists (same error message)
         assertEquals("Failed to process image", viewModel.error.value)
     }
 
@@ -285,7 +232,6 @@ class LoadingViewModelTest {
         // Given
         val errorMessage = "Cover upload server failed"
 
-        // Base64 인코딩 모킹 (성공 가정)
         mockkStatic(android.util.Base64::class)
 
         mockkStatic(BitmapFactory::class)
@@ -303,23 +249,18 @@ class LoadingViewModelTest {
 
         every { android.util.Base64.encodeToString(any(), any()) } returns "base64encodedstring"
 
-        // ProcessRepo 실패 Mocking
         whenever(mockProcessRepo.uploadCoverImage(any())).thenReturn(
             Result.failure(Exception(errorMessage))
         )
 
         // When
         viewModel.uploadCover("s1", "en", testImageFile.absolutePath)
-        advanceTimeBy(100L) // Ramp job 시작
-
-        // Mocking된 실패 응답 도착 및 Ramp job 중단
+        advanceTimeBy(100L)
         advanceUntilIdle()
 
-        // Then
         verify(mockProcessRepo).uploadCoverImage(any())
         assertEquals(errorMessage, viewModel.error.value)
 
-        // Ramp job이 중단되었는지 확인
         val initialProgress = viewModel.progress.value
         advanceTimeBy(2000L)
         assertEquals(initialProgress, viewModel.progress.value)

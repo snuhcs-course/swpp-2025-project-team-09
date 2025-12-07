@@ -1,5 +1,6 @@
 package com.example.storybridge_android.ui.session.loading
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -65,6 +66,7 @@ class LoadingViewModel(
         }
     }
 
+    @SuppressLint("HardwareIds")
     fun reloadAllSession(startedAt: String, context: Context) {
         scope.launch {
             _status.value = "reloading"

@@ -122,6 +122,9 @@ class ReadingActivity : BaseActivity() {
         observeViewModel()
         fetchPage()
         fetchAllThumbnails()
+
+        // Set initial current page for thumbnail border
+        thumbnailAdapter.setCurrentPage(pageIndex)
     }
 
     private fun initViews() {
@@ -396,7 +399,7 @@ class ReadingActivity : BaseActivity() {
 
             // Adjust initial position to keep bounding box within viewport
             var initialX = scaledX
-            var initialY = scaledY
+            val initialY = scaledY
 
             // Ensure the bounding box doesn't overflow horizontally
             if (initialX + constrainedWidth > offsetX + displayedWidth) {
@@ -558,6 +561,8 @@ class ReadingActivity : BaseActivity() {
         boundingBoxViewsMap.clear()
         savedBoxTranslations.clear()
         updateBottomNavStatus()
+        // Update thumbnail border for current page
+        thumbnailAdapter.setCurrentPage(pageIndex)
         // Fetch new page
         fetchPage()
     }
@@ -597,7 +602,7 @@ class ReadingActivity : BaseActivity() {
         currentAudioIndex = 0
 
         // Reset all play button states
-        for ((index, button) in playButtonsMap) {
+        for ((index, _) in playButtonsMap) {
             resetButtonState(index)
         }
 

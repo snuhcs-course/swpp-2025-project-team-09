@@ -20,6 +20,22 @@ class User(models.Model):
     def __str__(self):
         return f"{self.device_info} ({self.language_preference})"
 
+    def getSessions(self):
+        """Returns all sessions for this user"""
+        return self.sessions.all()
+
+    def deleteSession(self, session_id):
+        """
+        Delete a specific session for this user
+        
+        Args:
+            session_id: UUID of the session to delete
+        
+        Returns:
+            Tuple of (number_of_objects_deleted, dict_of_deletions)
+        """
+        return self.sessions.filter(id=session_id).delete()
+
     class Meta:
         """
         Use the table name that exists in the current sqlite database.

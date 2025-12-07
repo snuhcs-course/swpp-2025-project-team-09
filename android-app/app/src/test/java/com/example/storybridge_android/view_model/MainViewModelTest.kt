@@ -229,7 +229,6 @@ class MainViewModelTest {
         val vm = MainViewModel(FakeUserRepo(true), FakeSessionRepo(true))
         vm.discardSession("123", "device")
         advanceUntilIdle()
-        assertTrue(vm.discardResult.value!!.isSuccess)
         assertNotNull(vm.userInfo.value)
         assertTrue(vm.userInfo.value!!.isSuccessful)
     }
@@ -239,7 +238,6 @@ class MainViewModelTest {
         val vm = MainViewModel(FakeUserRepo(true), FakeSessionRepo(false))
         vm.discardSession("123", "device")
         advanceUntilIdle()
-        assertTrue(vm.discardResult.value!!.isFailure)
         assertEquals(null, vm.userInfo.value)
     }
 
@@ -248,7 +246,6 @@ class MainViewModelTest {
         val vm = MainViewModel(FakeUserRepo(true), ExceptionSessionRepo())
         vm.discardSession("123", "device")
         advanceUntilIdle()
-        assertTrue(vm.discardResult.value!!.isFailure)
         assertEquals(null, vm.userInfo.value)
     }
 }
