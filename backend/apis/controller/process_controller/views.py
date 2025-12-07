@@ -59,6 +59,7 @@ class ProcessUploadView(APIView):
 
         # Run OCR
         ocr_result = OCRModule().process_page(image_path)
+        
         if not ocr_result:
             return Response(
                 {"error_code": 422, "message": "PROCESS__UNABLE_TO_PROCESS_IMAGE"},

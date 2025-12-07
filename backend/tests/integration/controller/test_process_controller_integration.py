@@ -134,6 +134,7 @@ class TestProcessUploadViewIntegration(TestCase):
         }
         
         response = self.client.post("/process/upload/", data, format="json")
+        
 
         self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
         self.assertIn("error_code", response.data)
