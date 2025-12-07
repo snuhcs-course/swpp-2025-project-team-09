@@ -74,7 +74,6 @@ class VoiceSelectActivity : BaseActivity() {
         val womanButton = findViewById<Button>(R.id.womanButton)
         val nextButton = findViewById<Button>(R.id.nextButton)
 
-        nextButton.isEnabled = false
 
         fun updateButtonState(selected: Button) {
             listOf(manButton, womanButton).forEach { it.isSelected = it == selected }
@@ -111,7 +110,6 @@ class VoiceSelectActivity : BaseActivity() {
                 viewModel.success.collectLatest {
                     Log.d("VoiceSelectActivity", "✓ Voice selection saved successfully")
                     voiceSelected = true
-                    nextButton.isEnabled = true
                 }
             }
         }
