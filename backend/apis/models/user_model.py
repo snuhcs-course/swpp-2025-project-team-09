@@ -27,10 +27,10 @@ class User(models.Model):
     def deleteSession(self, session_id):
         """
         Delete a specific session for this user
-        
+
         Args:
             session_id: UUID of the session to delete
-        
+
         Returns:
             Tuple of (number_of_objects_deleted, dict_of_deletions)
         """
@@ -42,4 +42,5 @@ class User(models.Model):
         - Migration files show the DB contains `apis_user`, so align the model
         - to avoid "no such table: user" OperationalError at runtime.
         """
+
         db_table = "apis_user"

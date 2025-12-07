@@ -27,35 +27,35 @@ class Page(models.Model):
     def addBB(self, bbox_list, translated_list, audio_list):
         """
         Add bounding boxes to this page
-        
+
         Args:
             bbox_list: List of bbox dicts with 'text' and coordinate keys
             translated_list: List of translated text strings
             audio_list: List of audio base64 strings
         """
         from apis.models.bb_model import BB
-        
+
         for i, bbox in enumerate(bbox_list):
-            original_text = bbox.get('text', '')
-            translated_text = translated_list[i] if i < len(translated_list) else ''
-            audio_base64 = audio_list[i] if i < len(audio_list) else ''
-            
+            original_text = bbox.get("text", "")
+            translated_text = translated_list[i] if i < len(translated_list) else ""
+            audio_base64 = audio_list[i] if i < len(audio_list) else ""
+
             # Extract coordinates from bbox
             coordinates = {
-                'x1': bbox.get('x1', 0),
-                'y1': bbox.get('y1', 0),
-                'x2': bbox.get('x2', 0),
-                'y2': bbox.get('y2', 0),
-                'x3': bbox.get('x3', 0),
-                'y3': bbox.get('y3', 0),
-                'x4': bbox.get('x4', 0),
-                'y4': bbox.get('y4', 0),
+                "x1": bbox.get("x1", 0),
+                "y1": bbox.get("y1", 0),
+                "x2": bbox.get("x2", 0),
+                "y2": bbox.get("y2", 0),
+                "x3": bbox.get("x3", 0),
+                "y3": bbox.get("y3", 0),
+                "x4": bbox.get("x4", 0),
+                "y4": bbox.get("y4", 0),
             }
-            
+
             BB.objects.create(
                 page=self,
                 original_text=original_text,
                 translated_text=translated_text,
                 audio_base64=audio_base64,
-                coordinates=coordinates
+                coordinates=coordinates,
             )

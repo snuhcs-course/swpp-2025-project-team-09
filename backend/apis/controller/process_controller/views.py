@@ -59,13 +59,13 @@ class ProcessUploadView(APIView):
 
         # Run OCR
         ocr_result = OCRModule().process_page(image_path)
-        
+
         if not ocr_result:
             return Response(
                 {"error_code": 422, "message": "PROCESS__UNABLE_TO_PROCESS_IMAGE"},
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
-        
+
         # Count words from OCR and add to session.totalWords
         total_words = sum(
             len((para.get("text", "") or "").split()) for para in ocr_result
@@ -573,6 +573,7 @@ class ProcessUploadCoverView(APIView):
             traceback.print_exc()
             return "", ""
 
+
 class ProcessWordPickerView(APIView):
     """
     Extract vocabulary words from ALL pages of a session.
@@ -601,16 +602,14 @@ class ProcessWordPickerView(APIView):
         lang = request.data.get("lang")
         if not session_id:
             return Response(
-                {"error": "session_id_required"},
-                status=status.HTTP_400_BAD_REQUEST
+                {"error": "session_id_required"}, status=status.HTTP_400_BAD_REQUEST
             )
 
         try:
             session = Session.objects.get(id=session_id)
         except Session.DoesNotExist:
             return Response(
-                {"error": "session_not_found"},
-                status=status.HTTP_404_NOT_FOUND
+                {"error": "session_not_found"}, status=status.HTTP_404_NOT_FOUND
             )
 
         pages = Page.objects.filter(session=session).order_by("id")
@@ -644,8 +643,7 @@ class ProcessWordPickerView(APIView):
                 status=status.HTTP_200_OK,
             )
 
-
-        picker = StoryWordPicker() 
+        picker = StoryWordPicker()
 
         result = picker.pick_words(full_text)
 

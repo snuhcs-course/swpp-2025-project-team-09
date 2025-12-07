@@ -36,6 +36,7 @@ Return exactly three items and follow the structured output strictly.
 # Pydantic Models
 # -------------------------------------------------------------------------
 
+
 class VocabItem(BaseModel):
     word: str = Field(..., description="Single vocabulary word.")
     meaning_ko: str = Field(..., description="Short Korean meaning.")
@@ -43,16 +44,14 @@ class VocabItem(BaseModel):
 
 class VocabResult(BaseModel):
     items: List[VocabItem] = Field(
-        ..., 
-        min_items=3,
-        max_items=3,
-        description="Exactly 3 vocabulary items."
+        ..., min_items=3, max_items=3, description="Exactly 3 vocabulary items."
     )
 
 
 # -------------------------------------------------------------------------
 # StoryWordPicker Module
 # -------------------------------------------------------------------------
+
 
 class StoryWordPicker:
     """
@@ -94,9 +93,7 @@ class StoryWordPicker:
                 t0 = time.time()
 
                 response: VocabResult = self.word_chain.invoke(
-                    {
-                        "story_text": story_text
-                    }
+                    {"story_text": story_text}
                 )
                 print(f"[WordPicker] response: {response}")
                 latency = round(time.time() - t0, 3)
@@ -115,20 +112,13 @@ class StoryWordPicker:
                     if w not in seen:
                         seen.add(w)
                         cleaned.append(
-                            {
-                                "word": w,
-                                "meaning_ko": item.meaning_ko.strip()
-                            }
+                            {"word": w, "meaning_ko": item.meaning_ko.strip()}
                         )
 
                 if not cleaned:
                     return {"status": "no_words", "items": [], "latency": latency}
 
-                return {
-                    "status": "ok",
-                    "items": cleaned[:3],
-                    "latency": latency
-                }
+                return {"status": "ok", "items": cleaned[:3], "latency": latency}
 
             except Exception as e:
                 print(f"[WordPicker] attempt {attempt+1} failed: {e}")

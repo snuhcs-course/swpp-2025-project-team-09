@@ -35,19 +35,17 @@ class Session(models.Model):
     def addPage(self, img_url, index=None):
         """
         Add a page to this session
-        
+
         Args:
             img_url: URL/path to the page image
             index: Page index (optional, not used for ordering)
-        
+
         Returns:
             Created Page object
         """
         from apis.models.page_model import Page
-        
+
         page = Page.objects.create(
-            session=self,
-            img_url=img_url,
-            created_at=timezone.now()
+            session=self, img_url=img_url, created_at=timezone.now()
         )
         return page

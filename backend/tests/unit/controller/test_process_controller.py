@@ -137,6 +137,7 @@ class TestProcessUploadView(APITestCase):
         self.assertEqual(response.data["error_code"], 422)
         self.assertEqual(response.data["message"], "PROCESS__UNABLE_TO_PROCESS_IMAGE")
 
+
 class TestCheckOCRStatusView(APITestCase):
     """Unit tests for Check OCR Status endpoint"""
 

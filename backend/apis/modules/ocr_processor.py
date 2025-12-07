@@ -140,7 +140,7 @@ class OCRModule:
                 continue
             # Cluster by Y within paragraph (DBSCAN)
             Y = np.array([[t["y"]] for t in para])
-            line_eps = fs*0.25
+            line_eps = fs * 0.25
             line_db = DBSCAN(eps=line_eps, min_samples=1)
             line_labels = line_db.fit_predict(Y)
             for t, lbl in zip(para, line_labels):
@@ -354,4 +354,3 @@ class OCRModule:
         # Return the tallest text block (likely the title)
         results.sort(key=lambda r: r["height"], reverse=True)
         return results[0]["text"] if results else None
-

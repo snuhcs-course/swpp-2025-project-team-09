@@ -124,6 +124,7 @@ class TestSelectVoiceView(APITestCase):
         self.assertEqual(response.data["error_code"], 404)
         self.assertEqual(response.data["message"], "SESSION__NOT_FOUND")
 
+
 class TestEndSessionView(APITestCase):
     """Unit tests for End Session endpoint"""
 
@@ -175,6 +176,7 @@ class TestEndSessionView(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data["error_code"], 404)
         self.assertEqual(response.data["message"], "SESSION__NOT_FOUND")
+
 
 class TestGetSessionStatsView(APITestCase):
     """Unit tests for Get Session Stats endpoint"""
