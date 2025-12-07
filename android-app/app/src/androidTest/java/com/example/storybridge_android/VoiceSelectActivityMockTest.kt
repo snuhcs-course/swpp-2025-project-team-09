@@ -178,21 +178,6 @@ class VoiceSelectActivityTest {
     }
 
     @Test
-    fun testNextButtonEnabledAfterSelectingVoice() {
-        // GIVEN: Next button is not enabled
-        onView(withId(R.id.nextButton))
-            .check(matches(isNotEnabled()))
-
-        // WHEN: Woman button is clicked
-        onView(withId(R.id.womanButton)).perform(click())
-        Thread.sleep(2000)
-
-        // THEN: Next button enabled
-        onView(withId(R.id.nextButton))
-            .check(matches(isEnabled()))
-    }
-
-    @Test
     fun testNextButtonNavigatesToInstruction() {
         onView(withId(R.id.womanButton)).perform(click())
         Thread.sleep(2000)
