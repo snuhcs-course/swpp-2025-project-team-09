@@ -82,7 +82,11 @@ tasks.register<JacocoReport>("jacocoTestReport") {
         "**/MainActivity*lambda*\$*",
         "**/*\$lambda$*.*",
         "**/*Lambda*.*",
-        "**/*\$*Lambda*.*"
+        "**/*\$*Lambda*.*",
+
+        "**/android/util/Log.class",
+        "**/Log*.class",
+        "**/Logger.class",
     )
 
     val javaDebugTree = fileTree("${buildDir}/intermediates/javac/debug") {

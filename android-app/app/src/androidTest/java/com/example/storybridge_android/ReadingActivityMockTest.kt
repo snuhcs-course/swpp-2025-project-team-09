@@ -21,9 +21,9 @@ import org.junit.runner.RunWith
 import android.util.Base64
 import android.view.View
 import android.widget.ImageView
-import org.hamcrest.Matchers.`is`
-import org.hamcrest.TypeSafeMatcher
-import org.junit.runner.Description
+import androidx.lifecycle.Lifecycle
+import androidx.test.espresso.intent.Intents
+import androidx.test.espresso.intent.matcher.IntentMatchers
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -60,6 +60,8 @@ class ReadingActivityMockTest {
         every { Base64.decode(any<String>(), any()) } returns byteArrayOf(
             0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A
         )
+
+        Intents.init()
     }
 
     @After
@@ -69,6 +71,8 @@ class ReadingActivityMockTest {
         }
         ServiceLocator.reset()
         unmockkAll()
+
+        Intents.release()
     }
 
     // ==================== Helper Functions ====================
@@ -876,5 +880,50 @@ class ReadingActivityMockTest {
             }
             Assert.assertEquals(0, playButtons)
         }
+    }
+
+    // Navigation test
+
+    @Test
+    fun exitConfirmButton_notNewSession_navigatesToMain() = runTest {
+        scenario = ActivityScenario.launch(createIntent(isNewSession = false))
+        Thread.sleep(1000)
+
+        scenario.onActivity { activity ->
+            activity.onBackPressedDispatcher.onBackPressed()
+        }
+        Thread.sleep(500)
+
+        onView(withId(R.id.exitConfirmBtn)).perform(click())
+        Thread.sleep(1000)
+
+        Intents.intended(
+            IntentMatchers.hasComponent("com.example.storybridge_android.ui.main.MainActivity")
+        )
+    }
+
+    @Test
+    fun thumbnailClick_onCurrentPage_showsToast() = runTest {
+        val currentPage = 2
+        scenario = ActivityScenario.launch(createIntent(pageIndex = currentPage, totalPages = 3))
+        Thread.sleep(2000)
+
+        onView(withId(R.id.main)).perform(click())
+        Thread.sleep(300)
+        onView(withId(R.id.menuButton)).perform(click())
+        Thread.sleep(500)
+
+        scenario.onActivity { activity ->
+            val method = activity.javaClass.getDeclaredMethod(
+                "onThumbnailClick",
+                Int::class.java
+            )
+            method.isAccessible = true
+            method.invoke(activity, currentPage)
+        }
+
+        Thread.sleep(1000)
+
+        Assert.assertFalse("Activity should not finish", scenario.state == Lifecycle.State.DESTROYED)
     }
 }

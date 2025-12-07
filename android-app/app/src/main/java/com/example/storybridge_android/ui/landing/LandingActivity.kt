@@ -6,7 +6,9 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.activity.enableEdgeToEdge
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.storybridge_android.ui.setting.AppSettings
 import com.example.storybridge_android.ui.main.MainActivity
 import com.example.storybridge_android.R
@@ -25,12 +27,14 @@ class LandingActivity : BaseActivity() {
         setContentView(R.layout.activity_landing_first)
 
         lifecycleScope.launch {
-            viewModel.uiState.collectLatest { state ->
-                when (state) {
-                    is LandingUiState.Loading -> Unit
-                    is LandingUiState.NavigateMain -> navigateToMain()
-                    is LandingUiState.ShowLanguageSelect -> showLanguageSelection()
-                    is LandingUiState.Error -> showError(state.message)
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collectLatest { state ->
+                    when (state) {
+                        is LandingUiState.Loading -> Unit
+                        is LandingUiState.NavigateMain -> navigateToMain()
+                        is LandingUiState.ShowLanguageSelect -> showLanguageSelection()
+                        is LandingUiState.Error -> showError(state.message)
+                    }
                 }
             }
         }

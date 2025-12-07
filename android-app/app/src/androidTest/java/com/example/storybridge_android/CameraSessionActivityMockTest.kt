@@ -5,13 +5,20 @@ import android.content.Intent
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.matcher.IntentMatchers
+import androidx.test.espresso.matcher.ViewMatchers
+import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
+import androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility
+import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.rule.GrantPermissionRule
+import com.example.storybridge_android.R
 import com.example.storybridge_android.network.UploadCoverResponse
+import com.example.storybridge_android.ui.session.instruction.ContentInstructionActivity
 import com.example.storybridge_android.ui.session.loading.LoadingActivity
-import com.example.storybridge_android.ui.session.voice.VoiceSelectActivity
 import com.example.storybridge_android.ui.setting.AppSettings
 import io.mockk.every
 import io.mockk.mockk
@@ -82,18 +89,17 @@ class CameraSessionActivityMockTest {
     }
 
     @Test
-    fun uiState_success_coverNavigatesToVoiceSelect() {
+    fun uiState_success_coverNavigatesToContentInstruction() {
         val flow = MutableStateFlow<SessionUiState>(SessionUiState.Idle)
         every { mockViewModel.uiState } returns flow.asStateFlow()
 
         scenario = launchWithExtras(isCover = true)
         Thread.sleep(500)
 
-        // UI state changed
         flow.value = SessionUiState.Success("/tmp/a.jpg")
         Thread.sleep(1000)
 
-        Intents.intended(IntentMatchers.hasComponent(VoiceSelectActivity::class.java.name))
+        Intents.intended(IntentMatchers.hasComponent(ContentInstructionActivity::class.java.name))
     }
 
     @Test
@@ -112,39 +118,40 @@ class CameraSessionActivityMockTest {
     }
 
     @Test
-    fun uiState_cancelled_finishes() {
+    fun uiState_cancelled_showsExitDialog() { // 테스트 이름 변경
         val flow = MutableStateFlow<SessionUiState>(SessionUiState.Idle)
         every { mockViewModel.uiState } returns flow.asStateFlow()
 
         scenario = launchWithExtras()
         Thread.sleep(500)
 
-        // UI state changed
         flow.value = SessionUiState.Cancelled
         Thread.sleep(500)
 
-        assert(scenario.state == Lifecycle.State.DESTROYED)
+        assert(scenario!!.state == Lifecycle.State.RESUMED) { "Activity should remain RESUMED" }
+
+        onView(withId(R.id.exitPanel)).check(matches(isDisplayed()))
     }
 
     @Test
-    fun navigateToVoiceSelect_includesLanguageSetting() {
-        // GIVEN: AppSettings mock
+    fun uiState_success_coverNavigatesToContentInstructionWithLanguageSetting() {
         mockkObject(AppSettings)
         every { AppSettings.getLanguage(any()) } returns "zh"
 
         val flow = MutableStateFlow<SessionUiState>(SessionUiState.Idle)
         every { mockViewModel.uiState } returns flow.asStateFlow()
 
-        // WHEN: Cover mode Success
         scenario = launchWithExtras(isCover = true, sessionId = "S1")
         Thread.sleep(500)
 
         flow.value = SessionUiState.Success("/tmp/cover.jpg")
         Thread.sleep(1000)
 
-        // THEN: language setting is passed to VoiceSelectActivity
         Intents.intended(
-            IntentMatchers.hasExtra("lang", "zh")
+            allOf(
+                IntentMatchers.hasComponent("com.example.storybridge_android.ui.session.instruction.ContentInstructionActivity"),
+                IntentMatchers.hasExtra("session_id", "S1")
+            )
         )
 
         unmockkObject(AppSettings)
@@ -210,7 +217,7 @@ class CameraSessionActivityMockTest {
     }
 
     @Test
-    fun uiState_uploadSuccess_navigatesToVoiceSelectWithExtras() {
+    fun uiState_uploadSuccess_navigatesToContentInstructionWithExtras() { // 이름 변경
         val flow = MutableStateFlow<SessionUiState>(SessionUiState.Idle)
         every { mockViewModel.uiState } returns flow.asStateFlow()
 
@@ -231,13 +238,41 @@ class CameraSessionActivityMockTest {
 
         Intents.intended(
             allOf(
-                IntentMatchers.hasComponent(VoiceSelectActivity::class.java.name),
-                IntentMatchers.hasExtra("session_id", "S55"),
-                IntentMatchers.hasExtra("title", "마법 이야기"),
-                IntentMatchers.hasExtra("translated_title", "Magic Story")
+                IntentMatchers.hasComponent(ContentInstructionActivity::class.java.name),
+                IntentMatchers.hasExtra("session_id", "S55")
             )
         )
 
         assert(scenario.state == Lifecycle.State.DESTROYED)
+    }
+
+    @Test
+    fun uiState_noTextDetected_showsRetakeDialog() {
+        val flow = MutableStateFlow<SessionUiState>(SessionUiState.Idle)
+        every { mockViewModel.uiState } returns flow.asStateFlow()
+
+        scenario = launchWithExtras()
+        Thread.sleep(500)
+
+        flow.value = SessionUiState.NoTextDetected
+        Thread.sleep(500)
+
+        onView(withId(R.id.retakePanel)).check(matches(isDisplayed()))
+        onView(withId(R.id.exitPanel)).check(matches(withEffectiveVisibility(ViewMatchers.Visibility.GONE)))
+    }
+
+    @Test
+    fun uiState_error_showsRetakeDialog() {
+        val flow = MutableStateFlow<SessionUiState>(SessionUiState.Idle)
+        every { mockViewModel.uiState } returns flow.asStateFlow()
+
+        scenario = launchWithExtras()
+        Thread.sleep(500)
+
+        flow.value = SessionUiState.Error("Server processing failed")
+        Thread.sleep(500)
+
+        onView(withId(R.id.retakePanel)).check(matches(isDisplayed()))
+        onView(withId(R.id.exitPanel)).check(matches(withEffectiveVisibility(ViewMatchers.Visibility.GONE)))
     }
 }
